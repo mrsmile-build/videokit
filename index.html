@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VideoKit — AI Faceless Video Creator</title>
+  <meta name="description" content="Free AI-powered faceless video creator. Generate scripts, find stock videos, create voiceover and download your video in minutes.">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+    :root{--bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--border:#222;--ink:#fff;--ink-soft:rgba(255,255,255,.5);--accent:#ff5c00;--accent2:#ff8c00;--radius:14px;--font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-height:100vh}
+    nav{padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(10,10,10,.95);backdrop-filter:blur(10px);z-index:100}
+    .logo{font-family:var(--font-head);font-weight:800;font-size:1.3rem;letter-spacing:-1px}
+    .logo span{color:var(--accent)}
+    .nav-badge{background:var(--accent);color:#fff;font-size:.65rem;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em}
+    .hero{text-align:center;padding:60px 20px 40px;max-width:700px;margin:0 auto}
+    .hero h1{font-family:var(--font-head);font-size:clamp(2rem,6vw,3.2rem);font-weight:800;letter-spacing:-2px;line-height:1.1;margin-bottom:16px}
+    .hero h1 span{color:var(--accent)}
+    .hero p{color:var(--ink-soft);font-size:1rem;font-weight:300;max-width:480px;margin:0 auto 32px}
+    .steps-bar{display:flex;justify-content:center;gap:0;margin-bottom:40px;flex-wrap:wrap}
+    .step-item{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--ink-soft)}
+    .step-item.active{color:var(--accent)}
+    .step-num{width:24px;height:24px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;flex-shrink:0}
+    .step-item.done .step-num{background:var(--accent);border-color:var(--accent);color:#fff}
+    .step-divider{width:30px;height:1px;background:var(--border);margin:0 4px}
+    .wrapper{max-width:860px;margin:0 auto;padding:0 20px 80px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:20px}
+    .card-title{font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+    .card-sub{font-size:.82rem;color:var(--ink-soft);margin-bottom:20px}
+    label{display:block;font-size:.75rem;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-soft);margin-bottom:8px}
+    input,textarea,select{width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font-body);font-size:.95rem;background:var(--surface2);color:var(--ink);outline:none;transition:border-color .2s}
+    input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+    textarea{resize:vertical;min-height:100px;line-height:1.6}
+    .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;padding:13px 28px;border-radius:10px;font-family:var(--font-head);font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;text-decoration:none}
+    .btn:hover{background:#e04e00;transform:translateY(-1px)}
+    .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .btn-outline{background:transparent;color:var(--ink);border:1.5px solid var(--border)}
+    .btn-outline:hover{border-color:var(--accent);color:var(--accent);background:transparent}
+    .btn-green{background:#22c55e}
+    .btn-green:hover{background:#16a34a}
+    .form-group{margin-bottom:20px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .style-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:4px}
+    .style-btn{padding:10px 8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s;text-align:center;color:var(--ink)}
+    .style-btn.active{border-color:var(--accent);background:rgba(255,92,0,.1);color:var(--accent);font-weight:700}
+    .loading{display:none;text-align:center;padding:32px}
+    .loading.show{display:block}
+    .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading p{color:var(--ink-soft);font-size:.9rem}
+    .loading .loading-steps{margin-top:12px;font-size:.8rem;color:var(--accent)}
+    .section{display:none}.section.show{display:block}
+    .script-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+    .script-scene{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+    .script-scene:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+    .scene-num{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:700;margin-bottom:6px}
+    .scene-text{font-size:.9rem;line-height:1.7;color:var(--ink-soft)}
+    .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:16px}
+    .video-thumb{position:relative;border-radius:10px;overflow:hidden;border:2px solid var(--border);cursor:pointer;transition:border-color .2s;aspect-ratio:16/9}
+    .video-thumb.selected{border-color:var(--accent)}
+    .video-thumb video{width:100%;height:100%;object-fit:cover}
+    .video-thumb .select-overlay{position:absolute;inset:0;background:rgba(255,92,0,.2);display:none;align-items:center;justify-content:center;font-size:1.5rem}
+    .video-thumb.selected .select-overlay{display:flex}
+    .video-tag{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.7);color:#fff;font-size:.65rem;padding:2px 6px;border-radius:4px;font-weight:600}
+    .voice-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+    .voice-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s}
+    .voice-card.active{border-color:var(--accent);background:rgba(255,92,0,.08)}
+    .voice-name{font-weight:600;font-size:.9rem;margin-bottom:4px}
+    .voice-desc{font-size:.75rem;color:var(--ink-soft)}
+    .voice-badge{font-size:.65rem;background:var(--accent);color:#fff;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:6px;font-weight:700}
+    .audio-player{margin-top:16px;width:100%}
+    .download-section{background:linear-gradient(135deg,rgba(255,92,0,.15),rgba(255,140,0,.05));border:1px solid rgba(255,92,0,.3);border-radius:var(--radius);padding:28px;text-align:center}
+    .download-section h3{font-family:var(--font-head);font-size:1.3rem;font-weight:800;margin-bottom:8px}
+    .download-section p{color:var(--ink-soft);font-size:.875rem;margin-bottom:20px}
+    .download-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+    .progress-bar{background:var(--border);border-radius:10px;height:6px;margin:12px 0;overflow:hidden}
+    .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:10px;transition:width .3s;width:0%}
+    .toolkit-banner{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;flex-wrap:wrap}
+    .toolkit-banner p{font-size:.85rem;color:var(--ink-soft)}
+    .toolkit-banner strong{color:var(--ink)}
+    .error-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px;color:#f87171;font-size:.85rem;margin-top:12px;display:none}
+    .error-box.show{display:block}
+    @media(max-width:600px){.form-row{grid-template-columns:1fr}.hero{padding:40px 20px 28px}.card{padding:20px 16px}}
+  </style>
+</head>
+<body>
+<nav>
+  <div class="logo">Video<span>Kit</span></div>
+  <span class="nav-badge">Free Beta</span>
+</nav>
+
+<div class="hero">
+  <h1>Create <span>faceless videos</span><br>with AI in minutes</h1>
+  <p>Type your idea → AI writes the script → finds matching videos → adds voiceover → ready to post</p>
+  <div class="steps-bar">
+    <div class="step-item active" id="step1"><div class="step-num">1</div> Script</div>
+    <div class="step-divider"></div>
+    <div class="step-item" id="step2"><div class="step-num">2</div> Videos</div>
+    <div class="step-divider"></div>
+    <div class="step-item" id="step3"><div class="step-num">3</div> Voice</div>
+    <div class="step-divider"></div>
+    <div class="step-item" id="step4"><div class="step-num">4</div> Download</div>
+  </div>
+</div>
+
+<div class="wrapper">
+
+  <!-- STEP 1: SCRIPT -->
+  <div class="section show" id="section-script">
+    <div class="card">
+      <div class="card-title">🧠 Step 1 — Generate Your Script</div>
+      <div class="card-sub">Describe your video idea and AI will write a full viral script for it.</div>
+
+      <div class="form-group">
+        <label>Your video idea or topic</label>
+        <textarea id="videoIdea" placeholder="Examples:&#10;- How to make money online with no experience&#10;- 5 habits that changed my life&#10;- The truth about passive income&#10;- Morning routine for success"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Video style</label>
+        <div class="style-grid">
+          <div class="style-btn active" onclick="setStyle('motivational',this)">🔥 Motivational</div>
+          <div class="style-btn" onclick="setStyle('educational',this)">📚 Educational</div>
+          <div class="style-btn" onclick="setStyle('storytelling',this)">📖 Story</div>
+          <div class="style-btn" onclick="setStyle('tutorial',this)">🎯 Tutorial</div>
+          <div class="style-btn" onclick="setStyle('viral',this)">⚡ Viral Hook</div>
+          <div class="style-btn" onclick="setStyle('sales',this)">💰 Sales</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Video length</label>
+          <select id="videoLength">
+            <option value="30">30 seconds (Short)</option>
+            <option value="60" selected>60 seconds (Reel)</option>
+            <option value="180">3 minutes (YouTube Short)</option>
+            <option value="600">10 minutes (YouTube)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Platform</label>
+          <select id="platform">
+            <option value="TikTok">TikTok</option>
+            <option value="Instagram Reels" selected>Instagram Reels</option>
+            <option value="YouTube Shorts">YouTube Shorts</option>
+            <option value="YouTube">YouTube</option>
+            <option value="Facebook">Facebook</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn" onclick="generateScript()" id="btnScript">🧠 Generate Script</button>
+      <div class="error-box" id="err-script"></div>
+    </div>
+
+    <div class="loading" id="load-script">
+      <div class="spinner"></div>
+      <p>AI is writing your script...</p>
+      <div class="loading-steps" id="load-script-step">Analyzing your idea...</div>
+    </div>
+
+    <div class="card section" id="script-result">
+      <div class="card-title">✅ Your Script</div>
+      <div class="card-sub">Review and edit your script before continuing.</div>
+      <div id="script-scenes"></div>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn" onclick="goToVideos()">Next: Find Videos →</button>
+        <button class="btn btn-outline" onclick="generateScript()">Regenerate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: VIDEOS -->
+  <div class="section" id="section-videos">
+    <div class="card">
+      <div class="card-title">🎬 Step 2 — Select Stock Videos</div>
+      <div class="card-sub">AI found matching stock videos for each scene. Select the best one per scene.</div>
+      <div id="video-scenes"></div>
+      <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+        <button class="btn" onclick="goToVoice()">Next: Add Voice →</button>
+        <button class="btn btn-outline" onclick="goBack('section-script','step1')">← Back</button>
+      </div>
+    </div>
+    <div class="loading" id="load-videos">
+      <div class="spinner"></div>
+      <p>Finding matching stock videos...</p>
+    </div>
+    <div class="error-box" id="err-videos"></div>
+  </div>
+
+  <!-- STEP 3: VOICE -->
+  <div class="section" id="section-voice">
+    <div class="card">
+      <div class="card-title">🔊 Step 3 — Choose Voice & Generate Narration</div>
+      <div class="card-sub">Pick a voice and we'll generate the full narration for your video.</div>
+      <div class="voice-grid" id="voice-grid">
+        <div class="voice-card active" onclick="selectVoice('pNInz6obpgDQGcFmaJgB',this)">
+          <div class="voice-name">Adam</div>
+          <div class="voice-desc">Deep, authoritative male voice</div>
+          <span class="voice-badge">Popular</span>
+        </div>
+        <div class="voice-card" onclick="selectVoice('EXAVITQu4vr4xnSDxMaL',this)">
+          <div class="voice-name">Bella</div>
+          <div class="voice-desc">Warm, friendly female voice</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('VR6AewLTigWG4xSOukaG',this)">
+          <div class="voice-name">Arnold</div>
+          <div class="voice-desc">Strong, confident male voice</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('ThT5KcBeYPX3keUQqHPh',this)">
+          <div class="voice-name">Dorothy</div>
+          <div class="voice-desc">Pleasant, clear female voice</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('TxGEqnHWrfWFTfGW9XjX',this)">
+          <div class="voice-name">Josh</div>
+          <div class="voice-desc">Young, energetic male voice</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('piTKgcLEGmPE4e6mEKli',this)">
+          <div class="voice-name">Nicole</div>
+          <div class="voice-desc">Soft, intimate female voice</div>
+        </div>
+      </div>
+      <div style="margin-top:20px">
+        <button class="btn" onclick="generateVoice()" id="btnVoice">🔊 Generate Narration</button>
+      </div>
+      <div class="loading" id="load-voice" style="margin-top:16px">
+        <div class="spinner"></div>
+        <p>Generating your voiceover...</p>
+      </div>
+      <div class="error-box" id="err-voice"></div>
+      <div id="audio-result" style="display:none;margin-top:16px">
+        <p style="font-size:.82rem;color:var(--ink-soft);margin-bottom:8px">Preview your narration:</p>
+        <audio id="audioPlayer" controls class="audio-player"></audio>
+        <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+          <button class="btn" onclick="goToDownload()">Next: Download →</button>
+          <button class="btn btn-outline" onclick="goBack('section-videos','step2')">← Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: DOWNLOAD -->
+  <div class="section" id="section-download">
+    <div class="download-section">
+      <h3>🎬 Your Video is Ready!</h3>
+      <p>Download your script, videos and narration separately then combine in CapCut, VN or any video editor.</p>
+      <div class="download-btns">
+        <button class="btn btn-green" onclick="downloadScript()">📄 Download Script</button>
+        <button class="btn btn-green" onclick="downloadAudio()">🔊 Download Audio</button>
+        <button class="btn btn-green" onclick="downloadVideos()">🎬 Download Videos</button>
+        <button class="btn" onclick="downloadAll()">⬇️ Download All</button>
+      </div>
+      <div style="margin-top:20px;padding:16px;background:rgba(255,255,255,.05);border-radius:10px;text-align:left">
+        <p style="font-size:.82rem;color:var(--ink-soft);line-height:1.7">
+          <strong style="color:var(--ink)">How to create your final video:</strong><br>
+          1. Download all files above<br>
+          2. Open CapCut or VN Video Editor<br>
+          3. Add stock videos in order<br>
+          4. Add narration audio track<br>
+          5. Export and post! 🚀
+        </p>
+      </div>
+    </div>
+
+    <div class="toolkit-banner">
+      <p>💡 Need <strong>content ideas</strong> for your next video? Use our AI generator.</p>
+      <a href="https://mrsmile-build.github.io/toolkit/product-idea-generator/" class="btn btn-outline" style="padding:10px 18px;font-size:.82rem">Open ToolKit →</a>
+    </div>
+
+    <div style="margin-top:20px;text-align:center">
+      <button class="btn btn-outline" onclick="startOver()">🔄 Create Another Video</button>
+    </div>
+  </div>
+
+</div>
+
+<footer style="text-align:center;padding:32px 20px;font-size:.8rem;color:rgba(255,255,255,.3);border-top:1px solid var(--border)">
+  © 2025 VideoKit · Powered by ElevenLabs & Pixabay · <a href="https://mrsmile-build.github.io/toolkit/" style="color:rgba(255,255,255,.3)">ToolKit</a>
+</footer>
+<script>
+const PROXY = 'https://groq-proxy-7f82.onrender.com';
+let videoStyle = 'motivational';
+let selectedVoice = 'pNInz6obpgDQGcFmaJgB';
+let scriptData = null;
+let selectedVideos = {};
+let audioBlob = null;
+let audioUrl = null;
+
+function setStyle(s, el) {
+  videoStyle = s;
+  document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function selectVoice(id, el) {
+  selectedVoice = id;
+  document.querySelectorAll('.voice-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function setStep(n) {
+  for(let i=1;i<=4;i++){
+    const el = document.getElementById('step'+i);
+    el.classList.remove('active','done');
+    if(i < n) el.classList.add('done');
+    else if(i === n) el.classList.add('active');
+  }
+}
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('show'));
+  document.getElementById(id).classList.add('show');
+}
+
+function goBack(section, step) {
+  showSection(section);
+  setStep(parseInt(step.replace('step','')));
+}
+
+async function generateScript() {
+  const idea = document.getElementById('videoIdea').value.trim();
+  if (!idea) { alert('Please describe your video idea.'); return; }
+  const length = document.getElementById('videoLength').value;
+  const platform = document.getElementById('platform').value;
+
+  document.getElementById('load-script').classList.add('show');
+  document.getElementById('script-result').classList.remove('show');
+  document.getElementById('err-script').classList.remove('show');
+  document.getElementById('btnScript').disabled = true;
+
+  const steps = ['Analyzing your idea...', 'Writing hook...', 'Building scenes...', 'Adding CTA...'];
+  let si = 0;
+  const stepInt = setInterval(() => {
+    document.getElementById('load-script-step').textContent = steps[si % steps.length];
+    si++;
+  }, 1500);
+
+  const prompt = `You are a viral video script writer. Write a ${videoStyle} video script for ${platform} about: "${idea}". The video should be approximately ${length} seconds long. Return ONLY a valid JSON object with: title (catchy video title), hook (opening line that stops the scroll, max 15 words), scenes (array of 4-6 scene objects, each with: scene_number, narration (what to say), visual_keyword (2-3 words to search stock video), duration_seconds), cta (call to action at end). No markdown, no extra text.`;
+
+  try {
+    const res = await fetch(PROXY + '/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{role: 'user', content: prompt}],
+        temperature: 0.8,
+        max_tokens: 2000
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'API error');
+    let text = data.choices[0].message.content.trim().replace(/```json|```/g,'').trim();
+    scriptData = JSON.parse(text);
+    renderScript(scriptData);
+    document.getElementById('script-result').classList.add('show');
+  } catch(err) {
+    const box = document.getElementById('err-script');
+    box.textContent = 'Error: ' + err.message + '. Please try again.';
+    box.classList.add('show');
+  } finally {
+    clearInterval(stepInt);
+    document.getElementById('load-script').classList.remove('show');
+    document.getElementById('btnScript').disabled = false;
+  }
+}
+
+function renderScript(data) {
+  const container = document.getElementById('script-scenes');
+  let html = '<div class="script-box">';
+  html += '<div style="font-family:var(--font-head);font-size:1.1rem;font-weight:700;margin-bottom:4px">' + data.title + '</div>';
+  html += '<div style="font-size:.82rem;color:var(--accent);font-style:italic;margin-bottom:16px">"' + data.hook + '"</div>';
+  data.scenes.forEach(s => {
+    html += '<div class="script-scene">';
+    html += '<div class="scene-num">Scene ' + s.scene_number + ' · ' + s.duration_seconds + 's · 🔍 ' + s.visual_keyword + '</div>';
+    html += '<div class="scene-text">' + s.narration + '</div>';
+    html += '</div>';
+  });
+  if (data.cta) {
+    html += '<div class="script-scene"><div class="scene-num">Call to Action</div><div class="scene-text">' + data.cta + '</div></div>';
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+async function goToVideos() {
+  if (!scriptData) return;
+  showSection('section-videos');
+  setStep(2);
+  document.getElementById('load-videos').classList.add('show');
+  document.getElementById('video-scenes').innerHTML = '';
+  document.getElementById('err-videos').classList.remove('show');
+
+  try {
+    const container = document.getElementById('video-scenes');
+    for (let i = 0; i < scriptData.scenes.length; i++) {
+      const scene = scriptData.scenes[i];
+      const res = await fetch(PROXY + '/videos?q=' + encodeURIComponent(scene.visual_keyword));
+      const data = await res.json();
+      if (!data.hits || data.hits.length === 0) continue;
+
+      let sceneHtml = '<div style="margin-bottom:24px">';
+      sceneHtml += '<div style="font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:700;margin-bottom:8px">Scene ' + scene.scene_number + ' — ' + scene.visual_keyword + '</div>';
+      sceneHtml += '<div style="font-size:.82rem;color:var(--ink-soft);margin-bottom:10px">' + scene.narration.substring(0,80) + '...</div>';
+      sceneHtml += '<div class="video-grid">';
+
+      data.hits.slice(0,4).forEach((v, vi) => {
+        const url = v.videos.small.url;
+        const isFirst = vi === 0;
+        if (isFirst) selectedVideos[i] = url;
+        sceneHtml += '<div class="video-thumb ' + (isFirst?'selected':'') + '" onclick="selectVideo(' + i + ',' + vi + ',this,'' + url + '')">';
+        sceneHtml += '<video src="' + url + '" muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause()"></video>';
+        sceneHtml += '<div class="video-tag">Scene ' + scene.scene_number + '</div>';
+        sceneHtml += '<div class="select-overlay">✓</div>';
+        sceneHtml += '</div>';
+      });
+
+      sceneHtml += '</div></div>';
+      container.innerHTML += sceneHtml;
+    }
+  } catch(err) {
+    const box = document.getElementById('err-videos');
+    box.textContent = 'Error loading videos: ' + err.message;
+    box.classList.add('show');
+  } finally {
+    document.getElementById('load-videos').classList.remove('show');
+  }
+}
+
+function selectVideo(sceneIdx, vidIdx, el, url) {
+  const parent = el.closest('.video-grid');
+  parent.querySelectorAll('.video-thumb').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedVideos[sceneIdx] = url;
+}
+
+function goToVoice() {
+  showSection('section-voice');
+  setStep(3);
+}
+
+async function generateVoice() {
+  if (!scriptData) return;
+  const fullScript = scriptData.scenes.map(s => s.narration).join(' ') + ' ' + (scriptData.cta || '');
+  document.getElementById('load-voice').classList.add('show');
+  document.getElementById('audio-result').style.display = 'none';
+  document.getElementById('err-voice').classList.remove('show');
+  document.getElementById('btnVoice').disabled = true;
+
+  try {
+    const res = await fetch(PROXY + '/tts', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ text: fullScript, voice_id: selectedVoice })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail?.message || err.message || 'TTS error');
+    }
+    audioBlob = await res.blob();
+    audioUrl = URL.createObjectURL(audioBlob);
+    document.getElementById('audioPlayer').src = audioUrl;
+    document.getElementById('audio-result').style.display = 'block';
+  } catch(err) {
+    const box = document.getElementById('err-voice');
+    box.textContent = 'Voice error: ' + err.message;
+    box.classList.add('show');
+  } finally {
+    document.getElementById('load-voice').classList.remove('show');
+    document.getElementById('btnVoice').disabled = false;
+  }
+}
+
+function goToDownload() {
+  showSection('section-download');
+  setStep(4);
+}
+
+function downloadScript() {
+  if (!scriptData) return;
+  let text = scriptData.title + '\n\n';
+  text += 'HOOK: ' + scriptData.hook + '\n\n';
+  scriptData.scenes.forEach(s => {
+    text += 'SCENE ' + s.scene_number + ' (' + s.duration_seconds + 's)\n';
+    text += s.narration + '\n\n';
+  });
+  if (scriptData.cta) text += 'CTA: ' + scriptData.cta;
+  const blob = new Blob([text], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'script-' + scriptData.title.replace(/[^a-z0-9]/gi,'_').toLowerCase() + '.txt';
+  a.click();
+}
+
+function downloadAudio() {
+  if (!audioBlob) { alert('Generate voice first.'); return; }
+  const a = document.createElement('a');
+  a.href = audioUrl;
+  a.download = 'narration.mp3';
+  a.click();
+}
+
+function downloadVideos() {
+  const urls = Object.values(selectedVideos);
+  if (urls.length === 0) { alert('No videos selected.'); return; }
+  urls.forEach((url, i) => {
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = url + '&download=1';
+      a.download = 'scene-' + (i+1) + '.mp4';
+      a.target = '_blank';
+      a.click();
+    }, i * 1000);
+  });
+}
+
+function downloadAll() {
+  downloadScript();
+  setTimeout(downloadAudio, 500);
+  setTimeout(downloadVideos, 1000);
+}
+
+function startOver() {
+  scriptData = null;
+  selectedVideos = {};
+  audioBlob = null;
+  audioUrl = null;
+  document.getElementById('videoIdea').value = '';
+  showSection('section-script');
+  setStep(1);
+  document.getElementById('script-result').classList.remove('show');
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
