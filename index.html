@@ -196,30 +196,38 @@
       <div class="card-title">🔊 Step 3 — Choose Voice & Generate Narration</div>
       <div class="card-sub">Pick a voice and we'll generate the full narration for your video.</div>
       <div class="voice-grid" id="voice-grid">
-        <div class="voice-card active" onclick="selectVoice('pNInz6obpgDQGcFmaJgB',this)">
-          <div class="voice-name">Adam</div>
-          <div class="voice-desc">Deep, authoritative male voice</div>
+        <div class="voice-card active" onclick="selectVoice('en-us',this)">
+          <div class="voice-name">American English</div>
+          <div class="voice-desc">Clear US male voice</div>
           <span class="voice-badge">Popular</span>
         </div>
-        <div class="voice-card" onclick="selectVoice('EXAVITQu4vr4xnSDxMaL',this)">
-          <div class="voice-name">Bella</div>
-          <div class="voice-desc">Warm, friendly female voice</div>
+        <div class="voice-card" onclick="selectVoice('en-gb',this)">
+          <div class="voice-name">British English</div>
+          <div class="voice-desc">Professional UK accent</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('VR6AewLTigWG4xSOukaG',this)">
-          <div class="voice-name">Arnold</div>
-          <div class="voice-desc">Strong, confident male voice</div>
+        <div class="voice-card" onclick="selectVoice('en-au',this)">
+          <div class="voice-name">Australian</div>
+          <div class="voice-desc">Friendly Australian accent</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('ThT5KcBeYPX3keUQqHPh',this)">
-          <div class="voice-name">Dorothy</div>
-          <div class="voice-desc">Pleasant, clear female voice</div>
+        <div class="voice-card" onclick="selectVoice('en-ca',this)">
+          <div class="voice-name">Canadian</div>
+          <div class="voice-desc">Neutral Canadian accent</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('TxGEqnHWrfWFTfGW9XjX',this)">
-          <div class="voice-name">Josh</div>
-          <div class="voice-desc">Young, energetic male voice</div>
+        <div class="voice-card" onclick="selectVoice('en-in',this)">
+          <div class="voice-name">Indian English</div>
+          <div class="voice-desc">Clear Indian accent</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('piTKgcLEGmPE4e6mEKli',this)">
-          <div class="voice-name">Nicole</div>
-          <div class="voice-desc">Soft, intimate female voice</div>
+        <div class="voice-card" onclick="selectVoice('fr-fr',this)">
+          <div class="voice-name">French</div>
+          <div class="voice-desc">Native French voice</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('de-de',this)">
+          <div class="voice-name">German</div>
+          <div class="voice-desc">Native German voice</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('es-es',this)">
+          <div class="voice-name">Spanish</div>
+          <div class="voice-desc">Native Spanish voice</div>
         </div>
       </div>
       <div style="margin-top:20px">
@@ -469,6 +477,23 @@ async function generateVoice() {
   document.getElementById('audio-result').style.display = 'none';
   document.getElementById('err-voice').classList.remove('show');
   document.getElementById('btnVoice').disabled = true;
+
+  try {
+    const res = await fetch(PROXY + '/tts-voicerss', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ text: fullScript, voice: selectedVoice })
+    });
+    if (!res.ok) throw new Error('Voice generation failed');
+    audioBlob = await res.blob();
+    audioUrl = URL.createObjectURL(audioBlob);
+    document.getElementById('audioPlayer').src = audioUrl;
+    document.getElementById('audioPlayer').style.display = 'block';
+    document.getElementById('audio-result').style.display = 'block';
+    return;
+  } catch(voiceErr) {
+    console.log('VoiceRSS failed, using browser TTS:', voiceErr.message);
+  }
 
   try {
     if (!window.speechSynthesis) throw new Error('Browser TTS not supported');
