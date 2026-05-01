@@ -279,6 +279,7 @@
 <footer style="text-align:center;padding:32px 20px;font-size:.8rem;color:rgba(255,255,255,.3);border-top:1px solid var(--border)">
   © 2025 VideoKit · Powered by ElevenLabs & Pixabay · <a href="https://mrsmile-build.github.io/toolkit/" style="color:rgba(255,255,255,.3)">ToolKit</a>
 </footer>
+
 <script>
 const PROXY = 'https://groq-proxy-7f82.onrender.com';
 let videoStyle = 'motivational';
@@ -320,8 +321,6 @@ function goBack(section, step) {
 }
 
 async function generateScript() {
-  console.log("generateScript called");
-  alert("Button working! Connecting to AI...");
   const idea = document.getElementById('videoIdea').value.trim();
   if (!idea) { alert('Please describe your video idea.'); return; }
   const length = document.getElementById('videoLength').value;
