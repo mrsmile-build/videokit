@@ -254,10 +254,14 @@
       <h3>🎬 Your Video is Ready!</h3>
       <p>Download your script, videos and narration separately then combine in CapCut, VN or any video editor.</p>
       <div class="download-btns">
+        <button class="btn" style="background:#22c55e" onclick="mergeAndDownload()" id="btnMerge">🎬 Create Combined Video</button>
         <button class="btn btn-green" onclick="downloadScript()">📄 Download Script</button>
-        <button class="btn btn-green" onclick="downloadAudio()">🔊 Download Audio</button>
-        <button class="btn btn-green" onclick="downloadVideos()">🎬 Download Videos</button>
-        <button class="btn" onclick="downloadAll()">⬇️ Download All</button>
+        <button class="btn btn-green" onclick="downloadVideos()">🎞️ Download Videos</button>
+        <button class="btn btn-outline" onclick="downloadAll()">⬇️ Download All</button>
+      </div>
+      <div id="merge-progress" style="display:none;margin-top:16px">
+        <p style="font-size:.82rem;color:rgba(255,255,255,.6);margin-bottom:8px">Combining your videos...</p>
+        <div class="progress-bar"><div class="progress-fill" id="merge-fill" style="width:0%"></div></div>
       </div>
       <div style="margin-top:20px;padding:16px;background:rgba(255,255,255,.05);border-radius:10px;text-align:left">
         <p style="font-size:.82rem;color:var(--ink-soft);line-height:1.7">
@@ -560,6 +564,45 @@ function downloadAll() {
   downloadScript();
   setTimeout(downloadAudio, 500);
   setTimeout(downloadVideos, 1000);
+}
+
+async function mergeAndDownload() {
+  const videos = Object.values(selectedVideos);
+  if (videos.length === 0) { alert("No videos selected. Go back and select videos first."); return; }
+  const btn = document.getElementById("btnMerge");
+  const progress = document.getElementById("merge-progress");
+  const fill = document.getElementById("merge-fill");
+  btn.disabled = true;
+  btn.textContent = "⏳ Combining...";
+  progress.style.display = "block";
+  fill.style.width = "30%";
+  try {
+    fill.style.width = "60%";
+    const res = await fetch(PROXY + "/merge", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ videos: videos })
+    });
+    fill.style.width = "90%";
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Merge failed");
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "videokit-combined.mp4";
+    a.click();
+    fill.style.width = "100%";
+    btn.textContent = "✅ Downloaded!";
+    setTimeout(() => { btn.textContent = "🎬 Create Combined Video"; btn.disabled = false; progress.style.display = "none"; fill.style.width = "0%"; }, 3000);
+  } catch(err) {
+    alert("Merge error: " + err.message);
+    btn.textContent = "🎬 Create Combined Video";
+    btn.disabled = false;
+    progress.style.display = "none";
+  }
 }
 
 function startOver() {
