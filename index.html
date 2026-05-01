@@ -411,7 +411,7 @@ async function goToVideos() {
         const url = v.videos.small.url;
         const isFirst = vi === 0;
         if (isFirst) selectedVideos[i] = url;
-        sceneHtml += '<div class="video-thumb ' + (isFirst?'selected':'') + '" onclick="selectVideo(' + i + ',' + vi + ',this,'' + url + '')">';
+        sceneHtml += '<div class="video-thumb ' + (isFirst?'selected':'') + '" data-url="' + url + '" data-scene="' + i + '" onclick="selectVideoEl(this)">';
         sceneHtml += '<video src="' + url + '" muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause()"></video>';
         sceneHtml += '<div class="video-tag">Scene ' + scene.scene_number + '</div>';
         sceneHtml += '<div class="select-overlay">✓</div>';
@@ -431,6 +431,15 @@ async function goToVideos() {
 }
 
 function selectVideo(sceneIdx, vidIdx, el, url) {
+  const parent = el.closest('.video-grid');
+  parent.querySelectorAll('.video-thumb').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedVideos[sceneIdx] = url;
+}
+
+function selectVideoEl(el) {
+  const url = el.getAttribute('data-url');
+  const sceneIdx = el.getAttribute('data-scene');
   const parent = el.closest('.video-grid');
   parent.querySelectorAll('.video-thumb').forEach(t => t.classList.remove('selected'));
   el.classList.add('selected');
