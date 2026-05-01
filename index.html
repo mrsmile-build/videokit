@@ -480,7 +480,8 @@ async function generateVoice() {
       'piTKgcLEGmPE4e6mEKli': voices.find(v => v.name.includes('Female')) || voices[0]
     };
     if (voiceMap[selectedVoice]) utterance.voice = voiceMap[selectedVoice];
-    utterance.rate = 0.9;
+    utterance.rate = 0.85;
+    utterance.lang = 'en-US';
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
@@ -547,7 +548,7 @@ function downloadVideos() {
   urls.forEach((url, i) => {
     setTimeout(() => {
       const a = document.createElement('a');
-      a.href = url + '&download=1';
+      a.href = url;
       a.download = 'scene-' + (i+1) + '.mp4';
       a.target = '_blank';
       a.click();
