@@ -231,8 +231,15 @@
       </div>
       <div class="error-box" id="err-voice"></div>
       <div id="audio-result" style="display:none;margin-top:16px">
-        <p style="font-size:.82rem;color:var(--ink-soft);margin-bottom:8px">Preview your narration:</p>
+        <p style="font-size:.82rem;color:var(--ink-soft);margin-bottom:8px">Your narration is ready:</p>
         <audio id="audioPlayer" controls class="audio-player"></audio>
+        <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn btn-outline" id="previewVoiceBtn" style="display:none" onclick="previewVoice()">▶ Preview Voice</button>
+          <button class="btn btn-outline" onclick="stopVoice()">⏹ Stop</button>
+        </div>
+        <div style="background:rgba(255,92,0,.1);border:1px solid rgba(255,92,0,.3);border-radius:8px;padding:12px;margin-top:12px;font-size:.8rem;color:rgba(255,255,255,.7)">
+          💡 Voice will play through your device speaker. For your final video, record it using your phone's screen recorder while it plays.
+        </div>
         <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
           <button class="btn" onclick="goToDownload()">Next: Download →</button>
           <button class="btn btn-outline" onclick="goBack('section-videos','step2')">← Back</button>
@@ -460,19 +467,31 @@ async function generateVoice() {
   document.getElementById('btnVoice').disabled = true;
 
   try {
-    const res = await fetch(PROXY + '/tts', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ text: fullScript, voice_id: selectedVoice })
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail?.message || err.message || 'TTS error');
-    }
-    audioBlob = await res.blob();
-    audioUrl = URL.createObjectURL(audioBlob);
-    document.getElementById('audioPlayer').src = audioUrl;
+    if (!window.speechSynthesis) throw new Error('Browser TTS not supported');
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(fullScript);
+    const voices = window.speechSynthesis.getVoices();
+    const voiceMap = {
+      'pNInz6obpgDQGcFmaJgB': voices.find(v => v.name.includes('Male') || v.name.includes('David')) || voices[0],
+      'EXAVITQu4vr4xnSDxMaL': voices.find(v => v.name.includes('Female') || v.name.includes('Zira')) || voices[1] || voices[0],
+      'VR6AewLTigWG4xSOukaG': voices.find(v => v.name.includes('Male')) || voices[0],
+      'ThT5KcBeYPX3keUQqHPh': voices.find(v => v.name.includes('Female')) || voices[0],
+      'TxGEqnHWrfWFTfGW9XjX': voices.find(v => v.name.includes('Male')) || voices[0],
+      'piTKgcLEGmPE4e6mEKli': voices.find(v => v.name.includes('Female')) || voices[0]
+    };
+    if (voiceMap[selectedVoice]) utterance.voice = voiceMap[selectedVoice];
+    utterance.rate = 0.9;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    scriptFullText = fullScript;
     document.getElementById('audio-result').style.display = 'block';
+    document.getElementById('audioPlayer').style.display = 'none';
+
+    const previewBtn = document.getElementById('previewVoiceBtn');
+    if (previewBtn) previewBtn.style.display = 'flex';
+
+    window._currentUtterance = utterance;
   } catch(err) {
     const box = document.getElementById('err-voice');
     box.textContent = 'Voice error: ' + err.message;
@@ -481,6 +500,16 @@ async function generateVoice() {
     document.getElementById('load-voice').classList.remove('show');
     document.getElementById('btnVoice').disabled = false;
   }
+}
+
+function previewVoice() {
+  if (!window._currentUtterance) return;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(window._currentUtterance);
+}
+
+function stopVoice() {
+  window.speechSynthesis.cancel();
 }
 
 function goToDownload() {
