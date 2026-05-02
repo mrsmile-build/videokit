@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VideoKit — AI Faceless Video Creator</title>
-  <meta name="description" content="Free AI-powered faceless video creator. Generate scripts, find stock videos, create voiceover and download your video in minutes.">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
     :root{--bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--border:#222;--ink:#fff;--ink-soft:rgba(255,255,255,.5);--accent:#ff5c00;--accent2:#ff8c00;--radius:14px;--font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif}
@@ -49,42 +48,45 @@
     .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
     @keyframes spin{to{transform:rotate(360deg)}}
     .loading p{color:var(--ink-soft);font-size:.9rem}
-    .loading .loading-steps{margin-top:12px;font-size:.8rem;color:var(--accent)}
-    .section{display:none}.section.show{display:block}
+    .loading-steps{margin-top:12px;font-size:.8rem;color:var(--accent)}
+    .section{display:none}
+    .section.show{display:block}
     .script-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
     .script-scene{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
     .script-scene:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
     .scene-num{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:700;margin-bottom:6px}
     .scene-text{font-size:.9rem;line-height:1.7;color:var(--ink-soft)}
-    .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:16px}
+    .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}
     .video-thumb{position:relative;border-radius:10px;overflow:hidden;border:2px solid var(--border);cursor:pointer;transition:border-color .2s;aspect-ratio:16/9}
     .video-thumb.selected{border-color:var(--accent)}
     .video-thumb video{width:100%;height:100%;object-fit:cover}
-    .video-thumb .select-overlay{position:absolute;inset:0;background:rgba(255,92,0,.2);display:none;align-items:center;justify-content:center;font-size:1.5rem}
+    .select-overlay{position:absolute;inset:0;background:rgba(255,92,0,.2);display:none;align-items:center;justify-content:center;font-size:1.5rem}
     .video-thumb.selected .select-overlay{display:flex}
     .video-tag{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.7);color:#fff;font-size:.65rem;padding:2px 6px;border-radius:4px;font-weight:600}
-    .voice-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
-    .voice-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s}
+    .voice-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:20px}
+    .voice-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;position:relative}
     .voice-card.active{border-color:var(--accent);background:rgba(255,92,0,.08)}
-    .voice-name{font-weight:600;font-size:.9rem;margin-bottom:4px}
+    .voice-name{font-weight:600;font-size:.88rem;margin-bottom:4px}
     .voice-desc{font-size:.75rem;color:var(--ink-soft)}
-    .voice-badge{font-size:.65rem;background:var(--accent);color:#fff;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:6px;font-weight:700}
-    .audio-player{margin-top:16px;width:100%}
+    .voice-badge{font-size:.62rem;background:var(--accent);color:#fff;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:6px;font-weight:700;text-transform:uppercase}
     .download-section{background:linear-gradient(135deg,rgba(255,92,0,.15),rgba(255,140,0,.05));border:1px solid rgba(255,92,0,.3);border-radius:var(--radius);padding:28px;text-align:center}
     .download-section h3{font-family:var(--font-head);font-size:1.3rem;font-weight:800;margin-bottom:8px}
     .download-section p{color:var(--ink-soft);font-size:.875rem;margin-bottom:20px}
     .download-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
     .progress-bar{background:var(--border);border-radius:10px;height:6px;margin:12px 0;overflow:hidden}
     .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:10px;transition:width .3s;width:0%}
+    .error-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px;color:#f87171;font-size:.85rem;margin-top:12px;display:none}
+    .error-box.show{display:block}
+    .clip-hint{font-size:.74rem;color:var(--ink-soft);margin-top:6px;font-style:italic}
+    .tts-note{margin-top:12px;padding:10px;background:rgba(255,92,0,.07);border-radius:8px;font-size:.8rem;color:var(--ink-soft)}
     .toolkit-banner{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;flex-wrap:wrap}
     .toolkit-banner p{font-size:.85rem;color:var(--ink-soft)}
     .toolkit-banner strong{color:var(--ink)}
-    .error-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px;color:#f87171;font-size:.85rem;margin-top:12px;display:none}
-    .error-box.show{display:block}
     @media(max-width:600px){.form-row{grid-template-columns:1fr}.hero{padding:40px 20px 28px}.card{padding:20px 16px}}
   </style>
 </head>
 <body>
+
 <nav>
   <div class="logo">Video<span>Kit</span></div>
   <span class="nav-badge">Free Beta</span>
@@ -109,271 +111,282 @@
   <!-- STEP 1: SCRIPT -->
   <div class="section show" id="section-script">
     <div class="card">
-      <div class="card-title">🧠 Step 1 — Generate Your Script</div>
-      <div class="card-sub">Describe your video idea and AI will write a full viral script for it.</div>
-
+      <div class="card-title">🎯 Step 1 — Write Your Script</div>
+      <div class="card-sub">Describe your video idea and AI will write a complete script with scenes.</div>
       <div class="form-group">
-        <label>Your video idea or topic</label>
-        <textarea id="videoIdea" placeholder="Examples:&#10;- How to make money online with no experience&#10;- 5 habits that changed my life&#10;- The truth about passive income&#10;- Morning routine for success"></textarea>
+        <label>Your Video Idea</label>
+        <textarea id="videoIdea" placeholder="e.g. 5 ways to make money online in Nigeria with your phone..."></textarea>
       </div>
-
       <div class="form-group">
-        <label>Video style</label>
+        <label>Video Style</label>
         <div class="style-grid">
-          <div class="style-btn active" onclick="setStyle('motivational',this)">🔥 Motivational</div>
-          <div class="style-btn" onclick="setStyle('educational',this)">📚 Educational</div>
-          <div class="style-btn" onclick="setStyle('storytelling',this)">📖 Story</div>
-          <div class="style-btn" onclick="setStyle('tutorial',this)">🎯 Tutorial</div>
-          <div class="style-btn" onclick="setStyle('viral',this)">⚡ Viral Hook</div>
-          <div class="style-btn" onclick="setStyle('sales',this)">💰 Sales</div>
+          <div class="style-btn active" onclick="selectStyle(this)" data-style="educational">📚 Educational</div>
+          <div class="style-btn" onclick="selectStyle(this)" data-style="motivational">🔥 Motivational</div>
+          <div class="style-btn" onclick="selectStyle(this)" data-style="storytelling">📖 Story</div>
+          <div class="style-btn" onclick="selectStyle(this)" data-style="listicle">📋 Listicle</div>
+          <div class="style-btn" onclick="selectStyle(this)" data-style="news-style">📰 News Style</div>
+          <div class="style-btn" onclick="selectStyle(this)" data-style="documentary">🎥 Documentary</div>
         </div>
       </div>
-
       <div class="form-row">
-        <div class="form-group">
-          <label>Video length</label>
-          <select id="videoLength">
-            <option value="30">30 seconds (Short)</option>
-            <option value="60" selected>60 seconds (Reel)</option>
-            <option value="180">3 minutes (YouTube Short)</option>
-            <option value="600">10 minutes (YouTube)</option>
-          </select>
-        </div>
         <div class="form-group">
           <label>Platform</label>
           <select id="platform">
+            <option value="Instagram Reels">Instagram Reels</option>
             <option value="TikTok">TikTok</option>
-            <option value="Instagram Reels" selected>Instagram Reels</option>
             <option value="YouTube Shorts">YouTube Shorts</option>
             <option value="YouTube">YouTube</option>
             <option value="Facebook">Facebook</option>
           </select>
         </div>
+        <div class="form-group">
+          <label>Video Length</label>
+          <select id="videoLength" onchange="updateClipHint(this.value)">
+            <option value="30">30 seconds</option>
+            <option value="60" selected>60 seconds</option>
+            <option value="90">90 seconds</option>
+            <option value="120">2 minutes</option>
+            <option value="300">5 minutes</option>
+            <option value="600">10 minutes</option>
+          </select>
+          <div class="clip-hint" id="clip-hint">~6 clip options shown per scene</div>
+        </div>
       </div>
-
-      <button class="btn" onclick="generateScript()" id="btnScript">🧠 Generate Script</button>
-      <div class="error-box" id="err-script"></div>
+      <button class="btn" id="btnScript" onclick="generateScript()">✨ Generate Script</button>
     </div>
 
     <div class="loading" id="load-script">
       <div class="spinner"></div>
-      <p>AI is writing your script...</p>
+      <p>Writing your script...</p>
       <div class="loading-steps" id="load-script-step">Analyzing your idea...</div>
     </div>
 
-    <div class="card section" id="script-result">
-      <div class="card-title">✅ Your Script</div>
-      <div class="card-sub">Review and edit your script before continuing.</div>
-      <div id="script-scenes"></div>
-      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
-        <button class="btn" onclick="goToVideos()">Next: Find Videos →</button>
-        <button class="btn btn-outline" onclick="generateScript()">Regenerate</button>
+    <div class="section" id="script-result">
+      <div class="card">
+        <div class="card-title">📝 Your Script</div>
+        <div id="script-scenes"></div>
+        <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" onclick="goToVideos()">Next: Find Videos →</button>
+          <button class="btn btn-outline" onclick="generateScript()">🔄 Regenerate</button>
+        </div>
       </div>
     </div>
+
+    <div class="error-box" id="err-script"></div>
   </div>
 
   <!-- STEP 2: VIDEOS -->
   <div class="section" id="section-videos">
     <div class="card">
-      <div class="card-title">🎬 Step 2 — Select Stock Videos</div>
-      <div class="card-sub">AI found matching stock videos for each scene. Select the best one per scene.</div>
-      <div id="video-scenes"></div>
-      <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
-        <button class="btn" onclick="goToVoice()">Next: Add Voice →</button>
-        <button class="btn btn-outline" onclick="goBack('section-script','step1')">← Back</button>
+      <div class="card-title">🎬 Step 2 — Choose Your Videos</div>
+      <div class="card-sub" id="video-card-sub">Pick the best clip for each scene.</div>
+      <div class="loading" id="load-videos">
+        <div class="spinner"></div>
+        <p>Finding matching stock videos...</p>
+        <div class="loading-steps" id="load-videos-step">Searching Pixabay...</div>
       </div>
+      <div id="video-scenes"></div>
+      <div class="error-box" id="err-videos"></div>
     </div>
-    <div class="loading" id="load-videos">
-      <div class="spinner"></div>
-      <p>Finding matching stock videos...</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+      <button class="btn btn-outline" onclick="showSection('section-script');setStep(1)">← Back</button>
+      <button class="btn" onclick="goToVoice()">Next: Add Voice →</button>
     </div>
-    <div class="error-box" id="err-videos"></div>
   </div>
 
   <!-- STEP 3: VOICE -->
   <div class="section" id="section-voice">
     <div class="card">
-      <div class="card-title">🔊 Step 3 — Choose Voice & Generate Narration</div>
+      <div class="card-title">🎙️ Step 3 — Choose Voice & Generate Narration</div>
       <div class="card-sub">Pick a voice and we'll generate the full narration for your video.</div>
-      <div class="voice-grid" id="voice-grid">
+      <div class="voice-grid">
         <div class="voice-card active" onclick="selectVoice('en-us',this)">
-          <div class="voice-name">American English</div>
-          <div class="voice-desc">Clear US male voice</div>
+          <div class="voice-name">🇺🇸 American</div>
+          <div class="voice-desc">Male · Matthew</div>
           <span class="voice-badge">Popular</span>
         </div>
+        <div class="voice-card" onclick="selectVoice('en-us-f',this)">
+          <div class="voice-name">🇺🇸 American</div>
+          <div class="voice-desc">Female · Joanna</div>
+        </div>
         <div class="voice-card" onclick="selectVoice('en-gb',this)">
-          <div class="voice-name">British English</div>
-          <div class="voice-desc">Professional UK accent</div>
+          <div class="voice-name">🇬🇧 British</div>
+          <div class="voice-desc">Male · Brian</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('en-gb-f',this)">
+          <div class="voice-name">🇬🇧 British</div>
+          <div class="voice-desc">Female · Amy</div>
         </div>
         <div class="voice-card" onclick="selectVoice('en-au',this)">
-          <div class="voice-name">Australian</div>
-          <div class="voice-desc">Friendly Australian accent</div>
+          <div class="voice-name">🇦🇺 Australian</div>
+          <div class="voice-desc">Male · Russell</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-ca',this)">
-          <div class="voice-name">Canadian</div>
-          <div class="voice-desc">Neutral Canadian accent</div>
+        <div class="voice-card" onclick="selectVoice('en-au-f',this)">
+          <div class="voice-name">🇦🇺 Australian</div>
+          <div class="voice-desc">Female · Nicole</div>
         </div>
         <div class="voice-card" onclick="selectVoice('en-in',this)">
-          <div class="voice-name">Indian English</div>
-          <div class="voice-desc">Clear Indian accent</div>
+          <div class="voice-name">🇮🇳 Indian</div>
+          <div class="voice-desc">Female · Aditi</div>
         </div>
         <div class="voice-card" onclick="selectVoice('fr-fr',this)">
-          <div class="voice-name">French</div>
-          <div class="voice-desc">Native French voice</div>
+          <div class="voice-name">🇫🇷 French</div>
+          <div class="voice-desc">Male · Mathieu</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('fr-fr-f',this)">
+          <div class="voice-name">🇫🇷 French</div>
+          <div class="voice-desc">Female · Céline</div>
         </div>
         <div class="voice-card" onclick="selectVoice('de-de',this)">
-          <div class="voice-name">German</div>
-          <div class="voice-desc">Native German voice</div>
+          <div class="voice-name">🇩🇪 German</div>
+          <div class="voice-desc">Male · Hans</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('de-de-f',this)">
+          <div class="voice-name">🇩🇪 German</div>
+          <div class="voice-desc">Female · Marlene</div>
         </div>
         <div class="voice-card" onclick="selectVoice('es-es',this)">
-          <div class="voice-name">Spanish</div>
-          <div class="voice-desc">Native Spanish voice</div>
+          <div class="voice-name">🇪🇸 Spanish</div>
+          <div class="voice-desc">Male · Enrique</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('es-es-f',this)">
+          <div class="voice-name">🇪🇸 Spanish</div>
+          <div class="voice-desc">Female · Conchita</div>
         </div>
       </div>
-      <div style="margin-top:20px">
-        <button class="btn" onclick="generateVoice()" id="btnVoice">🔊 Generate Narration</button>
-      </div>
-      <div class="loading" id="load-voice" style="margin-top:16px">
-        <div class="spinner"></div>
-        <p>Generating your voiceover...</p>
-      </div>
-      <div class="error-box" id="err-voice"></div>
-      <div id="audio-result" style="display:none;margin-top:16px">
-        <p style="font-size:.82rem;color:var(--ink-soft);margin-bottom:8px">Your narration is ready:</p>
-        <audio id="audioPlayer" controls class="audio-player"></audio>
+      <button class="btn" id="btnVoice" onclick="generateVoice()">🎙️ Generate Narration</button>
+    </div>
+
+    <div class="loading" id="load-voice">
+      <div class="spinner"></div>
+      <p>Generating your voiceover...</p>
+    </div>
+
+    <div id="audio-result" style="display:none">
+      <div class="card">
+        <div class="card-title">🔊 Your Narration is Ready</div>
+        <audio id="audioPlayer" controls style="width:100%;display:none"></audio>
         <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
-          <button class="btn btn-outline" id="previewVoiceBtn" style="display:none" onclick="previewVoice()">▶ Preview Voice</button>
+          <button class="btn btn-outline" id="previewVoiceBtn" onclick="previewVoice()" style="display:none">▶ Preview</button>
           <button class="btn btn-outline" onclick="stopVoice()">⏹ Stop</button>
+          <button class="btn btn-outline" onclick="downloadAudio()">⬇ Download MP3</button>
         </div>
-        <div style="background:rgba(255,92,0,.1);border:1px solid rgba(255,92,0,.3);border-radius:8px;padding:12px;margin-top:12px;font-size:.8rem;color:rgba(255,255,255,.7)">
-          💡 Voice will play through your device speaker. For your final video, record it using your phone's screen recorder while it plays.
-        </div>
-        <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
-          <button class="btn" onclick="goToDownload()">Next: Download →</button>
-          <button class="btn btn-outline" onclick="goBack('section-videos','step2')">← Back</button>
-        </div>
+        <div class="tts-note">💡 Voice plays through your speaker. Record it using your phone's screen recorder for the final video.</div>
       </div>
+    </div>
+
+    <div class="error-box" id="err-voice"></div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+      <button class="btn btn-outline" onclick="showSection('section-videos');setStep(2)">← Back</button>
+      <button class="btn" onclick="goToDownload()">Next: Download →</button>
     </div>
   </div>
 
   <!-- STEP 4: DOWNLOAD -->
   <div class="section" id="section-download">
     <div class="download-section">
-      <h3>🎬 Your Video is Ready!</h3>
-      <p>Download your script, videos and narration separately then combine in CapCut, VN or any video editor.</p>
+      <h3>🎉 Your Video is Ready!</h3>
+      <p>Download everything you need to create your faceless video.</p>
       <div class="download-btns">
-        <button class="btn" style="background:#22c55e" onclick="mergeAndDownload()" id="btnMerge">🎬 Create Combined Video</button>
-        <button class="btn btn-green" onclick="downloadScript()">📄 Download Script</button>
-        <button class="btn btn-green" onclick="downloadVideos()">🎞️ Download Videos</button>
-        <button class="btn btn-outline" onclick="downloadAll()">⬇️ Download All</button>
-      </div>
-      <div id="merge-progress" style="display:none;margin-top:16px">
-        <p style="font-size:.82rem;color:rgba(255,255,255,.6);margin-bottom:8px">Combining your videos...</p>
-        <div class="progress-bar"><div class="progress-fill" id="merge-fill" style="width:0%"></div></div>
-      </div>
-      <div style="margin-top:20px;padding:16px;background:rgba(255,255,255,.05);border-radius:10px;text-align:left">
-        <p style="font-size:.82rem;color:var(--ink-soft);line-height:1.7">
-          <strong style="color:var(--ink)">How to create your final video:</strong><br>
-          1. Download all files above<br>
-          2. Open CapCut or VN Video Editor<br>
-          3. Add stock videos in order<br>
-          4. Add narration audio track<br>
-          5. Export and post! 🚀
-        </p>
+        <button class="btn btn-outline" onclick="downloadScript()">📄 Script</button>
+        <button class="btn btn-outline" onclick="downloadAudio()">🎵 Audio</button>
+        <button class="btn btn-outline" onclick="downloadVideos()">🎬 Videos</button>
+        <button class="btn btn-green" onclick="downloadAll()">⬇ Download All</button>
       </div>
     </div>
-
+    <div class="card" style="margin-top:20px">
+      <div class="card-title">🎬 Combine Into One Video</div>
+      <div class="card-sub">Merge all selected clips into a single MP4 automatically.</div>
+      <div class="progress-bar" id="merge-progress" style="display:none">
+        <div class="progress-fill" id="merge-fill"></div>
+      </div>
+      <button class="btn" id="btnMerge" onclick="mergeAndDownload()">🎬 Create Combined Video</button>
+    </div>
+    <div style="text-align:center;margin-top:24px">
+      <button class="btn btn-outline" onclick="startOver()">🔄 Start Over</button>
+    </div>
     <div class="toolkit-banner">
-      <p>💡 Need <strong>content ideas</strong> for your next video? Use our AI generator.</p>
-      <a href="https://mrsmile-build.github.io/toolkit/product-idea-generator/" class="btn btn-outline" style="padding:10px 18px;font-size:.82rem">Open ToolKit →</a>
-    </div>
-
-    <div style="margin-top:20px;text-align:center">
-      <button class="btn btn-outline" onclick="startOver()">🔄 Create Another Video</button>
+      <p><strong>Want more free tools?</strong> Check out the full MrSmile Build suite.</p>
+      <a href="https://mrsmile-build.github.io" class="btn btn-outline" style="font-size:.8rem;padding:8px 16px">Explore Tools</a>
     </div>
   </div>
 
 </div>
 
-<footer style="text-align:center;padding:32px 20px;font-size:.8rem;color:rgba(255,255,255,.3);border-top:1px solid var(--border)">
-  © 2025 VideoKit · Powered by ElevenLabs & Pixabay · <a href="https://mrsmile-build.github.io/toolkit/" style="color:rgba(255,255,255,.3)">ToolKit</a>
-</footer>
-
 <script>
-const PROXY = 'https://groq-proxy-7f82.onrender.com';
-let videoStyle = 'motivational';
-let selectedVoice = 'pNInz6obpgDQGcFmaJgB';
-let scriptData = null;
+const PROXY = 'https://groq-proxy-xmf7.onrender.com';
+
+let scriptData     = null;
 let selectedVideos = {};
-let audioBlob = null;
-let audioUrl = null;
-
-function setStyle(s, el) {
-  videoStyle = s;
-  document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-}
-
-function selectVoice(id, el) {
-  selectedVoice = id;
-  document.querySelectorAll('.voice-card').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-}
-
-function setStep(n) {
-  for(let i=1;i<=4;i++){
-    const el = document.getElementById('step'+i);
-    el.classList.remove('active','done');
-    if(i < n) el.classList.add('done');
-    else if(i === n) el.classList.add('active');
-  }
-}
+let selectedVoice  = 'en-us';
+let videoStyle     = 'educational';
+let audioBlob      = null;
+let audioUrl       = null;
 
 function showSection(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('show'));
   document.getElementById(id).classList.add('show');
+  window.scrollTo(0, 0);
 }
 
-function goBack(section, step) {
-  showSection(section);
-  setStep(parseInt(step.replace('step','')));
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('step' + i);
+    if (!el) continue;
+    el.classList.remove('active','done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  }
 }
 
+function updateClipHint(secs) {
+  const counts = {30:4,60:6,90:8,120:8,300:12,600:16};
+  const c = counts[parseInt(secs)] || 6;
+  const el = document.getElementById('clip-hint');
+  if (el) el.textContent = '~' + c + ' clip options shown per scene';
+}
+
+function selectStyle(el) {
+  document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  videoStyle = el.dataset.style;
+}
+
+function selectVoice(voice, el) {
+  selectedVoice = voice;
+  document.querySelectorAll('.voice-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── STEP 1: Script ────────────────────────────────────────────
 async function generateScript() {
   const idea = document.getElementById('videoIdea').value.trim();
-  if (!idea) { alert('Please describe your video idea.'); return; }
-  const length = document.getElementById('videoLength').value;
+  if (!idea) { alert('Please enter your video idea!'); return; }
   const platform = document.getElementById('platform').value;
+  const length   = document.getElementById('videoLength').value;
 
   document.getElementById('load-script').classList.add('show');
   document.getElementById('script-result').classList.remove('show');
   document.getElementById('err-script').classList.remove('show');
   document.getElementById('btnScript').disabled = true;
 
-  const steps = ['Analyzing your idea...', 'Writing hook...', 'Building scenes...', 'Adding CTA...'];
-  let si = 0;
+  const steps   = ['Analyzing your idea...','Writing hook...','Building scenes...','Adding CTA...'];
+  let si        = 0;
   const stepInt = setInterval(() => {
-    document.getElementById('load-script-step').textContent = steps[si % steps.length];
-    si++;
+    document.getElementById('load-script-step').textContent = steps[si++ % steps.length];
   }, 1500);
 
   const prompt = `You are a viral video script writer. Write a ${videoStyle} video script for ${platform} about: "${idea}". The video should be approximately ${length} seconds long. Return ONLY a valid JSON object with: title (catchy video title), hook (opening line that stops the scroll, max 15 words), scenes (array of 4-6 scene objects, each with: scene_number, narration (what to say), visual_keyword (2-3 words to search stock video), duration_seconds), cta (call to action at end). No markdown, no extra text.`;
 
   try {
-    const res = await fetch(PROXY + '/generate', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{role: 'user', content: prompt}],
-        temperature: 0.8,
-        max_tokens: 2000
-      })
+    const res  = await fetch(PROXY + '/generate', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'llama-3.3-70b-versatile', messages:[{role:'user',content:prompt}], temperature:0.8, max_tokens:2000 })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || 'API error');
-    let text = data.choices[0].message.content.trim().replace(/```json|```/g,'').trim();
-    scriptData = JSON.parse(text);
+    scriptData = JSON.parse(data.choices[0].message.content.trim().replace(/```json|```/g,'').trim());
     renderScript(scriptData);
     document.getElementById('script-result').classList.add('show');
   } catch(err) {
@@ -388,23 +401,19 @@ async function generateScript() {
 }
 
 function renderScript(data) {
-  const container = document.getElementById('script-scenes');
   let html = '<div class="script-box">';
   html += '<div style="font-family:var(--font-head);font-size:1.1rem;font-weight:700;margin-bottom:4px">' + data.title + '</div>';
   html += '<div style="font-size:.82rem;color:var(--accent);font-style:italic;margin-bottom:16px">"' + data.hook + '"</div>';
   data.scenes.forEach(s => {
-    html += '<div class="script-scene">';
-    html += '<div class="scene-num">Scene ' + s.scene_number + ' · ' + s.duration_seconds + 's · 🔍 ' + s.visual_keyword + '</div>';
-    html += '<div class="scene-text">' + s.narration + '</div>';
-    html += '</div>';
+    html += '<div class="script-scene"><div class="scene-num">Scene ' + s.scene_number + ' · ' + s.duration_seconds + 's · 🔍 ' + s.visual_keyword + '</div>';
+    html += '<div class="scene-text">' + s.narration + '</div></div>';
   });
-  if (data.cta) {
-    html += '<div class="script-scene"><div class="scene-num">Call to Action</div><div class="scene-text">' + data.cta + '</div></div>';
-  }
+  if (data.cta) html += '<div class="script-scene"><div class="scene-num">Call to Action</div><div class="scene-text">' + data.cta + '</div></div>';
   html += '</div>';
-  container.innerHTML = html;
+  document.getElementById('script-scenes').innerHTML = html;
 }
 
+// ── STEP 2: Videos ────────────────────────────────────────────
 async function goToVideos() {
   if (!scriptData) return;
   showSection('section-videos');
@@ -413,32 +422,47 @@ async function goToVideos() {
   document.getElementById('video-scenes').innerHTML = '';
   document.getElementById('err-videos').classList.remove('show');
 
+  const totalDuration = scriptData.scenes.reduce((sum, s) => sum + (parseInt(s.duration_seconds) || 10), 0);
+  const counts = {30:4,60:6,90:8,120:8,300:12,600:16};
+  let clipsPerScene = 6;
+  for (const [s, c] of Object.entries(counts)) { if (totalDuration <= parseInt(s)) { clipsPerScene = c; break; } }
+  if (totalDuration > 600) clipsPerScene = 20;
+
+  const subEl = document.getElementById('video-card-sub');
+  if (subEl) subEl.textContent = 'Pick the best clip for each scene — ' + clipsPerScene + ' options per scene for your ' + totalDuration + 's video.';
+
   try {
     const container = document.getElementById('video-scenes');
     for (let i = 0; i < scriptData.scenes.length; i++) {
       const scene = scriptData.scenes[i];
-      const res = await fetch(PROXY + '/videos?q=' + encodeURIComponent(scene.visual_keyword));
+      document.getElementById('load-videos-step').textContent = 'Scene ' + scene.scene_number + ': searching "' + scene.visual_keyword + '"...';
+
+      const res  = await fetch(PROXY + '/videos?q=' + encodeURIComponent(scene.visual_keyword) + '&duration=' + totalDuration);
       const data = await res.json();
-      if (!data.hits || data.hits.length === 0) continue;
+      const clips = data.hits || [];
+      if (clips.length === 0) continue;
 
-      let sceneHtml = '<div style="margin-bottom:24px">';
-      sceneHtml += '<div style="font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:700;margin-bottom:8px">Scene ' + scene.scene_number + ' — ' + scene.visual_keyword + '</div>';
-      sceneHtml += '<div style="font-size:.82rem;color:var(--ink-soft);margin-bottom:10px">' + scene.narration.substring(0,80) + '...</div>';
-      sceneHtml += '<div class="video-grid">';
+      let html = '<div style="margin-bottom:28px">';
+      html += '<div style="font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:700;margin-bottom:8px">';
+      html += 'Scene ' + scene.scene_number + ' — ' + scene.visual_keyword;
+      html += ' <span style="color:var(--ink-soft);text-transform:none;font-weight:400;letter-spacing:0">(' + clips.length + ' options)</span></div>';
+      html += '<div style="font-size:.82rem;color:var(--ink-soft);margin-bottom:10px">' + scene.narration.substring(0,80) + '...</div>';
+      html += '<div class="video-grid">';
 
-      data.hits.slice(0,4).forEach((v, vi) => {
-        const url = v.videos.small.url;
-        const isFirst = vi === 0;
-        if (isFirst) selectedVideos[i] = url;
-        sceneHtml += '<div class="video-thumb ' + (isFirst?'selected':'') + '" data-url="' + url + '" data-scene="' + i + '" onclick="selectVideoEl(this)">';
-        sceneHtml += '<video src="' + url + '" muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause()"></video>';
-        sceneHtml += '<div class="video-tag">Scene ' + scene.scene_number + '</div>';
-        sceneHtml += '<div class="select-overlay">✓</div>';
-        sceneHtml += '</div>';
+      clips.forEach((v, vi) => {
+        const url = (v.videos.medium && v.videos.medium.url) ||
+                    (v.videos.small  && v.videos.small.url)  ||
+                    (v.videos.large  && v.videos.large.url)  || null;
+        if (!url) return;
+        if (vi === 0) selectedVideos[i] = url;
+        html += '<div class="video-thumb ' + (vi === 0 ? 'selected' : '') + '" data-url="' + url + '" data-scene="' + i + '" onclick="selectVideoEl(this)">';
+        html += '<video src="' + url + '" muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause()"></video>';
+        html += '<div class="video-tag">S' + scene.scene_number + '</div>';
+        html += '<div class="select-overlay">✓</div></div>';
       });
 
-      sceneHtml += '</div></div>';
-      container.innerHTML += sceneHtml;
+      html += '</div></div>';
+      container.innerHTML += html;
     }
   } catch(err) {
     const box = document.getElementById('err-videos');
@@ -449,30 +473,21 @@ async function goToVideos() {
   }
 }
 
-function selectVideo(sceneIdx, vidIdx, el, url) {
-  const parent = el.closest('.video-grid');
-  parent.querySelectorAll('.video-thumb').forEach(t => t.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedVideos[sceneIdx] = url;
-}
-
 function selectVideoEl(el) {
-  const url = el.getAttribute('data-url');
+  const url      = el.getAttribute('data-url');
   const sceneIdx = el.getAttribute('data-scene');
-  const parent = el.closest('.video-grid');
-  parent.querySelectorAll('.video-thumb').forEach(t => t.classList.remove('selected'));
+  el.closest('.video-grid').querySelectorAll('.video-thumb').forEach(t => t.classList.remove('selected'));
   el.classList.add('selected');
   selectedVideos[sceneIdx] = url;
 }
 
-function goToVoice() {
-  showSection('section-voice');
-  setStep(3);
-}
+// ── STEP 3: Voice ─────────────────────────────────────────────
+function goToVoice() { showSection('section-voice'); setStep(3); }
 
 async function generateVoice() {
   if (!scriptData) return;
   const fullScript = scriptData.scenes.map(s => s.narration).join(' ') + ' ' + (scriptData.cta || '');
+
   document.getElementById('load-voice').classList.add('show');
   document.getElementById('audio-result').style.display = 'none';
   document.getElementById('err-voice').classList.remove('show');
@@ -480,56 +495,56 @@ async function generateVoice() {
 
   try {
     const res = await fetch(PROXY + '/tts-voicerss', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ text: fullScript, voice: selectedVoice })
     });
-    if (!res.ok) throw new Error('Voice generation failed');
+
+    if (res.status === 503) {
+      const data = await res.json();
+      if (data.fallback === 'webspeech') { playWebSpeech(data.text, data.lang); return; }
+    }
+
+    if (!res.ok) throw new Error('Voice failed: ' + res.status);
+
     audioBlob = await res.blob();
-    audioUrl = URL.createObjectURL(audioBlob);
-    document.getElementById('audioPlayer').src = audioUrl;
-    document.getElementById('audioPlayer').style.display = 'block';
-    document.getElementById('audio-result').style.display = 'block';
-    return;
-  } catch(voiceErr) {
-    console.log('VoiceRSS failed, using browser TTS:', voiceErr.message);
-  }
+    audioUrl  = URL.createObjectURL(audioBlob);
+    const player = document.getElementById('audioPlayer');
+    player.src   = audioUrl;
+    player.style.display = 'block';
+    document.getElementById('previewVoiceBtn').style.display = 'none';
+    document.getElementById('audio-result').style.display    = 'block';
+    player.play();
 
-  try {
-    if (!window.speechSynthesis) throw new Error('Browser TTS not supported');
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(fullScript);
-    const voices = window.speechSynthesis.getVoices();
-    const voiceMap = {
-      'pNInz6obpgDQGcFmaJgB': voices.find(v => v.name.includes('Male') || v.name.includes('David')) || voices[0],
-      'EXAVITQu4vr4xnSDxMaL': voices.find(v => v.name.includes('Female') || v.name.includes('Zira')) || voices[1] || voices[0],
-      'VR6AewLTigWG4xSOukaG': voices.find(v => v.name.includes('Male')) || voices[0],
-      'ThT5KcBeYPX3keUQqHPh': voices.find(v => v.name.includes('Female')) || voices[0],
-      'TxGEqnHWrfWFTfGW9XjX': voices.find(v => v.name.includes('Male')) || voices[0],
-      'piTKgcLEGmPE4e6mEKli': voices.find(v => v.name.includes('Female')) || voices[0]
-    };
-    if (voiceMap[selectedVoice]) utterance.voice = voiceMap[selectedVoice];
-    utterance.rate = 0.85;
-    utterance.lang = 'en-US';
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-
-    scriptFullText = fullScript;
-    document.getElementById('audio-result').style.display = 'block';
-    document.getElementById('audioPlayer').style.display = 'none';
-
-    const previewBtn = document.getElementById('previewVoiceBtn');
-    if (previewBtn) previewBtn.style.display = 'flex';
-
-    window._currentUtterance = utterance;
   } catch(err) {
-    const box = document.getElementById('err-voice');
-    box.textContent = 'Voice error: ' + err.message;
-    box.classList.add('show');
+    console.log('[Voice] Server failed, using Web Speech:', err.message);
+    playWebSpeech(fullScript, 'en-US');
   } finally {
     document.getElementById('load-voice').classList.remove('show');
     document.getElementById('btnVoice').disabled = false;
   }
+}
+
+function playWebSpeech(text, lang) {
+  if (!window.speechSynthesis) {
+    const box = document.getElementById('err-voice');
+    box.textContent = 'Voice not available. Try Chrome browser.';
+    box.classList.add('show');
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const utt  = new SpeechSynthesisUtterance(text);
+  utt.lang   = lang || 'en-US';
+  utt.rate   = 0.9;
+  utt.pitch  = 1.0;
+  utt.volume = 1.0;
+  const voices = window.speechSynthesis.getVoices();
+  const match  = voices.find(v => v.lang.startsWith((lang||'en-US').split('-')[0]));
+  if (match) utt.voice = match;
+  window._currentUtterance = utt;
+  document.getElementById('audio-result').style.display   = 'block';
+  document.getElementById('audioPlayer').style.display    = 'none';
+  document.getElementById('previewVoiceBtn').style.display = 'flex';
+  window.speechSynthesis.speak(utt);
 }
 
 function previewVoice() {
@@ -540,107 +555,81 @@ function previewVoice() {
 
 function stopVoice() {
   window.speechSynthesis.cancel();
+  const p = document.getElementById('audioPlayer');
+  if (p) p.pause();
 }
 
-function goToDownload() {
-  showSection('section-download');
-  setStep(4);
-}
+// ── STEP 4: Download ──────────────────────────────────────────
+function goToDownload() { showSection('section-download'); setStep(4); }
 
 function downloadScript() {
   if (!scriptData) return;
-  let text = scriptData.title + '\n\n';
-  text += 'HOOK: ' + scriptData.hook + '\n\n';
-  scriptData.scenes.forEach(s => {
-    text += 'SCENE ' + s.scene_number + ' (' + s.duration_seconds + 's)\n';
-    text += s.narration + '\n\n';
-  });
+  let text = scriptData.title + '\n\nHOOK: ' + scriptData.hook + '\n\n';
+  scriptData.scenes.forEach(s => { text += 'SCENE ' + s.scene_number + ' (' + s.duration_seconds + 's)\n' + s.narration + '\n\n'; });
   if (scriptData.cta) text += 'CTA: ' + scriptData.cta;
-  const blob = new Blob([text], {type:'text/plain'});
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'script-' + scriptData.title.replace(/[^a-z0-9]/gi,'_').toLowerCase() + '.txt';
+  a.href  = URL.createObjectURL(new Blob([text], {type:'text/plain'}));
+  a.download = 'script.txt';
   a.click();
 }
 
 function downloadAudio() {
-  if (!audioBlob) { alert('Generate voice first.'); return; }
+  if (!audioBlob) { alert('Generate voice first in Step 3.'); return; }
   const a = document.createElement('a');
-  a.href = audioUrl;
+  a.href  = audioUrl;
   a.download = 'narration.mp3';
   a.click();
 }
 
 function downloadVideos() {
   const urls = Object.values(selectedVideos);
-  if (urls.length === 0) { alert('No videos selected.'); return; }
-  urls.forEach((url, i) => {
-    setTimeout(() => {
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'scene-' + (i+1) + '.mp4';
-      a.target = '_blank';
-      a.click();
-    }, i * 1000);
-  });
+  if (!urls.length) { alert('No videos selected.'); return; }
+  urls.forEach((url, i) => setTimeout(() => {
+    const a = document.createElement('a');
+    a.href = url; a.download = 'scene-' + (i+1) + '.mp4'; a.target = '_blank'; a.click();
+  }, i * 1000));
 }
 
 function downloadAll() {
   downloadScript();
-  setTimeout(downloadAudio, 500);
+  setTimeout(downloadAudio,  500);
   setTimeout(downloadVideos, 1000);
 }
 
 async function mergeAndDownload() {
   const videos = Object.values(selectedVideos);
-  if (videos.length === 0) { alert("No videos selected. Go back and select videos first."); return; }
-  const btn = document.getElementById("btnMerge");
-  const progress = document.getElementById("merge-progress");
-  const fill = document.getElementById("merge-fill");
-  btn.disabled = true;
-  btn.textContent = "⏳ Combining...";
-  progress.style.display = "block";
-  fill.style.width = "30%";
+  if (!videos.length) { alert('No videos selected.'); return; }
+  const btn  = document.getElementById('btnMerge');
+  const prog = document.getElementById('merge-progress');
+  const fill = document.getElementById('merge-fill');
+  btn.disabled = true; btn.textContent = '⏳ Combining...';
+  prog.style.display = 'block'; fill.style.width = '30%';
   try {
-    fill.style.width = "60%";
-    const res = await fetch(PROXY + "/merge", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({ videos: videos })
+    fill.style.width = '60%';
+    const res = await fetch(PROXY + '/merge', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ videos })
     });
-    fill.style.width = "90%";
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || "Merge failed");
-    }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "videokit-combined.mp4";
+    fill.style.width = '90%';
+    if (!res.ok) throw new Error((await res.json()).error || 'Merge failed');
+    const a = document.createElement('a');
+    a.href  = URL.createObjectURL(await res.blob());
+    a.download = 'videokit-combined.mp4';
     a.click();
-    fill.style.width = "100%";
-    btn.textContent = "✅ Downloaded!";
-    setTimeout(() => { btn.textContent = "🎬 Create Combined Video"; btn.disabled = false; progress.style.display = "none"; fill.style.width = "0%"; }, 3000);
+    fill.style.width = '100%'; btn.textContent = '✅ Downloaded!';
+    setTimeout(() => { btn.textContent='🎬 Create Combined Video'; btn.disabled=false; prog.style.display='none'; fill.style.width='0%'; }, 3000);
   } catch(err) {
-    alert("Merge error: " + err.message);
-    btn.textContent = "🎬 Create Combined Video";
-    btn.disabled = false;
-    progress.style.display = "none";
+    alert('Merge error: ' + err.message);
+    btn.textContent='🎬 Create Combined Video'; btn.disabled=false; prog.style.display='none';
   }
 }
 
 function startOver() {
-  scriptData = null;
-  selectedVideos = {};
-  audioBlob = null;
-  audioUrl = null;
+  scriptData = null; selectedVideos = {}; audioBlob = null; audioUrl = null;
   document.getElementById('videoIdea').value = '';
-  showSection('section-script');
-  setStep(1);
+  showSection('section-script'); setStep(1);
   document.getElementById('script-result').classList.remove('show');
-  window.scrollTo(0,0);
 }
 </script>
 </body>
-</html></html>
+</html>
