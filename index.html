@@ -319,7 +319,7 @@ const PROXY = 'https://groq-proxy-7f82.onrender.com';
 
 let scriptData     = null;
 let selectedVideos = {};
-let selectedVoice  = 'en-us';
+let selectedVoice  = 'en-us'; // default: Matthew (male)
 let videoStyle     = 'educational';
 let audioBlob      = null;
 let audioUrl       = null;
@@ -377,7 +377,9 @@ async function generateScript() {
     document.getElementById('load-script-step').textContent = steps[si++ % steps.length];
   }, 1500);
 
-  const prompt = `You are a viral video script writer. Write a ${videoStyle} video script for ${platform} about: "${idea}". The video should be approximately ${length} seconds long. Return ONLY a valid JSON object with: title (catchy video title), hook (opening line that stops the scroll, max 15 words), scenes (array of 4-6 scene objects, each with: scene_number, narration (what to say), visual_keyword (2-3 words to search stock video), duration_seconds), cta (call to action at end). No markdown, no extra text.`;
+  const sceneCounts = {30:3,60:5,90:7,120:8,300:15,600:25};
+  const sceneCount = sceneCounts[parseInt(length)] || 5;
+  const prompt = `You are a viral video script writer. Write a ${videoStyle} video script for ${platform} about: "${idea}". The video should be approximately ${length} seconds long. Return ONLY a valid JSON object with: title (catchy video title), hook (opening line that stops the scroll, max 15 words), scenes (array of exactly ${sceneCount} scene objects, each with: scene_number, narration (what to say, minimum 2 sentences per scene), visual_keyword (2-3 words to search stock video), duration_seconds), cta (call to action at end). No markdown, no extra text.`;
 
   try {
     const res  = await fetch(PROXY + '/generate', {
@@ -496,7 +498,7 @@ async function generateVoice() {
   try {
     const res = await fetch(PROXY + '/tts-voicerss', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ text: fullScript, voice: selectedVoice })
+      body: JSON.stringify({ text: fullScript, voice: selectedVoice || 'en-us' })
     });
 
     if (res.status === 503) {
