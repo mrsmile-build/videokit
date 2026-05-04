@@ -262,59 +262,105 @@
     <div class="card">
       <div class="card-title">🎙️ Step 3 — Choose Voice & Generate Narration</div>
       <div class="card-sub">Pick a voice — male or female — and generate your narration.</div>
+      <!-- Puter.js login notice -->
+      <div id="puter-notice" style="background:rgba(255,92,0,.08);border:1px solid rgba(255,92,0,.3);border-radius:10px;padding:12px;margin-bottom:16px;font-size:.82rem;color:#ffaa77">
+        ℹ️ First time only: Puter.js will ask you to sign in with Google for free voice access. After that it works instantly every time.
+      </div>
+
       <div class="voice-grid">
-        <div class="voice-card active" onclick="selectVoice('en-us',this)">
+        <!-- US English - Neural -->
+        <div class="voice-card active" onclick="selectVoice('en-us-matthew',this)">
           <div class="voice-name">🇺🇸 American</div>
           <div class="voice-desc">Male · Matthew</div>
           <span class="voice-badge">Popular</span>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-us-f',this)">
+        <div class="voice-card" onclick="selectVoice('en-us-joey',this)">
+          <div class="voice-name">🇺🇸 American</div>
+          <div class="voice-desc">Male · Joey</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('en-us-joanna',this)">
           <div class="voice-name">🇺🇸 American</div>
           <div class="voice-desc">Female · Joanna</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-gb',this)">
+        <div class="voice-card" onclick="selectVoice('en-us-kendra',this)">
+          <div class="voice-name">🇺🇸 American</div>
+          <div class="voice-desc">Female · Kendra</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('en-us-salli',this)">
+          <div class="voice-name">🇺🇸 American</div>
+          <div class="voice-desc">Female · Salli</div>
+        </div>
+        <!-- UK English - Neural -->
+        <div class="voice-card" onclick="selectVoice('en-gb-brian',this)">
           <div class="voice-name">🇬🇧 British</div>
           <div class="voice-desc">Male · Brian</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-gb-f',this)">
+        <div class="voice-card" onclick="selectVoice('en-gb-amy',this)">
           <div class="voice-name">🇬🇧 British</div>
           <div class="voice-desc">Female · Amy</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-au',this)">
+        <div class="voice-card" onclick="selectVoice('en-gb-emma',this)">
+          <div class="voice-name">🇬🇧 British</div>
+          <div class="voice-desc">Female · Emma</div>
+        </div>
+        <!-- Australian - Neural -->
+        <div class="voice-card" onclick="selectVoice('en-au-russell',this)">
           <div class="voice-name">🇦🇺 Australian</div>
           <div class="voice-desc">Male · Russell</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-au-f',this)">
+        <div class="voice-card" onclick="selectVoice('en-au-olivia',this)">
           <div class="voice-name">🇦🇺 Australian</div>
-          <div class="voice-desc">Female · Nicole</div>
+          <div class="voice-desc">Female · Olivia</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-in',this)">
+        <!-- Indian English - Neural -->
+        <div class="voice-card" onclick="selectVoice('en-in-kajal',this)">
           <div class="voice-name">🇮🇳 Indian</div>
-          <div class="voice-desc">Female · Aditi</div>
+          <div class="voice-desc">Female · Kajal</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('fr-fr',this)">
+        <!-- French - Neural -->
+        <div class="voice-card" onclick="selectVoice('fr-remi',this)">
           <div class="voice-name">🇫🇷 French</div>
-          <div class="voice-desc">Male · Mathieu</div>
+          <div class="voice-desc">Male · Rémi</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('fr-fr-f',this)">
+        <div class="voice-card" onclick="selectVoice('fr-lea',this)">
           <div class="voice-name">🇫🇷 French</div>
-          <div class="voice-desc">Female · Céline</div>
+          <div class="voice-desc">Female · Léa</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('de-de',this)">
+        <!-- German - Neural -->
+        <div class="voice-card" onclick="selectVoice('de-daniel',this)">
           <div class="voice-name">🇩🇪 German</div>
-          <div class="voice-desc">Male · Hans</div>
+          <div class="voice-desc">Male · Daniel</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('de-de-f',this)">
+        <div class="voice-card" onclick="selectVoice('de-vicki',this)">
           <div class="voice-name">🇩🇪 German</div>
-          <div class="voice-desc">Female · Marlene</div>
+          <div class="voice-desc">Female · Vicki</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('es-es',this)">
+        <!-- Spanish - Neural -->
+        <div class="voice-card" onclick="selectVoice('es-sergio',this)">
           <div class="voice-name">🇪🇸 Spanish</div>
-          <div class="voice-desc">Male · Enrique</div>
+          <div class="voice-desc">Male · Sergio</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('es-es-f',this)">
+        <div class="voice-card" onclick="selectVoice('es-lucia',this)">
           <div class="voice-name">🇪🇸 Spanish</div>
-          <div class="voice-desc">Female · Conchita</div>
+          <div class="voice-desc">Female · Lucía</div>
+        </div>
+        <!-- Portuguese - Neural -->
+        <div class="voice-card" onclick="selectVoice('pt-thiago',this)">
+          <div class="voice-name">🇧🇷 Portuguese</div>
+          <div class="voice-desc">Male · Thiago</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('pt-camila',this)">
+          <div class="voice-name">🇧🇷 Portuguese</div>
+          <div class="voice-desc">Female · Camila</div>
+        </div>
+        <!-- Arabic - Neural (closest to Nigerian market) -->
+        <div class="voice-card" onclick="selectVoice('ar-zayd',this)">
+          <div class="voice-name">🇸🇦 Arabic</div>
+          <div class="voice-desc">Male · Zayd</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('ar-hala',this)">
+          <div class="voice-name">🇸🇦 Arabic</div>
+          <div class="voice-desc">Female · Hala</div>
         </div>
       </div>
       <button class="btn" id="btnVoice" onclick="generateVoice()">🎙️ Generate Narration</button>
@@ -384,7 +430,7 @@ const PROXY = 'https://groq-proxy-7f82.onrender.com';
 // ── State (preserved across navigation) ───────────────────────
 let scriptData     = null;
 let selectedVideos = {};
-let selectedVoice  = 'en-us';
+let selectedVoice  = 'en-us-matthew';
 let videoStyle     = 'educational';
 let audioBlob      = null;
 let audioUrl       = null;
@@ -708,30 +754,48 @@ async function generateVoice() {
   document.getElementById('btnVoice').disabled = true;
 
   // Puter.js voice map - real Amazon Polly voices, male + female
+  // Direct voice name map - all neural Polly voices
   const puterVoiceMap = {
-    'en-us':'Matthew','en-us-f':'Joanna',
-    'en-gb':'Brian','en-gb-f':'Amy',
-    'en-au':'Russell','en-au-f':'Nicole',
-    'en-ca':'Matthew','en-in':'Aditi',
-    'fr-fr':'Mathieu','fr-fr-f':'Celine',
-    'de-de':'Hans','de-de-f':'Marlene',
-    'es-es':'Enrique','es-es-f':'Conchita'
+    'en-us-matthew':'Matthew','en-us-joey':'Joey',
+    'en-us-joanna':'Joanna','en-us-kendra':'Kendra','en-us-salli':'Salli',
+    'en-gb-brian':'Brian','en-gb-amy':'Amy','en-gb-emma':'Emma',
+    'en-au-russell':'Russell','en-au-olivia':'Olivia',
+    'en-in-kajal':'Kajal',
+    'fr-remi':'Remi','fr-lea':'Lea',
+    'de-daniel':'Daniel','de-vicki':'Vicki',
+    'es-sergio':'Sergio','es-lucia':'Lucia',
+    'pt-thiago':'Thiago','pt-camila':'Camila',
+    'ar-zayd':'Zayd','ar-hala':'Hala'
   };
   const puterVoice = puterVoiceMap[selectedVoice] || 'Matthew';
+  const isMaleVoice = ['Matthew','Joey','Brian','Russell','Remi','Daniel','Sergio','Thiago','Zayd'].includes(puterVoice);
+
+  if (!navigator.onLine) {
+    document.getElementById('retry-voice').classList.add('show');
+    document.getElementById('load-voice').classList.remove('show');
+    document.getElementById('btnVoice').disabled = false;
+    // Auto-retry when network returns
+    window.addEventListener('online', () => generateVoice(), { once: true });
+    return;
+  }
+
+  // 15 second timeout wrapper
+  const withTimeout = (promise, ms) => Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout - network too slow')), ms))
+  ]);
 
   try {
-    // Layer 1: Puter.js - free Amazon Polly, real male/female voices
     if (typeof puter !== 'undefined') {
-      const audio = await puter.ai.txt2speech(fullScript.slice(0, 2000), {
-        voice: puterVoice,
-        engine: 'neural',
-        language: 'en-US'
-      });
-      audioBlob = null;
-      audioUrl  = null;
+      const audio = await withTimeout(
+        puter.ai.txt2speech(fullScript.slice(0, 2000), { voice: puterVoice, engine: 'neural', language: 'en-US' }),
+        15000
+      );
+      audioBlob = null; audioUrl = null;
       document.getElementById('audioPlayer').style.display = 'none';
       document.getElementById('previewVoiceBtn').style.display = 'flex';
       document.getElementById('audio-result').style.display = 'block';
+      document.getElementById('puter-notice').style.display = 'none';
       window._puterAudio = audio;
       audio.play();
       document.getElementById('previewVoiceBtn').onclick = () => { audio.currentTime=0; audio.play(); };
@@ -741,12 +805,17 @@ async function generateVoice() {
     }
   } catch(err) {
     console.log('[Voice] Puter.js failed:', err.message);
+    if (err.message.includes('Timeout') || !navigator.onLine) {
+      document.getElementById('retry-voice').classList.add('show');
+      window.addEventListener('online', () => generateVoice(), { once: true });
+      document.getElementById('load-voice').classList.remove('show');
+      document.getElementById('btnVoice').disabled = false;
+      return;
+    }
   }
 
-  // Layer 2: Web Speech API fallback
-  const fullText = fullScript.slice(0, 1000);
-  const isMale = !selectedVoice.endsWith('-f');
-  playWebSpeech(fullText, 'en-US', isMale);
+  // Fallback: Web Speech API
+  playWebSpeech(fullScript.slice(0,1000), 'en-US', isMaleVoice);
   document.getElementById('load-voice').classList.remove('show');
   document.getElementById('btnVoice').disabled = false;
 }
