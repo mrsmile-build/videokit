@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VideoKit — AI Faceless Video Creator</title>
+  <script src="https://js.puter.com/v2/"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
     :root{--bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--border:#222;--ink:#fff;--ink-soft:rgba(255,255,255,.5);--accent:#ff5c00;--accent2:#ff8c00;--radius:14px;--font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif}
@@ -700,50 +701,54 @@ async function generateVoice() {
   if (!scriptData) return;
   const fullScript = scriptData.scenes.map(s => s.narration).join(' ') + ' ' + (scriptData.cta||'');
 
-  console.log('[Voice] generating with voice key:', selectedVoice);
-
   document.getElementById('load-voice').classList.add('show');
   document.getElementById('audio-result').style.display = 'none';
   document.getElementById('err-voice').classList.remove('show');
   document.getElementById('retry-voice').classList.remove('show');
   document.getElementById('btnVoice').disabled = true;
 
+  // Puter.js voice map - real Amazon Polly voices, male + female
+  const puterVoiceMap = {
+    'en-us':'Matthew','en-us-f':'Joanna',
+    'en-gb':'Brian','en-gb-f':'Amy',
+    'en-au':'Russell','en-au-f':'Nicole',
+    'en-ca':'Matthew','en-in':'Aditi',
+    'fr-fr':'Mathieu','fr-fr-f':'Celine',
+    'de-de':'Hans','de-de-f':'Marlene',
+    'es-es':'Enrique','es-es-f':'Conchita'
+  };
+  const puterVoice = puterVoiceMap[selectedVoice] || 'Matthew';
+
   try {
-    const res = await fetchWithRetry(PROXY + '/tts-voicerss', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ text: fullScript, voice: selectedVoice })
-    });
-
-    if (res.status === 503) {
-      const data = await res.json();
-      if (data.fallback === 'webspeech') { playWebSpeech(data.text, data.lang, data.male); return; }
+    // Layer 1: Puter.js - free Amazon Polly, real male/female voices
+    if (typeof puter !== 'undefined') {
+      const audio = await puter.ai.txt2speech(fullScript.slice(0, 2000), {
+        voice: puterVoice,
+        engine: 'neural',
+        language: 'en-US'
+      });
+      audioBlob = null;
+      audioUrl  = null;
+      document.getElementById('audioPlayer').style.display = 'none';
+      document.getElementById('previewVoiceBtn').style.display = 'flex';
+      document.getElementById('audio-result').style.display = 'block';
+      window._puterAudio = audio;
+      audio.play();
+      document.getElementById('previewVoiceBtn').onclick = () => { audio.currentTime=0; audio.play(); };
+      document.getElementById('btnVoice').disabled = false;
+      document.getElementById('load-voice').classList.remove('show');
+      return;
     }
-
-    if (!res.ok) throw new Error('Voice failed: ' + res.status);
-
-    const source = res.headers.get('X-TTS-Source') || 'server';
-    console.log('[Voice] received from:', source);
-
-    audioBlob = await res.blob();
-    audioUrl  = URL.createObjectURL(audioBlob);
-    const player = document.getElementById('audioPlayer');
-    player.src   = audioUrl;
-    player.style.display = 'block';
-    document.getElementById('previewVoiceBtn').style.display = 'none';
-    document.getElementById('audio-result').style.display    = 'block';
-    player.play();
-
   } catch(err) {
-    if (!navigator.onLine) {
-      document.getElementById('retry-voice').classList.add('show');
-    } else {
-      console.log('[Voice] Server failed, falling back to Web Speech:', err.message);
-      playWebSpeech(fullScript, 'en-US');
-    }
-  } finally {
-    document.getElementById('load-voice').classList.remove('show');
-    document.getElementById('btnVoice').disabled = false;
+    console.log('[Voice] Puter.js failed:', err.message);
   }
+
+  // Layer 2: Web Speech API fallback
+  const fullText = fullScript.slice(0, 1000);
+  const isMale = !selectedVoice.endsWith('-f');
+  playWebSpeech(fullText, 'en-US', isMale);
+  document.getElementById('load-voice').classList.remove('show');
+  document.getElementById('btnVoice').disabled = false;
 }
 
 function playWebSpeech(text, lang, forceMale) {
@@ -787,6 +792,7 @@ function stopVoice() {
   window.speechSynthesis.cancel();
   const p = document.getElementById('audioPlayer');
   if (p) p.pause();
+  if (window._puterAudio) { window._puterAudio.pause(); window._puterAudio.currentTime=0; }
 }
 
 // ── STEP 4: Download ──────────────────────────────────────────
