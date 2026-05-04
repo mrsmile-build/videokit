@@ -808,13 +808,32 @@ function downloadAudio() {
   a.href = audioUrl; a.download = 'narration.mp3'; a.click();
 }
 
-function downloadVideos() {
-  const urls = Object.values(selectedVideos);
-  if (!urls.length) { alert('No videos selected.'); return; }
-  urls.forEach((url,i) => setTimeout(() => {
-    const a = document.createElement('a');
-    a.href = url; a.download = 'scene-'+(i+1)+'.mp4'; a.target='_blank'; a.click();
-  }, i*1000));
+async function downloadVideos() {
+  const entries = Object.entries(selectedVideos);
+  if (!entries.length) { alert('No videos selected.'); return; }
+  alert('Burning captions onto videos... This takes ~30s per clip. Check Downloads folder.');
+  for (let i = 0; i < entries.length; i++) {
+    const [sceneIdx, url] = entries[i];
+    const scene = scriptData && scriptData.scenes[parseInt(sceneIdx)];
+    const text  = scene ? scene.narration.slice(0, 100) : '';
+    try {
+      const res = await fetch(PROXY + '/overlay', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ videoUrl: url, text, position: 'bottom' })
+      });
+      if (!res.ok) throw new Error('overlay failed');
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'scene-' + (i+1) + '-captioned.mp4';
+      a.click();
+    } catch(err) {
+      // fallback: download without overlay
+      const a = document.createElement('a');
+      a.href = url; a.download = 'scene-'+(i+1)+'.mp4'; a.target='_blank'; a.click();
+    }
+    await new Promise(r => setTimeout(r, 2000));
+  }
 }
 
 function downloadAll() {
