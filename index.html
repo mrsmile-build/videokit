@@ -716,7 +716,7 @@ async function generateVoice() {
 
     if (res.status === 503) {
       const data = await res.json();
-      if (data.fallback === 'webspeech') { playWebSpeech(data.text, data.lang); return; }
+      if (data.fallback === 'webspeech') { playWebSpeech(data.text, data.lang, data.male); return; }
     }
 
     if (!res.ok) throw new Error('Voice failed: ' + res.status);
@@ -746,7 +746,7 @@ async function generateVoice() {
   }
 }
 
-function playWebSpeech(text, lang) {
+function playWebSpeech(text, lang, forceMale) {
   if (!window.speechSynthesis) {
     const box = document.getElementById('err-voice');
     box.textContent = 'Voice not available. Try Chrome browser.';
@@ -761,7 +761,7 @@ function playWebSpeech(text, lang) {
   utt.volume = 1.0;
 
   // Pick matching voice — prefer male for male keys
-  const isMale  = !selectedVoice.endsWith('-f');
+  const isMale  = forceMale !== undefined ? forceMale : !selectedVoice.endsWith('-f');
   const voices  = window.speechSynthesis.getVoices();
   const langCode = (lang||'en-US').split('-')[0];
   const matches = voices.filter(v => v.lang.startsWith(langCode));
