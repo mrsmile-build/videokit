@@ -13,6 +13,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="canonical" href="https://mrsmile-build.github.io/videokit/">
   <!-- Google Analytics - replace G-XXFNM475V9 with your real ID -->
+  <script src="https://js.puter.com/v2/"></script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXFNM475V9"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXFNM475V9');</script>
   <style>
@@ -276,7 +277,7 @@
     <div class="card">
       <div class="card-title">🎙️ Step 3 — Choose Voice & Generate Narration</div>
       <div class="card-sub">Pick a voice — male or female — and generate your narration.</div>
-      <!-- ElevenLabs Connect -->
+      <!-- Voice Options -->
       <div id="eleven-connect-box" style="background:rgba(255,92,0,.08);border:1px solid rgba(255,92,0,.3);border-radius:10px;padding:14px;margin-bottom:16px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
           <div>
@@ -828,7 +829,37 @@ async function generateVoice() {
     new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout - network too slow')), ms))
   ]);
 
-  // Fallback: Web Speech API
+  // Layer 2: Puter.js - each user uses their own free Puter account credits
+  try {
+    if (typeof puter !== 'undefined') {
+      const puterVoiceMap = {
+        'en-us-matthew':'en-US','en-us-joey':'en-US','en-us-joanna':'en-US',
+        'en-us-kendra':'en-US','en-us-salli':'en-US','en-gb-brian':'en-GB',
+        'en-gb-amy':'en-GB','en-gb-emma':'en-GB','en-au-russell':'en-AU',
+        'en-au-olivia':'en-AU','es-sergio':'es-ES','pt-thiago':'pt-BR'
+      };
+      const lang = puterVoiceMap[selectedVoice] || 'en-US';
+      const audio = await Promise.race([
+        puter.ai.txt2speech(fullScript.slice(0,1000), { voice: isMaleVoice ? 'onyx' : 'nova' }),
+        new Promise((_,r) => setTimeout(() => r(new Error('timeout')), 20000))
+      ]);
+      if (audio) {
+        document.getElementById('audioPlayer').style.display = 'none';
+        document.getElementById('previewVoiceBtn').style.display = 'flex';
+        document.getElementById('audio-result').style.display = 'block';
+        window._puterAudio = audio;
+        audio.play();
+        document.getElementById('previewVoiceBtn').onclick = () => { audio.currentTime=0; audio.play(); };
+        document.getElementById('load-voice').classList.remove('show');
+        document.getElementById('btnVoice').disabled = false;
+        return;
+      }
+    }
+  } catch(e) {
+    console.log('[Puter TTS]', e.message);
+  }
+
+  // Layer 3: Web Speech API
   playWebSpeech(fullScript.slice(0,1000), 'en-US', isMaleVoice);
   document.getElementById('load-voice').classList.remove('show');
   document.getElementById('btnVoice').disabled = false;
