@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact & Feedback — VideoKit by MrSmile</title>
+  <meta name="description" content="Contact MrSmile or send feedback about VideoKit — free AI video creator.">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXXXXXXXXX');</script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap');
+    :root{--bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--border:#222;--ink:#fff;--ink-soft:rgba(255,255,255,.5);--accent:#ff5c00;--font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-height:100vh}
+    nav{padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(10,10,10,.95);backdrop-filter:blur(10px);z-index:100}
+    .logo{font-family:var(--font-head);font-weight:800;font-size:1.3rem;letter-spacing:-1px;text-decoration:none;color:var(--ink)}
+    .logo span{color:var(--accent)}
+    .nav-links{display:flex;gap:24px}
+    .nav-links a{color:var(--ink-soft);text-decoration:none;font-size:.9rem;transition:color .2s}
+    .nav-links a:hover{color:var(--accent)}
+    .wrapper{max-width:760px;margin:0 auto;padding:60px 20px 80px}
+    h1{font-family:var(--font-head);font-size:2rem;font-weight:800;margin-bottom:8px}
+    .sub{color:var(--ink-soft);font-size:.95rem;margin-bottom:40px;line-height:1.6}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:40px}
+    .contact-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+    .contact-card .icon{font-size:1.5rem;margin-bottom:8px}
+    .contact-card h3{font-family:var(--font-head);font-size:.9rem;font-weight:700;margin-bottom:4px}
+    .contact-card p{font-size:.82rem;color:var(--ink-soft)}
+    .contact-card a{color:var(--accent);text-decoration:none;font-size:.85rem}
+    .form-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px}
+    .form-card h2{font-family:var(--font-head);font-size:1.1rem;font-weight:700;margin-bottom:6px}
+    .form-card p{font-size:.85rem;color:var(--ink-soft);margin-bottom:20px}
+    .form-group{margin-bottom:16px}
+    label{display:block;font-size:.75rem;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-soft);margin-bottom:8px}
+    input,textarea,select{width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font-body);font-size:.95rem;background:var(--surface2);color:var(--ink);outline:none;transition:border-color .2s}
+    input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+    textarea{resize:vertical;min-height:120px;line-height:1.6}
+    .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;padding:13px 28px;border-radius:10px;font-family:var(--font-head);font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;width:100%;justify-content:center}
+    .btn:hover{background:#e04e00}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:16px;color:#4ade80;font-size:.9rem;display:none;margin-top:16px}
+    .success.show{display:block}
+    @media(max-width:600px){.grid{grid-template-columns:1fr}}
+    footer{border-top:1px solid var(--border);padding:30px 20px;text-align:center}
+    footer p{color:var(--ink-soft);font-size:.82rem}
+    footer a{color:var(--accent);text-decoration:none}
+  </style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="logo">Video<span>Kit</span></a>
+  <div class="nav-links">
+    <a href="index.html">Create Video</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+  </div>
+</nav>
+
+<div class="wrapper">
+  <h1>Contact & Feedback</h1>
+  <p class="sub">Have a question, found a bug, or want to suggest a feature? We'd love to hear from you. VideoKit is built by one person and your feedback makes it better.</p>
+
+  <div class="grid">
+    <div class="contact-card">
+      <div class="icon">📧</div>
+      <h3>Email</h3>
+      <p>For general enquiries and support</p>
+      <a href="mailto:mrsmile4569@gmail.com">mrsmile4569@gmail.com</a>
+    </div>
+    <div class="contact-card">
+      <div class="icon">⚡</div>
+      <h3>Response Time</h3>
+      <p>We typically respond within 24-48 hours. Faster for bug reports.</p>
+    </div>
+    <div class="contact-card">
+      <div class="icon">🛠️</div>
+      <h3>More Tools</h3>
+      <p>Check out the full MrSmile Build suite</p>
+      <a href="https://mrsmile-build.github.io" target="_blank">mrsmile-build.github.io</a>
+    </div>
+    <div class="contact-card">
+      <div class="icon">💡</div>
+      <h3>Feature Requests</h3>
+      <p>Tell us what you want VideoKit to do next — we build based on user requests.</p>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <h2>Send a Message</h2>
+    <p>Fill out the form and we'll get back to you as soon as possible.</p>
+
+    <div class="form-group">
+      <label>Your Name</label>
+      <input type="text" id="name" placeholder="e.g. Chukwuemeka Adeyemi">
+    </div>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="email" placeholder="your@email.com">
+    </div>
+    <div class="form-group">
+      <label>Type of Message</label>
+      <select id="type">
+        <option value="feedback">General Feedback</option>
+        <option value="bug">Bug Report</option>
+        <option value="feature">Feature Request</option>
+        <option value="support">Support / Help</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Your Message</label>
+      <textarea id="message" placeholder="Tell us what you think, what broke, or what you'd like to see..."></textarea>
+    </div>
+    <button class="btn" id="submitBtn" onclick="submitForm()">📨 Send Message</button>
+    <div class="success" id="successMsg">✅ Message sent! We'll get back to you within 24-48 hours. Thank you!</div>
+  </div>
+</div>
+
+<footer>
+  <p>© 2026 VideoKit by MrSmile Build · <a href="privacy.html">Privacy Policy</a> · <a href="about.html">About</a> · <a href="index.html">Create Video</a></p>
+</footer>
+
+<script>
+async function submitForm() {
+  const name    = document.getElementById('name').value.trim();
+  const email   = document.getElementById('email').value.trim();
+  const type    = document.getElementById('type').value;
+  const message = document.getElementById('message').value.trim();
+
+  if (!name || !email || !message) {
+    alert('Please fill in your name, email, and message.');
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Sending...';
+
+  try {
+    // Formspree - free contact form backend
+    const res = await fetch('https://formspree.io/f/mrsmile4569', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ name, email, type, message })
+    });
+
+    if (res.ok) {
+      document.getElementById('successMsg').classList.add('show');
+      document.getElementById('name').value = '';
+      document.getElementById('email').value = '';
+      document.getElementById('message').value = '';
+      btn.textContent = '✅ Sent!';
+    } else {
+      throw new Error('Form submission failed');
+    }
+  } catch(err) {
+    // Fallback: open email client
+    const subject = encodeURIComponent(`VideoKit ${type}: ${message.slice(0,50)}`);
+    const body    = encodeURIComponent(`Name: ${name}\nEmail: ${email}\nType: ${type}\n\nMessage:\n${message}`);
+    window.open(`mailto:mrsmile4569@gmail.com?subject=${subject}&body=${body}`);
+    btn.textContent = '📧 Opening email...';
+    setTimeout(() => { btn.textContent = '📨 Send Message'; btn.disabled = false; }, 3000);
+  }
+}
+</script>
+</body>
+</html>
