@@ -3,19 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VideoKit — Free AI Faceless Video Creator by MrSmile</title>
-  <meta name="description" content="Create faceless videos with AI in minutes. Free AI script writer, stock video finder and voiceover generator. No camera needed. By MrSmile Build.">
-  <meta name="keywords" content="AI video creator, faceless video, free video maker, AI script writer, stock video, voiceover generator, Nigeria">
-  <meta property="og:title" content="VideoKit — Free AI Faceless Video Creator">
-  <meta property="og:description" content="Type your idea. AI writes script, finds videos, adds voice. Ready to post in minutes. 100% free.">
-  <meta property="og:url" content="https://mrsmile-build.github.io/videokit/">
-  <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary_large_image">
-  <link rel="canonical" href="https://mrsmile-build.github.io/videokit/">
-  <!-- Google Analytics - replace G-XXFNM475V9 with your real ID -->
-  <script src="https://js.puter.com/v2/"></script>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXFNM475V9"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXFNM475V9');</script>
+  <title>VideoKit — AI Faceless Video Creator</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
     :root{--bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--border:#222;--ink:#fff;--ink-soft:rgba(255,255,255,.5);--accent:#ff5c00;--accent2:#ff8c00;--radius:14px;--font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif}
@@ -122,11 +110,7 @@
 <body>
 <nav>
   <div class="logo">Video<span>Kit</span></div>
-  <div style="display:flex;align-items:center;gap:16px">
-    <a href="about.html" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:.85rem">About</a>
-    <a href="contact.html" style="color:rgba(255,255,255,.5);text-decoration:none;font-size:.85rem">Feedback</a>
-    <span class="nav-badge">Free Beta</span>
-  </div>
+  <span class="nav-badge">Free Beta</span>
 </nav>
 
 <div class="hero">
@@ -277,125 +261,59 @@
     <div class="card">
       <div class="card-title">🎙️ Step 3 — Choose Voice & Generate Narration</div>
       <div class="card-sub">Pick a voice — male or female — and generate your narration.</div>
-      <!-- Voice Options -->
-      <div id="eleven-connect-box" style="background:rgba(255,92,0,.08);border:1px solid rgba(255,92,0,.3);border-radius:10px;padding:14px;margin-bottom:16px">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-          <div>
-            <div style="font-size:.88rem;font-weight:600;margin-bottom:3px">🎙️ Better Voice Quality</div>
-            <div style="font-size:.78rem;color:rgba(255,255,255,.5)">Connect your free ElevenLabs account for professional male & female voices (10,000 chars/month free)</div>
-          </div>
-          <button onclick="showElevenConnect()" style="background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap" id="eleven-connect-btn">
-            Connect Free Account
-          </button>
-        </div>
-        <div id="eleven-key-form" style="display:none;margin-top:12px">
-          <div style="font-size:.78rem;color:rgba(255,255,255,.6);margin-bottom:8px">
-            1. Go to <a href="https://elevenlabs.io/app/settings/api-keys" target="_blank" style="color:var(--accent)">elevenlabs.io/app/settings/api-keys</a> (free signup)<br>
-            2. Create a key with Text to Speech access<br>
-            3. Paste it below
-          </div>
-          <div style="display:flex;gap:8px">
-            <input type="password" id="eleven-key-input" placeholder="Paste your ElevenLabs API key..." style="flex:1;padding:10px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:.85rem">
-            <button onclick="saveElevenKey()" style="background:var(--accent);color:#fff;border:none;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer">Save</button>
-            <button onclick="hideElevenConnect()" style="background:transparent;color:#888;border:1px solid #333;padding:10px 12px;border-radius:8px;cursor:pointer">✕</button>
-          </div>
-        </div>
-      </div>
-
       <div class="voice-grid">
-        <!-- US English - Neural -->
-        <div class="voice-card active" onclick="selectVoice('en-us-matthew',this)">
+        <div class="voice-card active" onclick="selectVoice('en-us',this)">
           <div class="voice-name">🇺🇸 American</div>
           <div class="voice-desc">Male · Matthew</div>
           <span class="voice-badge">Popular</span>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-us-joey',this)">
-          <div class="voice-name">🇺🇸 American</div>
-          <div class="voice-desc">Male · Joey</div>
-        </div>
-        <div class="voice-card" onclick="selectVoice('en-us-joanna',this)">
+        <div class="voice-card" onclick="selectVoice('en-us-f',this)">
           <div class="voice-name">🇺🇸 American</div>
           <div class="voice-desc">Female · Joanna</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-us-kendra',this)">
-          <div class="voice-name">🇺🇸 American</div>
-          <div class="voice-desc">Female · Kendra</div>
-        </div>
-        <div class="voice-card" onclick="selectVoice('en-us-salli',this)">
-          <div class="voice-name">🇺🇸 American</div>
-          <div class="voice-desc">Female · Salli</div>
-        </div>
-        <!-- UK English - Neural -->
-        <div class="voice-card" onclick="selectVoice('en-gb-brian',this)">
+        <div class="voice-card" onclick="selectVoice('en-gb',this)">
           <div class="voice-name">🇬🇧 British</div>
           <div class="voice-desc">Male · Brian</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-gb-amy',this)">
+        <div class="voice-card" onclick="selectVoice('en-gb-f',this)">
           <div class="voice-name">🇬🇧 British</div>
           <div class="voice-desc">Female · Amy</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-gb-emma',this)">
-          <div class="voice-name">🇬🇧 British</div>
-          <div class="voice-desc">Female · Emma</div>
-        </div>
-        <!-- Australian - Neural -->
-        <div class="voice-card" onclick="selectVoice('en-au-russell',this)">
+        <div class="voice-card" onclick="selectVoice('en-au',this)">
           <div class="voice-name">🇦🇺 Australian</div>
           <div class="voice-desc">Male · Russell</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-au-olivia',this)">
+        <div class="voice-card" onclick="selectVoice('en-au-f',this)">
           <div class="voice-name">🇦🇺 Australian</div>
-          <div class="voice-desc">Female · Olivia</div>
+          <div class="voice-desc">Female · Nicole</div>
         </div>
-        <!-- Indian English - Neural -->
-        <div class="voice-card" onclick="selectVoice('en-in-kajal',this)">
+        <div class="voice-card" onclick="selectVoice('en-in',this)">
           <div class="voice-name">🇮🇳 Indian</div>
-          <div class="voice-desc">Female · Kajal</div>
+          <div class="voice-desc">Female · Aditi</div>
         </div>
-        <!-- French - Neural -->
-        <div class="voice-card" onclick="selectVoice('fr-remi',this)">
+        <div class="voice-card" onclick="selectVoice('fr-fr',this)">
           <div class="voice-name">🇫🇷 French</div>
-          <div class="voice-desc">Male · Rémi</div>
+          <div class="voice-desc">Male · Mathieu</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('fr-lea',this)">
+        <div class="voice-card" onclick="selectVoice('fr-fr-f',this)">
           <div class="voice-name">🇫🇷 French</div>
-          <div class="voice-desc">Female · Léa</div>
+          <div class="voice-desc">Female · Céline</div>
         </div>
-        <!-- German - Neural -->
-        <div class="voice-card" onclick="selectVoice('de-daniel',this)">
+        <div class="voice-card" onclick="selectVoice('de-de',this)">
           <div class="voice-name">🇩🇪 German</div>
-          <div class="voice-desc">Male · Daniel</div>
+          <div class="voice-desc">Male · Hans</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('de-vicki',this)">
+        <div class="voice-card" onclick="selectVoice('de-de-f',this)">
           <div class="voice-name">🇩🇪 German</div>
-          <div class="voice-desc">Female · Vicki</div>
+          <div class="voice-desc">Female · Marlene</div>
         </div>
-        <!-- Spanish - Neural -->
-        <div class="voice-card" onclick="selectVoice('es-sergio',this)">
+        <div class="voice-card" onclick="selectVoice('es-es',this)">
           <div class="voice-name">🇪🇸 Spanish</div>
-          <div class="voice-desc">Male · Sergio</div>
+          <div class="voice-desc">Male · Enrique</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('es-lucia',this)">
+        <div class="voice-card" onclick="selectVoice('es-es-f',this)">
           <div class="voice-name">🇪🇸 Spanish</div>
-          <div class="voice-desc">Female · Lucía</div>
-        </div>
-        <!-- Portuguese - Neural -->
-        <div class="voice-card" onclick="selectVoice('pt-thiago',this)">
-          <div class="voice-name">🇧🇷 Portuguese</div>
-          <div class="voice-desc">Male · Thiago</div>
-        </div>
-        <div class="voice-card" onclick="selectVoice('pt-camila',this)">
-          <div class="voice-name">🇧🇷 Portuguese</div>
-          <div class="voice-desc">Female · Camila</div>
-        </div>
-        <!-- Arabic - Neural (closest to Nigerian market) -->
-        <div class="voice-card" onclick="selectVoice('ar-zayd',this)">
-          <div class="voice-name">🇸🇦 Arabic</div>
-          <div class="voice-desc">Male · Zayd</div>
-        </div>
-        <div class="voice-card" onclick="selectVoice('ar-hala',this)">
-          <div class="voice-name">🇸🇦 Arabic</div>
-          <div class="voice-desc">Female · Hala</div>
+          <div class="voice-desc">Female · Conchita</div>
         </div>
       </div>
       <button class="btn" id="btnVoice" onclick="generateVoice()">🎙️ Generate Narration</button>
@@ -459,22 +377,13 @@
 
 </div>
 
-<footer style="border-top:1px solid #222;padding:24px 20px;text-align:center;margin-top:40px">
-  <p style="color:rgba(255,255,255,.4);font-size:.8rem">
-    © 2026 VideoKit by <a href="https://mrsmile-build.github.io" style="color:#ff5c00;text-decoration:none">MrSmile Build</a> ·
-    <a href="about.html" style="color:rgba(255,255,255,.4);text-decoration:none;margin:0 8px">About</a>
-    <a href="contact.html" style="color:rgba(255,255,255,.4);text-decoration:none;margin:0 8px">Feedback</a>
-    <a href="privacy.html" style="color:rgba(255,255,255,.4);text-decoration:none;margin:0 8px">Privacy</a>
-  </p>
-</footer>
-
 <script>
 const PROXY = 'https://groq-proxy-7f82.onrender.com';
 
 // ── State (preserved across navigation) ───────────────────────
 let scriptData     = null;
 let selectedVideos = {};
-let selectedVoice  = 'en-us-matthew';
+let selectedVoice  = 'en-us';
 let videoStyle     = 'educational';
 let audioBlob      = null;
 let audioUrl       = null;
@@ -791,81 +700,53 @@ async function generateVoice() {
   if (!scriptData) return;
   const fullScript = scriptData.scenes.map(s => s.narration).join(' ') + ' ' + (scriptData.cta||'');
 
+  console.log('[Voice] generating with voice key:', selectedVoice);
+
   document.getElementById('load-voice').classList.add('show');
   document.getElementById('audio-result').style.display = 'none';
   document.getElementById('err-voice').classList.remove('show');
   document.getElementById('retry-voice').classList.remove('show');
   document.getElementById('btnVoice').disabled = true;
 
-  // Puter.js voice map - real Amazon Polly voices, male + female
-  // Direct voice name map - all neural Polly voices
-  const puterVoiceMap = {
-    'en-us-matthew':'Matthew','en-us-joey':'Joey',
-    'en-us-joanna':'Joanna','en-us-kendra':'Kendra','en-us-salli':'Salli',
-    'en-gb-brian':'Brian','en-gb-amy':'Amy','en-gb-emma':'Emma',
-    'en-au-russell':'Russell','en-au-olivia':'Olivia',
-    'en-in-kajal':'Kajal',
-    'fr-remi':'Remi','fr-lea':'Lea',
-    'de-daniel':'Daniel','de-vicki':'Vicki',
-    'es-sergio':'Sergio','es-lucia':'Lucia',
-    'pt-thiago':'Thiago','pt-camila':'Camila',
-    'ar-zayd':'Zayd','ar-hala':'Hala'
-  };
-  const puterVoice = puterVoiceMap[selectedVoice] || 'Matthew';
-  const isMaleVoice = ['Matthew','Joey','Brian','Russell','Remi','Daniel','Sergio','Thiago','Zayd'].includes(puterVoice);
+  try {
+    const res = await fetchWithRetry(PROXY + '/tts-voicerss', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ text: fullScript, voice: selectedVoice })
+    });
 
-  if (!navigator.onLine) {
-    document.getElementById('retry-voice').classList.add('show');
+    if (res.status === 503) {
+      const data = await res.json();
+      if (data.fallback === 'webspeech') { playWebSpeech(data.text, data.lang); return; }
+    }
+
+    if (!res.ok) throw new Error('Voice failed: ' + res.status);
+
+    const source = res.headers.get('X-TTS-Source') || 'server';
+    console.log('[Voice] received from:', source);
+
+    audioBlob = await res.blob();
+    audioUrl  = URL.createObjectURL(audioBlob);
+    const player = document.getElementById('audioPlayer');
+    player.src   = audioUrl;
+    player.style.display = 'block';
+    document.getElementById('previewVoiceBtn').style.display = 'none';
+    document.getElementById('audio-result').style.display    = 'block';
+    player.play();
+
+  } catch(err) {
+    if (!navigator.onLine) {
+      document.getElementById('retry-voice').classList.add('show');
+    } else {
+      console.log('[Voice] Server failed, falling back to Web Speech:', err.message);
+      playWebSpeech(fullScript, 'en-US');
+    }
+  } finally {
     document.getElementById('load-voice').classList.remove('show');
     document.getElementById('btnVoice').disabled = false;
-    // Auto-retry when network returns
-    window.addEventListener('online', () => generateVoice(), { once: true });
-    return;
   }
-
-  // 15 second timeout wrapper
-  const withTimeout = (promise, ms) => Promise.race([
-    promise,
-    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout - network too slow')), ms))
-  ]);
-
-  // Layer 2: Puter.js - each user uses their own free Puter account credits
-  try {
-    if (typeof puter !== 'undefined') {
-      const puterVoiceMap = {
-        'en-us-matthew':'en-US','en-us-joey':'en-US','en-us-joanna':'en-US',
-        'en-us-kendra':'en-US','en-us-salli':'en-US','en-gb-brian':'en-GB',
-        'en-gb-amy':'en-GB','en-gb-emma':'en-GB','en-au-russell':'en-AU',
-        'en-au-olivia':'en-AU','es-sergio':'es-ES','pt-thiago':'pt-BR'
-      };
-      const lang = puterVoiceMap[selectedVoice] || 'en-US';
-      const audio = await Promise.race([
-        puter.ai.txt2speech(fullScript.slice(0,1000), { voice: isMaleVoice ? 'onyx' : 'nova' }),
-        new Promise((_,r) => setTimeout(() => r(new Error('timeout')), 20000))
-      ]);
-      if (audio) {
-        document.getElementById('audioPlayer').style.display = 'none';
-        document.getElementById('previewVoiceBtn').style.display = 'flex';
-        document.getElementById('audio-result').style.display = 'block';
-        window._puterAudio = audio;
-        audio.play();
-        document.getElementById('previewVoiceBtn').onclick = () => { audio.currentTime=0; audio.play(); };
-        document.getElementById('load-voice').classList.remove('show');
-        document.getElementById('btnVoice').disabled = false;
-        return;
-      }
-    }
-  } catch(e) {
-    console.log('[Puter TTS]', e.message);
-  }
-
-  // Layer 3: Web Speech API
-  playWebSpeech(fullScript.slice(0,1000), 'en-US', isMaleVoice);
-  document.getElementById('load-voice').classList.remove('show');
-  document.getElementById('btnVoice').disabled = false;
 }
 
-function playWebSpeech(text, lang, forceMale) {
+function playWebSpeech(text, lang) {
   if (!window.speechSynthesis) {
     const box = document.getElementById('err-voice');
     box.textContent = 'Voice not available. Try Chrome browser.';
@@ -880,7 +761,7 @@ function playWebSpeech(text, lang, forceMale) {
   utt.volume = 1.0;
 
   // Pick matching voice — prefer male for male keys
-  const isMale  = forceMale !== undefined ? forceMale : !selectedVoice.endsWith('-f');
+  const isMale  = !selectedVoice.endsWith('-f');
   const voices  = window.speechSynthesis.getVoices();
   const langCode = (lang||'en-US').split('-')[0];
   const matches = voices.filter(v => v.lang.startsWith(langCode));
@@ -906,7 +787,6 @@ function stopVoice() {
   window.speechSynthesis.cancel();
   const p = document.getElementById('audioPlayer');
   if (p) p.pause();
-  if (window._puterAudio) { window._puterAudio.pause(); window._puterAudio.currentTime=0; }
 }
 
 // ── STEP 4: Download ──────────────────────────────────────────
@@ -928,32 +808,13 @@ function downloadAudio() {
   a.href = audioUrl; a.download = 'narration.mp3'; a.click();
 }
 
-async function downloadVideos() {
-  const entries = Object.entries(selectedVideos);
-  if (!entries.length) { alert('No videos selected.'); return; }
-  alert('Burning captions onto videos... This takes ~30s per clip. Check Downloads folder.');
-  for (let i = 0; i < entries.length; i++) {
-    const [sceneIdx, url] = entries[i];
-    const scene = scriptData && scriptData.scenes[parseInt(sceneIdx)];
-    const text  = scene ? scene.narration.slice(0, 100) : '';
-    try {
-      const res = await fetch(PROXY + '/overlay', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ videoUrl: url, text, position: 'bottom' })
-      });
-      if (!res.ok) throw new Error('overlay failed');
-      const blob = await res.blob();
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'scene-' + (i+1) + '-captioned.mp4';
-      a.click();
-    } catch(err) {
-      // fallback: download without overlay
-      const a = document.createElement('a');
-      a.href = url; a.download = 'scene-'+(i+1)+'.mp4'; a.target='_blank'; a.click();
-    }
-    await new Promise(r => setTimeout(r, 2000));
-  }
+function downloadVideos() {
+  const urls = Object.values(selectedVideos);
+  if (!urls.length) { alert('No videos selected.'); return; }
+  urls.forEach((url,i) => setTimeout(() => {
+    const a = document.createElement('a');
+    a.href = url; a.download = 'scene-'+(i+1)+'.mp4'; a.target='_blank'; a.click();
+  }, i*1000));
 }
 
 function downloadAll() {
@@ -983,37 +844,6 @@ async function mergeAndDownload() {
   }
 }
 
-function showElevenConnect() {
-  document.getElementById('eleven-key-form').style.display = 'block';
-}
-function hideElevenConnect() {
-  document.getElementById('eleven-key-form').style.display = 'none';
-}
-function saveElevenKey() {
-  const key = document.getElementById('eleven-key-input').value.trim();
-  if (!key) { alert('Please paste your API key'); return; }
-  localStorage.setItem('eleven_key', key);
-  updateElevenConnectBtn();
-  hideElevenConnect();
-  alert('✅ ElevenLabs connected! Generate narration to test it.');
-}
-function updateElevenConnectBtn() {
-  const key = localStorage.getItem('eleven_key');
-  const btn = document.getElementById('eleven-connect-btn');
-  const box = document.getElementById('eleven-connect-box');
-  if (key) {
-    btn.textContent = '✅ Connected — Click to change';
-    btn.style.background = '#22c55e';
-    box.style.borderColor = 'rgba(34,197,94,.4)';
-    box.style.background  = 'rgba(34,197,94,.05)';
-  } else {
-    btn.textContent = 'Connect Free Account';
-    btn.style.background = 'var(--accent)';
-    box.style.borderColor = 'rgba(255,92,0,.3)';
-    box.style.background  = 'rgba(255,92,0,.08)';
-  }
-}
-// Add footer links
 function startOver() {
   scriptData=null; selectedVideos={}; audioBlob=null; audioUrl=null; videosLoaded=false; chatHistory=[];
   document.getElementById('videoIdea').value='';
