@@ -3,27 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VideoKit — AI Faceless Video Creator</title>
+  <title>VideoKit — Free AI Faceless Video Creator by MrSmile</title>
+  <meta name="description" content="Create faceless videos with AI in minutes. Free AI script writer, stock video finder and voiceover generator. No camera needed. By MrSmile Build.">
+  <meta name="keywords" content="AI video creator, faceless video, free video maker, AI script writer, stock video, voiceover generator, Nigeria">
+  <meta property="og:title" content="VideoKit — Free AI Faceless Video Creator">
+  <meta property="og:description" content="Type your idea. AI writes script, finds videos, adds voice. Ready to post in minutes. 100% free.">
+  <meta property="og:url" content="https://mrsmile-build.github.io/videokit/">
+  <link rel="canonical" href="https://mrsmile-build.github.io/videokit/">
+  <script src="https://js.puter.com/v2/"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXFNM475V9"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXFNM475V9');</script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
     :root{--bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--border:#222;--ink:#fff;--ink-soft:rgba(255,255,255,.5);--accent:#ff5c00;--accent2:#ff8c00;--radius:14px;--font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif}
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-height:100vh}
     nav{padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(10,10,10,.95);backdrop-filter:blur(10px);z-index:100}
-    .logo{font-family:var(--font-head);font-weight:800;font-size:1.3rem;letter-spacing:-1px}
+    .logo{font-family:var(--font-head);font-weight:800;font-size:1.3rem;letter-spacing:-1px;text-decoration:none;color:var(--ink)}
     .logo span{color:var(--accent)}
+    .nav-right{display:flex;align-items:center;gap:16px}
+    .nav-right a{color:var(--ink-soft);text-decoration:none;font-size:.85rem;transition:color .2s}
+    .nav-right a:hover{color:var(--accent)}
     .nav-badge{background:var(--accent);color:#fff;font-size:.65rem;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase}
     .hero{text-align:center;padding:60px 20px 40px;max-width:700px;margin:0 auto}
     .hero h1{font-family:var(--font-head);font-size:clamp(2rem,6vw,3.2rem);font-weight:800;letter-spacing:-2px;line-height:1.1;margin-bottom:16px}
     .hero h1 span{color:var(--accent)}
     .hero p{color:var(--ink-soft);font-size:1rem;font-weight:300;max-width:480px;margin:0 auto 32px}
-    /* Clickable steps bar */
     .steps-bar{display:flex;justify-content:center;gap:0;margin-bottom:40px;flex-wrap:wrap}
     .step-item{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--ink-soft);cursor:pointer;padding:4px 6px;border-radius:8px;transition:all .2s}
-    .step-item:hover{color:var(--ink)}
     .step-item.active{color:var(--accent)}
-    .step-item.done{color:var(--ink-soft)}
-    .step-item.done:hover{color:var(--accent)}
     .step-item.locked{cursor:not-allowed;opacity:.4}
     .step-num{width:24px;height:24px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;flex-shrink:0}
     .step-item.done .step-num{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -82,35 +90,36 @@
     .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:10px;transition:width .3s;width:0%}
     .error-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px;color:#f87171;font-size:.85rem;margin-top:12px;display:none}
     .error-box.show{display:block}
-    .clip-hint{font-size:.74rem;color:var(--ink-soft);margin-top:6px;font-style:italic}
-    .tts-note{margin-top:12px;padding:10px;background:rgba(255,92,0,.07);border-radius:8px;font-size:.8rem;color:var(--ink-soft)}
-    .toolkit-banner{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;flex-wrap:wrap}
-    .toolkit-banner p{font-size:.85rem;color:var(--ink-soft)}
-    /* Network retry banner */
     .retry-banner{background:rgba(255,92,0,.1);border:1px solid rgba(255,92,0,.4);border-radius:10px;padding:14px 18px;display:none;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
     .retry-banner.show{display:flex}
-    .retry-banner p{font-size:.85rem;color:var(--accent-soft);color:#ffaa77}
-    /* Chatbox */
-    .chat-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:0;overflow:hidden;margin-bottom:16px}
+    .retry-banner p{font-size:.85rem;color:#ffaa77}
+    .clip-hint{font-size:.74rem;color:var(--ink-soft);margin-top:6px;font-style:italic}
+    .tts-note{margin-top:12px;padding:10px;background:rgba(255,92,0,.07);border-radius:8px;font-size:.8rem;color:var(--ink-soft)}
+    .chat-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
     .chat-header{padding:14px 18px;border-bottom:1px solid var(--border);font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:8px}
-    .chat-messages{padding:16px;max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+    .chat-messages{padding:16px;max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
     .chat-msg{padding:10px 14px;border-radius:10px;font-size:.85rem;line-height:1.6;max-width:90%}
     .chat-msg.ai{background:rgba(255,92,0,.08);border:1px solid rgba(255,92,0,.15);align-self:flex-start}
     .chat-msg.user{background:var(--surface);border:1px solid var(--border);align-self:flex-end;text-align:right}
     .chat-input-row{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border)}
     .chat-input-row input{flex:1;padding:10px 14px;border-radius:8px;font-size:.9rem}
-    .chat-input-row button{padding:10px 16px;border-radius:8px;font-size:.85rem;white-space:nowrap}
-    /* Paste own script */
     .paste-toggle{font-size:.8rem;color:var(--accent);cursor:pointer;text-decoration:underline;margin-bottom:12px;display:inline-block}
     .paste-area{display:none;margin-bottom:16px}
     .paste-area.show{display:block}
+    .toolkit-banner{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;flex-wrap:wrap}
+    .toolkit-banner p{font-size:.85rem;color:var(--ink-soft)}
     @media(max-width:600px){.form-row{grid-template-columns:1fr}.hero{padding:40px 20px 28px}.card{padding:20px 16px}}
   </style>
 </head>
 <body>
+
 <nav>
-  <div class="logo">Video<span>Kit</span></div>
-  <span class="nav-badge">Free Beta</span>
+  <a href="index.html" class="logo">Video<span>Kit</span></a>
+  <div class="nav-right">
+    <a href="about.html">About</a>
+    <a href="contact.html">Feedback</a>
+    <span class="nav-badge">Free Beta</span>
+  </div>
 </nav>
 
 <div class="hero">
@@ -137,16 +146,13 @@
     </div>
     <div class="card">
       <div class="card-title">🎯 Step 1 — Write Your Script</div>
-      <div class="card-sub">Describe your idea, customize in the chat, or paste your own script.</div>
-
-      <!-- Option: paste own script -->
+      <div class="card-sub">Describe your idea, customize in chat, or paste your own script.</div>
       <span class="paste-toggle" onclick="togglePaste()">📋 Paste my own script instead</span>
       <div class="paste-area" id="paste-area">
-        <label>Your Script (paste full script or scene-by-scene)</label>
-        <textarea id="pasteScript" rows="8" placeholder="Paste your full script here. You can write it like:&#10;Scene 1: Welcome to my channel MrSmile Hustle...&#10;Scene 2: Today we talk about making money online...&#10;&#10;VideoKit will turn it into proper scenes automatically."></textarea>
+        <label>Your Script</label>
+        <textarea id="pasteScript" rows="8" placeholder="Paste your full script here. VideoKit will turn it into proper scenes."></textarea>
         <button class="btn" style="margin-top:12px" onclick="usePastedScript()">✅ Use This Script</button>
       </div>
-
       <div id="idea-section">
         <div class="form-group">
           <label>Your Video Idea</label>
@@ -190,42 +196,35 @@
         <button class="btn" id="btnScript" onclick="generateScript()">✨ Generate Script</button>
       </div>
     </div>
-
     <div class="loading" id="load-script">
       <div class="spinner"></div>
       <p>Writing your script...</p>
       <div class="loading-steps" id="load-script-step">Analyzing your idea...</div>
     </div>
-
-    <!-- Script result + Chatbox -->
     <div class="section" id="script-result">
       <div class="card">
         <div class="card-title">📝 Your Script</div>
         <div id="script-scenes"></div>
-
-        <!-- CHATBOX -->
         <div style="margin-top:20px">
           <div class="card-title" style="font-size:.9rem">💬 Customize Your Script</div>
-          <div class="card-sub" style="margin-bottom:12px">Tell the AI how to change any scene. E.g. "Scene 1 should say Welcome to MrSmile Hustle" or "Add a discount CTA at the end"</div>
+          <div class="card-sub" style="margin-bottom:12px">Tell AI how to change any scene. e.g. "Scene 1 should welcome viewers to MrSmile Hustle"</div>
           <div class="chat-box">
             <div class="chat-header">🤖 Script Assistant</div>
             <div class="chat-messages" id="chat-messages">
-              <div class="chat-msg ai">Your script is ready! Tell me how you'd like to customize it — change a scene, add your brand name, update the CTA, anything.</div>
+              <div class="chat-msg ai">Your script is ready! Tell me how you'd like to customize it.</div>
             </div>
             <div class="chat-input-row">
-              <input type="text" id="chatInput" placeholder="e.g. Scene 1 should welcome viewers to MrSmile Hustle..." onkeydown="if(event.key==='Enter')sendChat()">
+              <input type="text" id="chatInput" placeholder="e.g. Make scene 3 about Nigerian hustle culture..." onkeydown="if(event.key==='Enter')sendChat()">
               <button class="btn btn-sm" onclick="sendChat()">Send</button>
             </div>
           </div>
         </div>
-
         <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn" onclick="goToVideos()">Next: Find Videos →</button>
           <button class="btn btn-outline" onclick="generateScript()">🔄 Regenerate</button>
         </div>
       </div>
     </div>
-
     <div class="error-box" id="err-script"></div>
   </div>
 
@@ -255,75 +254,69 @@
   <!-- STEP 3: VOICE -->
   <div class="section" id="section-voice">
     <div class="retry-banner" id="retry-voice">
-      <p>⚠️ Voice generation failed. Will auto-retry...</p>
+      <p>⚠️ Voice failed. Will auto-retry when connection returns...</p>
       <button class="btn btn-sm btn-outline" onclick="generateVoice()">Retry Now</button>
     </div>
     <div class="card">
       <div class="card-title">🎙️ Step 3 — Choose Voice & Generate Narration</div>
-      <div class="card-sub">Pick a voice — male or female — and generate your narration.</div>
+      <div class="card-sub">Pick a voice and we'll generate the full narration for your video.</div>
       <div class="voice-grid">
-        <div class="voice-card active" onclick="selectVoice('en-us',this)">
+        <div class="voice-card active" onclick="selectVoice('en-us-m',this)">
           <div class="voice-name">🇺🇸 American</div>
-          <div class="voice-desc">Male · Matthew</div>
+          <div class="voice-desc">Male · Deep</div>
           <span class="voice-badge">Popular</span>
         </div>
         <div class="voice-card" onclick="selectVoice('en-us-f',this)">
           <div class="voice-name">🇺🇸 American</div>
-          <div class="voice-desc">Female · Joanna</div>
+          <div class="voice-desc">Female · Clear</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-gb',this)">
+        <div class="voice-card" onclick="selectVoice('en-gb-m',this)">
           <div class="voice-name">🇬🇧 British</div>
-          <div class="voice-desc">Male · Brian</div>
+          <div class="voice-desc">Male · Professional</div>
         </div>
         <div class="voice-card" onclick="selectVoice('en-gb-f',this)">
           <div class="voice-name">🇬🇧 British</div>
-          <div class="voice-desc">Female · Amy</div>
+          <div class="voice-desc">Female · Elegant</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-au',this)">
+        <div class="voice-card" onclick="selectVoice('en-au-m',this)">
           <div class="voice-name">🇦🇺 Australian</div>
-          <div class="voice-desc">Male · Russell</div>
+          <div class="voice-desc">Male · Friendly</div>
         </div>
         <div class="voice-card" onclick="selectVoice('en-au-f',this)">
           <div class="voice-name">🇦🇺 Australian</div>
-          <div class="voice-desc">Female · Nicole</div>
+          <div class="voice-desc">Female · Warm</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('en-in',this)">
-          <div class="voice-name">🇮🇳 Indian</div>
-          <div class="voice-desc">Female · Aditi</div>
+        <div class="voice-card" onclick="selectVoice('en-news-m',this)">
+          <div class="voice-name">📺 News Anchor</div>
+          <div class="voice-desc">Male · Authoritative</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('fr-fr',this)">
+        <div class="voice-card" onclick="selectVoice('en-story-f',this)">
+          <div class="voice-name">📖 Storyteller</div>
+          <div class="voice-desc">Female · Engaging</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('fr-m',this)">
           <div class="voice-name">🇫🇷 French</div>
-          <div class="voice-desc">Male · Mathieu</div>
+          <div class="voice-desc">Male</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('fr-fr-f',this)">
-          <div class="voice-name">🇫🇷 French</div>
-          <div class="voice-desc">Female · Céline</div>
-        </div>
-        <div class="voice-card" onclick="selectVoice('de-de',this)">
+        <div class="voice-card" onclick="selectVoice('de-m',this)">
           <div class="voice-name">🇩🇪 German</div>
-          <div class="voice-desc">Male · Hans</div>
+          <div class="voice-desc">Male</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('de-de-f',this)">
-          <div class="voice-name">🇩🇪 German</div>
-          <div class="voice-desc">Female · Marlene</div>
-        </div>
-        <div class="voice-card" onclick="selectVoice('es-es',this)">
+        <div class="voice-card" onclick="selectVoice('es-m',this)">
           <div class="voice-name">🇪🇸 Spanish</div>
-          <div class="voice-desc">Male · Enrique</div>
+          <div class="voice-desc">Male</div>
         </div>
-        <div class="voice-card" onclick="selectVoice('es-es-f',this)">
-          <div class="voice-name">🇪🇸 Spanish</div>
-          <div class="voice-desc">Female · Conchita</div>
+        <div class="voice-card" onclick="selectVoice('pt-m',this)">
+          <div class="voice-name">🇧🇷 Portuguese</div>
+          <div class="voice-desc">Male</div>
         </div>
       </div>
       <button class="btn" id="btnVoice" onclick="generateVoice()">🎙️ Generate Narration</button>
     </div>
-
     <div class="loading" id="load-voice">
       <div class="spinner"></div>
       <p>Generating your voiceover...</p>
     </div>
-
     <div id="audio-result" style="display:none">
       <div class="card">
         <div class="card-title">🔊 Your Narration is Ready</div>
@@ -336,7 +329,6 @@
         <div class="tts-note">💡 Voice plays through your speaker. Record using your phone's screen recorder for the final video.</div>
       </div>
     </div>
-
     <div class="error-box" id="err-voice"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
       <button class="btn btn-outline" onclick="navigateToStep(2)">← Back to Videos</button>
@@ -358,7 +350,7 @@
     </div>
     <div class="card" style="margin-top:20px">
       <div class="card-title">🎬 Combine Into One Video</div>
-      <div class="card-sub">Merge all selected clips into a single MP4 automatically.</div>
+      <div class="card-sub">Merge all selected clips with captions into a single MP4.</div>
       <div class="progress-bar" id="merge-progress" style="display:none">
         <div class="progress-fill" id="merge-fill"></div>
       </div>
@@ -377,33 +369,53 @@
 
 </div>
 
+<footer style="border-top:1px solid #222;padding:24px 20px;text-align:center;margin-top:40px">
+  <p style="color:rgba(255,255,255,.4);font-size:.8rem">
+    © 2026 VideoKit by <a href="https://mrsmile-build.github.io" style="color:#ff5c00;text-decoration:none">MrSmile Build</a> ·
+    <a href="about.html" style="color:rgba(255,255,255,.4);text-decoration:none;margin:0 8px">About</a>
+    <a href="contact.html" style="color:rgba(255,255,255,.4);text-decoration:none;margin:0 8px">Feedback</a>
+    <a href="privacy.html" style="color:rgba(255,255,255,.4);text-decoration:none;margin:0 8px">Privacy</a>
+  </p>
+</footer>
+
 <script>
 const PROXY = 'https://groq-proxy-7f82.onrender.com';
 
-// ── State (preserved across navigation) ───────────────────────
+// ── Voice map: puter voice name → ElevenLabs voice ID ─────────
+// Male voices use: onyx, echo, fable
+// Female voices use: nova, shimmer, alloy
+const VOICE_CONFIG = {
+  'en-us-m':    { puter: 'onyx',    eleven: 'pNInz6obpgDQGcFmaJgB', label: 'US Male' },
+  'en-us-f':    { puter: 'nova',    eleven: '21m00Tcm4TlvDq8ikWAM', label: 'US Female' },
+  'en-gb-m':    { puter: 'echo',    eleven: 'IKne3meq5aSn9XLyUdCD', label: 'UK Male' },
+  'en-gb-f':    { puter: 'shimmer', eleven: 'XrExE9yKIg1WjnnlVkGX', label: 'UK Female' },
+  'en-au-m':    { puter: 'fable',   eleven: 'IKne3meq5aSn9XLyUdCD', label: 'AU Male' },
+  'en-au-f':    { puter: 'alloy',   eleven: 'XrExE9yKIg1WjnnlVkGX', label: 'AU Female' },
+  'en-news-m':  { puter: 'onyx',    eleven: 'TxGEqnHWrfWFTfGW9XjX', label: 'News Male' },
+  'en-story-f': { puter: 'nova',    eleven: 'EXAVITQu4vr4xnSDxMaL', label: 'Story Female' },
+  'fr-m':       { puter: 'echo',    eleven: 'pNInz6obpgDQGcFmaJgB', label: 'French Male' },
+  'de-m':       { puter: 'fable',   eleven: 'TxGEqnHWrfWFTfGW9XjX', label: 'German Male' },
+  'es-m':       { puter: 'onyx',    eleven: 'VR6AewLTigWG4xSOukaG', label: 'Spanish Male' },
+  'pt-m':       { puter: 'echo',    eleven: 'VR6AewLTigWG4xSOukaG', label: 'Portuguese Male' },
+};
+
+// ── State ─────────────────────────────────────────────────────
 let scriptData     = null;
 let selectedVideos = {};
-let selectedVoice  = 'en-us';
+let selectedVoice  = 'en-us-m';
 let videoStyle     = 'educational';
 let audioBlob      = null;
 let audioUrl       = null;
 let chatHistory    = [];
 let videosLoaded   = false;
-let retryTimers    = {};
 
-// ── Step navigation ───────────────────────────────────────────
+// ── Navigation ────────────────────────────────────────────────
 const stepSections = {1:'section-script',2:'section-videos',3:'section-voice',4:'section-download'};
 
 function navigateToStep(n) {
-  // Only allow going to steps that have data
-  if (n === 2 && !scriptData) return;
-  if (n === 3 && !scriptData) return;
-  if (n === 4 && !scriptData) return;
-
+  if (n >= 2 && !scriptData) return;
   showSection(stepSections[n]);
   setStep(n);
-
-  // Re-load videos if going back to step 2 (already loaded, just show)
   if (n === 2 && scriptData && !videosLoaded) goToVideos();
 }
 
@@ -418,20 +430,16 @@ function setStep(n) {
     const el = document.getElementById('step' + i);
     if (!el) continue;
     el.classList.remove('active','done','locked');
-    if      (i < n)  el.classList.add('done');
+    if (i < n) el.classList.add('done');
     else if (i === n) el.classList.add('active');
-    else {
-      // Lock steps that have no data yet
-      const hasData = (i <= 2 && scriptData) || (i === 3 && scriptData) || (i === 4 && scriptData);
-      el.classList.add(hasData ? 'done' : 'locked');
-    }
+    else el.classList.add(scriptData ? 'done' : 'locked');
   }
 }
 
 function updateClipHint(secs) {
   const map = {30:4,60:6,90:8,120:8,300:12,600:16};
-  const c   = map[parseInt(secs)] || 6;
-  const el  = document.getElementById('clip-hint');
+  const c = map[parseInt(secs)] || 6;
+  const el = document.getElementById('clip-hint');
   if (el) el.textContent = '~' + c + ' clip options shown per scene';
 }
 
@@ -445,10 +453,8 @@ function selectVoice(voice, el) {
   selectedVoice = voice;
   document.querySelectorAll('.voice-card').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
-  console.log('[Voice] selected:', voice);
 }
 
-// ── Paste own script ──────────────────────────────────────────
 function togglePaste() {
   const area = document.getElementById('paste-area');
   const idea = document.getElementById('idea-section');
@@ -456,61 +462,21 @@ function togglePaste() {
   idea.style.display = show ? 'none' : 'block';
 }
 
-async function usePastedScript() {
-  const raw = document.getElementById('pasteScript').value.trim();
-  if (!raw) { alert('Please paste your script first.'); return; }
-
-  document.getElementById('load-script').classList.add('show');
-  document.getElementById('btnScript') && (document.getElementById('btnScript').disabled = true);
-
-  try {
-    const res  = await fetchWithRetry(PROXY + '/generate', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{role:'user', content:`Convert this script into a proper JSON video script. Return ONLY a valid JSON object with: title, hook (max 15 words), scenes (array of objects, each with: scene_number, narration, visual_keyword (2-3 words for stock video search), duration_seconds), cta. Preserve the user's exact words in the narration fields. Script:\n${raw}`}],
-        temperature: 0.3, max_tokens: 2000
-      })
-    });
-    const data = await res.json();
-    scriptData = JSON.parse(data.choices[0].message.content.trim().replace(/```json|```/g,'').trim());
-    renderScript(scriptData);
-    document.getElementById('script-result').classList.add('show');
-    setStep(1);
-    // unlock other steps
-  } catch(err) {
-    alert('Could not parse script: ' + err.message);
-  } finally {
-    document.getElementById('load-script').classList.remove('show');
+async function fetchWithRetry(url, options, max=3) {
+  for (let i = 0; i < max; i++) {
+    try { return await fetch(url, options); }
+    catch(e) { if (i === max-1) throw e; await new Promise(r=>setTimeout(r,2000*(i+1))); }
   }
 }
 
-// ── Network retry helper ──────────────────────────────────────
-async function fetchWithRetry(url, options, maxRetries=3) {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      const res = await fetch(url, options);
-      return res;
-    } catch(err) {
-      if (i === maxRetries - 1) throw err;
-      await new Promise(r => setTimeout(r, 2000 * (i + 1)));
-    }
-  }
-}
-
-// Auto-retry on network change
-window.addEventListener('online', () => {
-  console.log('[Network] Back online');
-  // Hide all retry banners
-  document.querySelectorAll('.retry-banner').forEach(b => b.classList.remove('show'));
-});
-
-// ── STEP 1: Generate Script ───────────────────────────────────
+// ── STEP 1: Script ────────────────────────────────────────────
 async function generateScript() {
   const idea = document.getElementById('videoIdea').value.trim();
   if (!idea) { alert('Please enter your video idea!'); return; }
   const platform = document.getElementById('platform').value;
   const length   = document.getElementById('videoLength').value;
+  const sceneCounts = {30:3,60:5,90:7,120:9,300:15,600:25};
+  const sceneCount  = sceneCounts[parseInt(length)] || 5;
 
   document.getElementById('load-script').classList.add('show');
   document.getElementById('script-result').classList.remove('show');
@@ -518,11 +484,8 @@ async function generateScript() {
   document.getElementById('retry-script').classList.remove('show');
   document.getElementById('btnScript').disabled = true;
 
-  const sceneCounts = {30:3,60:5,90:7,120:9,300:15,600:25};
-  const sceneCount  = sceneCounts[parseInt(length)] || 5;
-
-  const steps   = ['Analyzing your idea...','Writing hook...','Building scenes...','Adding CTA...'];
-  let si        = 0;
+  const steps = ['Analyzing your idea...','Writing hook...','Building scenes...','Adding CTA...'];
+  let si = 0;
   const stepInt = setInterval(() => {
     document.getElementById('load-script-step').textContent = steps[si++ % steps.length];
   }, 1500);
@@ -531,7 +494,7 @@ async function generateScript() {
 
   try {
     const res  = await fetchWithRetry(PROXY + '/generate', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ model:'llama-3.3-70b-versatile', messages:[{role:'user',content:prompt}], temperature:0.8, max_tokens:3000 })
     });
     const data = await res.json();
@@ -545,6 +508,7 @@ async function generateScript() {
   } catch(err) {
     if (!navigator.onLine) {
       document.getElementById('retry-script').classList.add('show');
+      window.addEventListener('online', generateScript, {once:true});
     } else {
       const box = document.getElementById('err-script');
       box.textContent = 'Error: ' + err.message + '. Please try again.';
@@ -555,6 +519,27 @@ async function generateScript() {
     document.getElementById('load-script').classList.remove('show');
     document.getElementById('btnScript').disabled = false;
   }
+}
+
+async function usePastedScript() {
+  const raw = document.getElementById('pasteScript').value.trim();
+  if (!raw) { alert('Please paste your script first.'); return; }
+  document.getElementById('load-script').classList.add('show');
+  try {
+    const res  = await fetchWithRetry(PROXY + '/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'llama-3.3-70b-versatile',
+        messages:[{role:'user',content:`Convert this script into a proper JSON video script. Return ONLY a valid JSON object with: title, hook (max 15 words), scenes (array with: scene_number, narration, visual_keyword, duration_seconds), cta. Preserve the user's exact words. Script:\n${raw}`}],
+        temperature:0.3, max_tokens:2000
+      })
+    });
+    const data = await res.json();
+    scriptData = JSON.parse(data.choices[0].message.content.trim().replace(/```json|```/g,'').trim());
+    renderScript(scriptData);
+    document.getElementById('script-result').classList.add('show');
+  } catch(err) { alert('Could not parse script: ' + err.message); }
+  finally { document.getElementById('load-script').classList.remove('show'); }
 }
 
 function renderScript(data) {
@@ -570,43 +555,34 @@ function renderScript(data) {
   document.getElementById('script-scenes').innerHTML = html;
 }
 
-// ── Chatbox ───────────────────────────────────────────────────
 async function sendChat() {
   const input = document.getElementById('chatInput');
   const msg   = input.value.trim();
   if (!msg || !scriptData) return;
   input.value = '';
-
   addChatMsg(msg, 'user');
   addChatMsg('Updating your script...', 'ai', 'chat-typing');
-
-  chatHistory.push({ role: 'user', content: msg });
-
+  chatHistory.push({role:'user', content:msg});
   try {
-    const systemMsg = `You are a script editor. The user has this video script: ${JSON.stringify(scriptData)}. Apply the user's requested change and return the COMPLETE updated script as a valid JSON object with the same structure: title, hook, scenes (array), cta. No markdown. No extra text.`;
-
     const res  = await fetchWithRetry(PROXY + '/generate', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          {role:'system', content: systemMsg},
+        model:'llama-3.3-70b-versatile',
+        messages:[
+          {role:'system', content:`You are a script editor. The user has this video script: ${JSON.stringify(scriptData)}. Apply the user's requested change and return the COMPLETE updated script as a valid JSON object with the same structure: title, hook, scenes (array), cta. No markdown. No extra text.`},
           ...chatHistory
         ],
-        temperature: 0.5, max_tokens: 3000
+        temperature:0.5, max_tokens:3000
       })
     });
     const data   = await res.json();
     const raw    = data.choices[0].message.content.trim().replace(/```json|```/g,'').trim();
     scriptData   = JSON.parse(raw);
-
-    // Remove typing indicator
     const typing = document.getElementById('chat-typing');
     if (typing) typing.remove();
-
     renderScript(scriptData);
     addChatMsg('Done! Script updated. Check the scenes above.', 'ai');
-    chatHistory.push({ role: 'assistant', content: raw });
+    chatHistory.push({role:'assistant', content:raw});
   } catch(err) {
     const typing = document.getElementById('chat-typing');
     if (typing) typing.textContent = 'Failed: ' + err.message;
@@ -647,7 +623,6 @@ async function goToVideos() {
     for (let i = 0; i < scriptData.scenes.length; i++) {
       const scene = scriptData.scenes[i];
       document.getElementById('load-videos-step').textContent = 'Scene ' + scene.scene_number + ': "' + scene.visual_keyword + '"...';
-
       const res   = await fetchWithRetry(PROXY + '/videos?q=' + encodeURIComponent(scene.visual_keyword) + '&duration=' + totalDuration);
       const data  = await res.json();
       const clips = data.hits || [];
@@ -657,7 +632,6 @@ async function goToVideos() {
       html += '<div style="font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:700;margin-bottom:8px">Scene ' + scene.scene_number + ' — ' + scene.visual_keyword + ' <span style="color:var(--ink-soft);text-transform:none;font-weight:400">(' + clips.length + ' options)</span></div>';
       html += '<div style="font-size:.82rem;color:var(--ink-soft);margin-bottom:10px">' + scene.narration.substring(0,80) + '...</div>';
       html += '<div class="video-grid">';
-
       clips.forEach((v,vi) => {
         const url = (v.videos.medium&&v.videos.medium.url)||(v.videos.small&&v.videos.small.url)||(v.videos.large&&v.videos.large.url)||null;
         if (!url) return;
@@ -675,6 +649,7 @@ async function goToVideos() {
   } catch(err) {
     if (!navigator.onLine) {
       document.getElementById('retry-videos').classList.add('show');
+      window.addEventListener('online', goToVideos, {once:true});
     } else {
       const box = document.getElementById('err-videos');
       box.textContent = 'Error loading videos: ' + err.message;
@@ -686,11 +661,11 @@ async function goToVideos() {
 }
 
 function selectVideoEl(el) {
-  const url      = el.getAttribute('data-url');
-  const sceneIdx = el.getAttribute('data-scene');
+  const url = el.getAttribute('data-url');
+  const si  = el.getAttribute('data-scene');
   el.closest('.video-grid').querySelectorAll('.video-thumb').forEach(t => t.classList.remove('selected'));
   el.classList.add('selected');
-  selectedVideos[sceneIdx] = url;
+  selectedVideos[si] = url;
 }
 
 // ── STEP 3: Voice ─────────────────────────────────────────────
@@ -699,8 +674,8 @@ function goToVoice() { showSection('section-voice'); setStep(3); }
 async function generateVoice() {
   if (!scriptData) return;
   const fullScript = scriptData.scenes.map(s => s.narration).join(' ') + ' ' + (scriptData.cta||'');
-
-  console.log('[Voice] generating with voice key:', selectedVoice);
+  const cfg = VOICE_CONFIG[selectedVoice] || VOICE_CONFIG['en-us-m'];
+  const isMale = ['onyx','echo','fable'].includes(cfg.puter);
 
   document.getElementById('load-voice').classList.add('show');
   document.getElementById('audio-result').style.display = 'none';
@@ -708,45 +683,88 @@ async function generateVoice() {
   document.getElementById('retry-voice').classList.remove('show');
   document.getElementById('btnVoice').disabled = true;
 
-  try {
-    const res = await fetchWithRetry(PROXY + '/tts-voicerss', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ text: fullScript, voice: selectedVoice })
-    });
-
-    if (res.status === 503) {
-      const data = await res.json();
-      if (data.fallback === 'webspeech') { playWebSpeech(data.text, data.lang); return; }
-    }
-
-    if (!res.ok) throw new Error('Voice failed: ' + res.status);
-
-    const source = res.headers.get('X-TTS-Source') || 'server';
-    console.log('[Voice] received from:', source);
-
-    audioBlob = await res.blob();
-    audioUrl  = URL.createObjectURL(audioBlob);
-    const player = document.getElementById('audioPlayer');
-    player.src   = audioUrl;
-    player.style.display = 'block';
-    document.getElementById('previewVoiceBtn').style.display = 'none';
-    document.getElementById('audio-result').style.display    = 'block';
-    player.play();
-
-  } catch(err) {
-    if (!navigator.onLine) {
-      document.getElementById('retry-voice').classList.add('show');
-    } else {
-      console.log('[Voice] Server failed, falling back to Web Speech:', err.message);
-      playWebSpeech(fullScript, 'en-US');
-    }
-  } finally {
+  if (!navigator.onLine) {
+    document.getElementById('retry-voice').classList.add('show');
+    window.addEventListener('online', generateVoice, {once:true});
     document.getElementById('load-voice').classList.remove('show');
     document.getElementById('btnVoice').disabled = false;
+    return;
   }
+
+  // Layer 1: ElevenLabs directly from browser (no server IP block)
+  const elevenKey = localStorage.getItem('eleven_key') || 'sk_2cddc1fbbed9d3fb5b18d0158cf22c240bc3c374b9cfbd30';
+  if (elevenKey) {
+    try {
+      const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${cfg.eleven}`, {
+        method:'POST',
+        headers:{'xi-api-key':elevenKey,'Content-Type':'application/json'},
+        body:JSON.stringify({text:fullScript.slice(0,500),model_id:'eleven_turbo_v2_5',voice_settings:{stability:0.5,similarity_boost:0.75}})
+      });
+      if (r.ok) {
+        audioBlob = await r.blob();
+        audioUrl  = URL.createObjectURL(audioBlob);
+        const player = document.getElementById('audioPlayer');
+        player.src = audioUrl; player.style.display='block';
+        document.getElementById('previewVoiceBtn').style.display='none';
+        document.getElementById('audio-result').style.display='block';
+        document.getElementById('load-voice').classList.remove('show');
+        document.getElementById('btnVoice').disabled=false;
+        player.play();
+        return;
+      } else if (r.status===401||r.status===422) {
+        localStorage.removeItem('eleven_key');
+      }
+    } catch(e) { console.log('[ElevenLabs]',e.message); }
+  }
+
+  // Layer 2: Server ElevenLabs (backend key)
+  try {
+    const r = await fetchWithRetry(PROXY + '/tts-voicerss', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:fullScript.slice(0,500), voice: selectedVoice})
+    });
+    if (r.ok) {
+      audioBlob = await r.blob();
+      audioUrl  = URL.createObjectURL(audioBlob);
+      const player = document.getElementById('audioPlayer');
+      player.src = audioUrl; player.style.display='block';
+      document.getElementById('previewVoiceBtn').style.display='none';
+      document.getElementById('audio-result').style.display='block';
+      document.getElementById('load-voice').classList.remove('show');
+      document.getElementById('btnVoice').disabled=false;
+      player.play();
+      return;
+    }
+  } catch(e) { console.log('[Server TTS]',e.message); }
+
+  // Layer 3: Puter.js (user's own account)
+  try {
+    if (typeof puter !== 'undefined') {
+      const audio = await Promise.race([
+        puter.ai.txt2speech(fullScript.slice(0,1000), {voice: cfg.puter}),
+        new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),20000))
+      ]);
+      if (audio) {
+        document.getElementById('audioPlayer').style.display='none';
+        document.getElementById('previewVoiceBtn').style.display='flex';
+        document.getElementById('audio-result').style.display='block';
+        window._puterAudio = audio;
+        audio.play();
+        document.getElementById('previewVoiceBtn').onclick = ()=>{ audio.currentTime=0; audio.play(); };
+        document.getElementById('load-voice').classList.remove('show');
+        document.getElementById('btnVoice').disabled=false;
+        return;
+      }
+    }
+  } catch(e) { console.log('[Puter TTS]',e.message); }
+
+  // Layer 4: Web Speech API
+  playWebSpeech(fullScript.slice(0,1000), 'en-US', isMale);
+  document.getElementById('load-voice').classList.remove('show');
+  document.getElementById('btnVoice').disabled=false;
 }
 
-function playWebSpeech(text, lang) {
+function playWebSpeech(text, lang, isMale) {
   if (!window.speechSynthesis) {
     const box = document.getElementById('err-voice');
     box.textContent = 'Voice not available. Try Chrome browser.';
@@ -754,39 +772,30 @@ function playWebSpeech(text, lang) {
     return;
   }
   window.speechSynthesis.cancel();
-  const utt  = new SpeechSynthesisUtterance(text);
-  utt.lang   = lang || 'en-US';
-  utt.rate   = 0.9;
-  utt.pitch  = 1.0;
-  utt.volume = 1.0;
-
-  // Pick matching voice — prefer male for male keys
-  const isMale  = !selectedVoice.endsWith('-f');
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang=lang||'en-US'; utt.rate=0.9; utt.pitch=1.0; utt.volume=1.0;
   const voices  = window.speechSynthesis.getVoices();
-  const langCode = (lang||'en-US').split('-')[0];
-  const matches = voices.filter(v => v.lang.startsWith(langCode));
-  const pick    = isMale
-    ? matches.find(v => /male|man|guy|david|mark|daniel/i.test(v.name)) || matches[0]
-    : matches.find(v => /female|woman|girl|zira|samantha|susan/i.test(v.name)) || matches[1] || matches[0];
+  const matches = voices.filter(v=>v.lang.startsWith((lang||'en-US').split('-')[0]));
+  const pick = isMale
+    ? matches.find(v=>/male|man|guy|david|mark|daniel/i.test(v.name))||matches[0]
+    : matches.find(v=>/female|woman|zira|samantha/i.test(v.name))||matches[1]||matches[0];
   if (pick) utt.voice = pick;
-
   window._currentUtterance = utt;
-  document.getElementById('audio-result').style.display   = 'block';
-  document.getElementById('audioPlayer').style.display    = 'none';
-  document.getElementById('previewVoiceBtn').style.display = 'flex';
+  document.getElementById('audio-result').style.display='block';
+  document.getElementById('audioPlayer').style.display='none';
+  document.getElementById('previewVoiceBtn').style.display='flex';
   window.speechSynthesis.speak(utt);
 }
 
 function previewVoice() {
-  if (!window._currentUtterance) return;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(window._currentUtterance);
+  if (window._puterAudio) { window._puterAudio.currentTime=0; window._puterAudio.play(); return; }
+  if (window._currentUtterance) { window.speechSynthesis.cancel(); window.speechSynthesis.speak(window._currentUtterance); }
 }
 
 function stopVoice() {
   window.speechSynthesis.cancel();
-  const p = document.getElementById('audioPlayer');
-  if (p) p.pause();
+  if (window._puterAudio) { window._puterAudio.pause(); window._puterAudio.currentTime=0; }
+  const p=document.getElementById('audioPlayer'); if(p) p.pause();
 }
 
 // ── STEP 4: Download ──────────────────────────────────────────
@@ -795,47 +804,68 @@ function goToDownload() { showSection('section-download'); setStep(4); }
 function downloadScript() {
   if (!scriptData) return;
   let text = scriptData.title + '\n\nHOOK: ' + scriptData.hook + '\n\n';
-  scriptData.scenes.forEach(s => { text += 'SCENE ' + s.scene_number + ' (' + s.duration_seconds + 's)\n' + s.narration + '\n\n'; });
-  if (scriptData.cta) text += 'CTA: ' + scriptData.cta;
-  const a = document.createElement('a');
-  a.href  = URL.createObjectURL(new Blob([text],{type:'text/plain'}));
-  a.download = 'script.txt'; a.click();
+  scriptData.scenes.forEach(s=>{ text+='SCENE '+s.scene_number+' ('+s.duration_seconds+'s)\n'+s.narration+'\n\n'; });
+  if (scriptData.cta) text+='CTA: '+scriptData.cta;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'}));
+  a.download='script.txt'; a.click();
 }
 
 function downloadAudio() {
   if (!audioBlob) { alert('Generate voice first in Step 3.'); return; }
-  const a = document.createElement('a');
-  a.href = audioUrl; a.download = 'narration.mp3'; a.click();
+  const a=document.createElement('a'); a.href=audioUrl; a.download='narration.mp3'; a.click();
 }
 
-function downloadVideos() {
-  const urls = Object.values(selectedVideos);
-  if (!urls.length) { alert('No videos selected.'); return; }
-  urls.forEach((url,i) => setTimeout(() => {
-    const a = document.createElement('a');
-    a.href = url; a.download = 'scene-'+(i+1)+'.mp4'; a.target='_blank'; a.click();
-  }, i*1000));
+async function downloadVideos() {
+  const entries = Object.entries(selectedVideos);
+  if (!entries.length) { alert('No videos selected.'); return; }
+  alert('Burning captions onto videos... Check Downloads folder in ~30s per clip.');
+  for (let i=0; i<entries.length; i++) {
+    const [sceneIdx,url] = entries[i];
+    const scene = scriptData && scriptData.scenes[parseInt(sceneIdx)];
+    const text  = scene ? scene.narration.slice(0,100) : '';
+    try {
+      const res = await fetch(PROXY+'/overlay',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({videoUrl:url,text,position:'bottom'})
+      });
+      if (!res.ok) throw new Error('overlay failed');
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(await res.blob());
+      a.download='scene-'+(i+1)+'-captioned.mp4'; a.click();
+    } catch(err) {
+      const a=document.createElement('a'); a.href=url; a.download='scene-'+(i+1)+'.mp4'; a.target='_blank'; a.click();
+    }
+    await new Promise(r=>setTimeout(r,2000));
+  }
 }
 
 function downloadAll() {
   downloadScript();
-  setTimeout(downloadAudio, 500);
-  setTimeout(downloadVideos, 1000);
+  setTimeout(downloadAudio,500);
+  setTimeout(downloadVideos,1000);
 }
 
 async function mergeAndDownload() {
   const videos = Object.values(selectedVideos);
   if (!videos.length) { alert('No videos selected.'); return; }
-  const btn=document.getElementById('btnMerge'), prog=document.getElementById('merge-progress'), fill=document.getElementById('merge-fill');
+  const btn=document.getElementById('btnMerge'),prog=document.getElementById('merge-progress'),fill=document.getElementById('merge-fill');
   btn.disabled=true; btn.textContent='⏳ Combining...';
   prog.style.display='block'; fill.style.width='30%';
   try {
     fill.style.width='60%';
-    const res = await fetchWithRetry(PROXY+'/merge',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({videos})});
+    const scenes = Object.entries(selectedVideos).map(([idx,url])=>({
+      videoUrl:url,
+      text: scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].narration.slice(0,100) : ''
+    }));
+    const res=await fetch(PROXY+'/merge-overlay',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({scenes})
+    });
     fill.style.width='90%';
     if (!res.ok) throw new Error((await res.json()).error||'Merge failed');
     const a=document.createElement('a');
-    a.href=URL.createObjectURL(await res.blob()); a.download='videokit-combined.mp4'; a.click();
+    a.href=URL.createObjectURL(await res.blob()); a.download='videokit-final.mp4'; a.click();
     fill.style.width='100%'; btn.textContent='✅ Downloaded!';
     setTimeout(()=>{btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';fill.style.width='0%';},3000);
   } catch(err) {
@@ -847,7 +877,7 @@ async function mergeAndDownload() {
 function startOver() {
   scriptData=null; selectedVideos={}; audioBlob=null; audioUrl=null; videosLoaded=false; chatHistory=[];
   document.getElementById('videoIdea').value='';
-  document.getElementById('chat-messages').innerHTML='<div class="chat-msg ai">Your script is ready! Tell me how you\'d like to customize it.</div>';
+  document.getElementById('chat-messages').innerHTML='<div class="chat-msg ai">Your script is ready! Tell me how to customize it.</div>';
   showSection('section-script'); setStep(1);
   document.getElementById('script-result').classList.remove('show');
 }
