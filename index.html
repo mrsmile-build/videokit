@@ -692,7 +692,7 @@ async function generateVoice() {
   }
 
   // Layer 1: ElevenLabs directly from browser (no server IP block)
-  const elevenKey = localStorage.getItem('eleven_key') || 'sk_2cddc1fbbed9d3fb5b18d0158cf22c240bc3c374b9cfbd30';
+  const elevenKey = localStorage.getItem('eleven_key');
   if (elevenKey) {
     try {
       const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${cfg.eleven}`, {
