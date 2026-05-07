@@ -758,10 +758,11 @@ async function generateVoice() {
     }
   } catch(e) { console.log('[Puter TTS]',e.message); }
 
-  // Layer 4: Web Speech API
-  playWebSpeech(fullScript.slice(0,1000), 'en-US', isMale);
+  // Layer 4: Show retry banner instead of wrong-gender fallback
+  document.getElementById('retry-voice').classList.add('show');
   document.getElementById('load-voice').classList.remove('show');
   document.getElementById('btnVoice').disabled=false;
+  window.addEventListener('online', generateVoice, {once:true});
 }
 
 function playWebSpeech(text, lang, isMale) {
