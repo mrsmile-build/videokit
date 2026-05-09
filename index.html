@@ -185,6 +185,20 @@
             <div class="style-btn" onclick="selectStyle(this)" data-style="documentary">🎥 Documentary</div>
           </div>
         </div>
+        <div class="form-group">
+          <label>Hook Mode</label>
+          <div class="style-grid">
+            <div class="style-btn active" onclick="selectHook(this)" data-hook="viral">🔥 Viral</div>
+            <div class="style-btn" onclick="selectHook(this)" data-hook="controversial">😱 Controversial</div>
+            <div class="style-btn" onclick="selectHook(this)" data-hook="emotional">💔 Emotional</div>
+            <div class="style-btn" onclick="selectHook(this)" data-hook="nigerian">🇳🇬 Nigerian Style</div>
+            <div class="style-btn" onclick="selectHook(this)" data-hook="storytelling">📖 Storytelling</div>
+            <div class="style-btn" onclick="selectHook(this)" data-hook="curiosity">🤔 Curiosity</div>
+            <div class="style-btn" onclick="selectHook(this)" data-hook="luxury">💎 Luxury</div>
+            <div class="style-btn" onclick="selectHook(this)" data-hook="fomo">⚡ FOMO</div>
+          </div>
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label>Platform</label>
@@ -243,6 +257,7 @@
         <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn" onclick="goToVideos()">Next: Find Videos →</button>
           <button class="btn btn-outline" onclick="generateScript()">🔄 Regenerate</button>
+          <button class="btn btn-outline" id="humanBtn" onclick="humanRewrite()">🧠 Make it Sound Human</button>
         </div>
       </div>
     </div>
@@ -425,6 +440,7 @@ let scriptData     = null;
 let selectedVideos = {};
 let selectedVoice  = 'en-us-m';
 let videoStyle     = 'educational';
+let hookMode       = 'viral';
 let audioBlob      = null;
 let audioUrl       = null;
 let chatHistory    = [];
@@ -462,6 +478,12 @@ function updateClipHint(secs) {
   const c = map[parseInt(secs)] || 6;
   const el = document.getElementById('clip-hint');
   if (el) el.textContent = '~' + c + ' clip options shown per scene';
+}
+
+function selectHook(el) {
+  document.querySelectorAll('[data-hook]').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  hookMode = el.dataset.hook;
 }
 
 function selectStyle(el) {
@@ -511,7 +533,18 @@ async function generateScript() {
     document.getElementById('load-script-step').textContent = steps[si++ % steps.length];
   }, 1500);
 
-  const prompt = `You are a viral video script writer. Write a ${videoStyle} video script for ${platform} about: "${idea}". The video is ${length} seconds long. Return ONLY a valid JSON object with: title (catchy), hook (max 15 words, scroll-stopping), scenes (array of exactly ${sceneCount} objects, each with: scene_number, narration (2-3 full sentences), visual_keyword (2-3 words for stock video search), duration_seconds), cta. No markdown. No extra text.`;
+  const hookInstructions = {
+    viral: 'Use a shocking scroll-stopping hook. Make every line punchy and shareable.',
+    controversial: 'Start with a bold controversial statement that challenges common beliefs.',
+    emotional: 'Use emotional storytelling. Connect with pain points and aspirations deeply.',
+    nigerian: 'Write in a relatable Nigerian style. Reference hustle culture, street wisdom. Can sprinkle Pidgin phrases naturally.',
+    storytelling: 'Open with "Let me tell you a story..." format. Build narrative tension.',
+    curiosity: "Use curiosity gaps. What most people don't know about... format.",
+    luxury: 'Aspirational and premium tone. Paint a picture of success and status.',
+    fomo: 'Create urgent fear of missing out. While you sleep, others are... format.'
+  };
+  const hookInstruction = hookInstructions[hookMode] || hookInstructions.viral;
+  const prompt = `You are a viral video script writer. Write a ${videoStyle} video script for ${platform} about: "${idea}". The video is ${length} seconds long. Hook style: ${hookInstruction} Return ONLY a valid JSON object with: title (catchy), hook (max 15 words, scroll-stopping), scenes (array of exactly ${sceneCount} objects, each with: scene_number, narration (2-3 full sentences), visual_keyword (2-3 words for stock video search), duration_seconds), cta. No markdown. No extra text.`;
 
   try {
     const res  = await fetchWithRetry(PROXY + '/generate', {
@@ -897,6 +930,41 @@ async function mergeAndDownload() {
   }
 }
 
+
+async function humanRewrite() {
+  if (!scriptData) return;
+  const btn = document.getElementById('humanBtn');
+  btn.disabled = true; btn.textContent = '⏳ Rewriting...';
+  try {
+    const res = await fetchWithRetry(PROXY + '/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'llama-3.3-70b-versatile', max_tokens:3000,
+        messages:[{role:'user', content:`Rewrite this video script to sound completely human and natural. 
+Rules:
+- Remove all AI clichés (game-changer, delve, unlock, leverage, it is important to note, in conclusion)
+- Use contractions (you're, it's, don't, we've)
+- Add natural pauses with "..." where a speaker would pause
+- Use conversational phrases like "Here's the thing", "And honestly", "Look", "So here's what happened"
+- Keep the same structure and message but make it sound like a real person talking
+- Preserve all scene_number, visual_keyword, duration_seconds values exactly
+
+Return ONLY the updated JSON object with same structure. No markdown.
+
+Script: ${JSON.stringify(scriptData)}`}]
+      })
+    });
+    const data = await res.json();
+    const raw  = data.choices[0].message.content.trim().replace(/\`\`\`json|\`\`\`/g,'').trim();
+    scriptData = JSON.parse(raw);
+    renderScript(scriptData);
+    btn.textContent = '✅ Sounds Human!';
+    setTimeout(()=>{ btn.textContent='🧠 Make it Sound Human'; btn.disabled=false; }, 2000);
+  } catch(e) {
+    btn.textContent = '🧠 Make it Sound Human'; btn.disabled=false;
+    alert('Rewrite failed: ' + e.message);
+  }
+}
 
 async function generateCaption(sd) {
   const platform = document.getElementById('platform').value;
