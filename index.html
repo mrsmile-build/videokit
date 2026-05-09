@@ -876,14 +876,18 @@ async function downloadVideos() {
   const entries = Object.entries(selectedVideos);
   if (!entries.length) { alert('No videos selected.'); return; }
   alert('Burning captions onto videos... Check Downloads folder in ~30s per clip.');
+  const hook = scriptData && scriptData.hook ? scriptData.hook : '';
   for (let i=0; i<entries.length; i++) {
     const [sceneIdx,url] = entries[i];
     const scene = scriptData && scriptData.scenes[parseInt(sceneIdx)];
-    const text  = scene ? scene.narration.slice(0,100) : '';
+    // First clip gets the hook as big title card
+    const isFirst = i === 0;
+    const text = isFirst && hook ? hook : (scene ? scene.narration.slice(0,100) : '');
+    const position = isFirst && hook ? 'title' : 'bottom';
     try {
       const res = await fetch(PROXY+'/overlay',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({videoUrl:url,text,position:'bottom'})
+        body:JSON.stringify({videoUrl:url,text,position})
       });
       if (!res.ok) throw new Error('overlay failed');
       const a=document.createElement('a');
@@ -971,8 +975,8 @@ async function generateCaption(sd) {
   try {
     const res = await fetchWithRetry(PROXY + '/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:150,
-        messages:[{role:'user',content:'Write ONE punchy viral '+platform+' caption for a video about: "'+sd.title+'". Max 3 lines, 3-5 hashtags, 1-2 emojis, create urgency. Return ONLY the caption.'}]})
+      body: JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:200,
+        messages:[{role:'user',content:'Write ONE viral '+platform+' caption for a video about: "'+sd.title+'". Platform rules: Instagram=3 lines max + 5 hashtags + 2 emojis. YouTube=catchy title + 2 line description + 3 tags. TikTok=1 punchy line + trending hashtags. Facebook=conversational 2-3 sentences + 2 hashtags. Return ONLY the caption/title text, nothing else.'}]})
     });
     const data = await res.json();
     const cap  = data.choices[0].message.content.trim();
@@ -1008,6 +1012,11 @@ async function analyzeUrl() {
     if (data.success && data.analysis) {
       info.innerHTML = '<strong style="color:var(--ink)">'+(data.title||'Video found')+'</strong><br>Suggested idea: <span style="color:var(--accent)">'+data.analysis.suggested_idea+'</span>';
       desc.style.display='none';
+      document.getElementById('url-result').style.display='block';
+      document.getElementById('url-loading').style.display='none';
+      // Auto-generate immediately
+      await useUrlAnalysis();
+      return;
     } else {
       info.innerHTML='<span style="color:#ffaa77">'+(data.message||'Paste description below')+'</span>';
       desc.style.display='block';
