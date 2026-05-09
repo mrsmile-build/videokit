@@ -147,6 +147,22 @@
     <div class="card">
       <div class="card-title">🎯 Step 1 — Write Your Script</div>
       <div class="card-sub">Describe your idea, customize in chat, or paste your own script.</div>
+      <div style="margin-bottom:12px">
+        <span class="paste-toggle" onclick="toggleUrlSection()">🔗 Inspire from a YouTube/Instagram video</span>
+        <div id="url-area" style="display:none;margin-top:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px">
+          <label>Paste Video URL</label>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <input type="url" id="videoUrl" placeholder="https://youtube.com/watch?v=...">
+            <button class="btn btn-sm" onclick="analyzeUrl()">Analyze</button>
+          </div>
+          <div id="url-loading" style="display:none;font-size:.82rem;color:var(--accent)">⏳ Analyzing video...</div>
+          <div id="url-result" style="display:none">
+            <div id="url-info" style="font-size:.82rem;color:var(--ink-soft);margin-bottom:8px"></div>
+            <textarea id="urlDescription" rows="3" placeholder="Describe the video if auto-fetch failed..." style="display:none;margin-bottom:8px"></textarea>
+            <button class="btn btn-sm" onclick="useUrlAnalysis()">✨ Create Similar Video</button>
+          </div>
+        </div>
+      </div>
       <span class="paste-toggle" onclick="togglePaste()">📋 Paste my own script instead</span>
       <div class="paste-area" id="paste-area">
         <label>Your Script</label>
@@ -205,6 +221,11 @@
       <div class="card">
         <div class="card-title">📝 Your Script</div>
         <div id="script-scenes"></div>
+        <div id="caption-box" style="display:none;margin-top:16px;background:rgba(255,92,0,.07);border:1px solid rgba(255,92,0,.25);border-radius:10px;padding:16px">
+          <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);margin-bottom:8px">📢 Your Viral Caption</div>
+          <div id="caption-text" style="font-size:.9rem;line-height:1.6;color:var(--ink);margin-bottom:10px"></div>
+          <button onclick="copyCaption()" class="btn btn-sm btn-outline">📋 Copy Caption</button>
+        </div>
         <div style="margin-top:20px">
           <div class="card-title" style="font-size:.9rem">💬 Customize Your Script</div>
           <div class="card-sub" style="margin-bottom:12px">Tell AI how to change any scene. e.g. "Scene 1 should welcome viewers to MrSmile Hustle"</div>
@@ -505,6 +526,7 @@ async function generateScript() {
     document.getElementById('script-result').classList.add('show');
     videosLoaded = false;
     setStep(1);
+    generateCaption(scriptData);
   } catch(err) {
     if (!navigator.onLine) {
       document.getElementById('retry-script').classList.add('show');
@@ -873,6 +895,75 @@ async function mergeAndDownload() {
     alert('Merge error: '+err.message);
     btn.textContent='🎬 Create Combined Video'; btn.disabled=false; prog.style.display='none';
   }
+}
+
+
+async function generateCaption(sd) {
+  const platform = document.getElementById('platform').value;
+  try {
+    const res = await fetchWithRetry(PROXY + '/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:150,
+        messages:[{role:'user',content:'Write ONE punchy viral '+platform+' caption for a video about: "'+sd.title+'". Max 3 lines, 3-5 hashtags, 1-2 emojis, create urgency. Return ONLY the caption.'}]})
+    });
+    const data = await res.json();
+    const cap  = data.choices[0].message.content.trim();
+    document.getElementById('caption-text').textContent = cap;
+    document.getElementById('caption-box').style.display = 'block';
+    window._caption = cap;
+  } catch(e) {}
+}
+
+function copyCaption() {
+  const t = window._caption || '';
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(()=>alert('Copied!'));
+  else { const el=document.createElement('textarea');el.value=t;document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);alert('Copied!'); }
+}
+
+function toggleUrlSection() {
+  const a = document.getElementById('url-area');
+  a.style.display = a.style.display==='none'?'block':'none';
+}
+
+let _urlData = null;
+async function analyzeUrl() {
+  const url = document.getElementById('videoUrl').value.trim();
+  if (!url) { alert('Paste a URL first'); return; }
+  document.getElementById('url-loading').style.display='block';
+  document.getElementById('url-result').style.display='none';
+  try {
+    const res  = await fetchWithRetry(PROXY+'/analyze-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    const data = await res.json();
+    _urlData   = data;
+    const info = document.getElementById('url-info');
+    const desc = document.getElementById('urlDescription');
+    if (data.success && data.analysis) {
+      info.innerHTML = '<strong style="color:var(--ink)">'+(data.title||'Video found')+'</strong><br>Suggested idea: <span style="color:var(--accent)">'+data.analysis.suggested_idea+'</span>';
+      desc.style.display='none';
+    } else {
+      info.innerHTML='<span style="color:#ffaa77">'+(data.message||'Paste description below')+'</span>';
+      desc.style.display='block';
+    }
+    document.getElementById('url-result').style.display='block';
+  } catch(e) {
+    document.getElementById('url-info').textContent='Error: '+e.message;
+    document.getElementById('url-result').style.display='block';
+  } finally { document.getElementById('url-loading').style.display='none'; }
+}
+
+async function useUrlAnalysis() {
+  let idea = '';
+  const desc = document.getElementById('urlDescription').value.trim();
+  if (_urlData && _urlData.analysis) {
+    idea = _urlData.analysis.suggested_idea || _urlData.analysis.topic;
+    const sm={'educational':'educational','motivational':'motivational','storytelling':'storytelling','listicle':'listicle'};
+    const se=document.querySelector('.style-btn[data-style="'+(sm[_urlData.analysis.style]||'educational')+'"]');
+    if(se) selectStyle(se);
+  } else if (desc) { idea=desc; }
+  else { alert('Describe the video first'); return; }
+  document.getElementById('videoIdea').value=idea;
+  document.getElementById('url-area').style.display='none';
+  await generateScript();
 }
 
 function startOver() {
