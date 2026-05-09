@@ -700,11 +700,12 @@ async function goToVideos() {
       html += '<div style="font-size:.82rem;color:var(--ink-soft);margin-bottom:10px">' + scene.narration.substring(0,80) + '...</div>';
       html += '<div class="video-grid">';
       clips.forEach((v,vi) => {
-        const url = (v.videos.medium&&v.videos.medium.url)||(v.videos.small&&v.videos.small.url)||(v.videos.large&&v.videos.large.url)||null;
+        const url  = (v.videos.medium&&v.videos.medium.url)||(v.videos.small&&v.videos.small.url)||(v.videos.large&&v.videos.large.url)||null;
+        const tiny = (v.videos.tiny&&v.videos.tiny.url)||(v.videos.small&&v.videos.small.url)||url;
         if (!url) return;
-        if (vi===0 && !selectedVideos[i]) selectedVideos[i] = url;
-        const isSel = selectedVideos[i] === url;
-        html += '<div class="video-thumb '+(isSel?'selected':'')+'" data-url="'+url+'" data-scene="'+i+'" onclick="selectVideoEl(this)">';
+        if (vi===0 && !selectedVideos[i]) selectedVideos[i] = {url, tiny};
+        const isSel = selectedVideos[i] && selectedVideos[i].url === url;
+        html += '<div class="video-thumb '+(isSel?'selected':'')+'" data-url="'+url+'" data-tiny="'+tiny+'" data-scene="'+i+'" onclick="selectVideoEl(this)">';
         html += '<video src="'+url+'" muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause()"></video>';
         html += '<div class="video-tag">S'+scene.scene_number+'</div>';
         html += '<div class="select-overlay">✓</div></div>';
@@ -728,11 +729,12 @@ async function goToVideos() {
 }
 
 function selectVideoEl(el) {
-  const url = el.getAttribute('data-url');
-  const si  = el.getAttribute('data-scene');
+  const url  = el.getAttribute('data-url');
+  const tiny = el.getAttribute('data-tiny') || url;
+  const si   = el.getAttribute('data-scene');
   el.closest('.video-grid').querySelectorAll('.video-thumb').forEach(t => t.classList.remove('selected'));
   el.classList.add('selected');
-  selectedVideos[si] = url;
+  selectedVideos[si] = {url, tiny};
 }
 
 // ── STEP 3: Voice ─────────────────────────────────────────────
@@ -890,7 +892,8 @@ async function downloadVideos() {
   alert('Burning captions onto videos... Check Downloads folder in ~30s per clip.');
   const hook = scriptData && scriptData.hook ? scriptData.hook : '';
   for (let i=0; i<entries.length; i++) {
-    const [sceneIdx,url] = entries[i];
+    const [sceneIdx,vObj] = entries[i];
+    const url = (vObj && vObj.url) ? vObj.url : (typeof vObj==='string'?vObj:null);
     const scene = scriptData && scriptData.scenes[parseInt(sceneIdx)];
     // First clip gets the hook as big title card
     const isFirst = i === 0;
@@ -922,12 +925,14 @@ async function mergeAndDownload() {
   const videos = Object.values(selectedVideos);
   if (!videos.length) { alert('No videos selected.'); return; }
   const btn=document.getElementById('btnMerge'),prog=document.getElementById('merge-progress'),fill=document.getElementById('merge-fill');
-  btn.disabled=true; btn.textContent='⏳ Combining...';
-  prog.style.display='block'; fill.style.width='30%';
+  const nScenes = Object.keys(selectedVideos).length;
+  btn.disabled=true; btn.textContent='⏳ Downloading '+nScenes+' clips...';
+  prog.style.display='block'; fill.style.width='10%';
   try {
-    fill.style.width='60%';
-    const scenes = Object.entries(selectedVideos).map(([idx,url])=>({
-      videoUrl:url,
+    fill.style.width='40%';
+    btn.textContent='⚙️ Merging clips...';
+    const scenes = Object.entries(selectedVideos).map(([idx,v])=>({
+      videoUrl: (v&&v.tiny) ? v.tiny : (typeof v==='string'?v:v.url),
       text: scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].narration.slice(0,100) : ''
     }));
     const res=await fetch(PROXY+'/merge-overlay',{
