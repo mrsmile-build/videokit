@@ -147,19 +147,31 @@
     <div class="card">
       <div class="card-title">🎯 Step 1 — Write Your Script</div>
       <div class="card-sub">Describe your idea, customize in chat, or paste your own script.</div>
-      <div style="margin-bottom:12px">
-        <span class="paste-toggle" onclick="toggleUrlSection()">🔗 Inspire from a YouTube/Instagram video</span>
-        <div id="url-area" style="display:none;margin-top:12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px">
-          <label>Paste Video URL</label>
-          <div style="display:flex;gap:8px;margin-bottom:10px">
-            <input type="url" id="videoUrl" placeholder="https://youtube.com/watch?v=...">
-            <button class="btn btn-sm" onclick="analyzeUrl()">Analyze</button>
+      <!-- Video inspiration section -->
+      <div style="margin-bottom:16px">
+        <div onclick="toggleUrlSection()" style="display:flex;align-items:center;gap:10px;background:rgba(255,92,0,.06);border:1px dashed rgba(255,92,0,.3);border-radius:10px;padding:12px 16px;cursor:pointer;transition:all .2s" onmouseenter="this.style.background='rgba(255,92,0,.1)'" onmouseleave="this.style.background='rgba(255,92,0,.06)'">
+          <span style="font-size:1.3rem">🔗</span>
+          <div>
+            <div style="font-size:.88rem;font-weight:600;color:var(--ink)">Inspire from a video</div>
+            <div style="font-size:.75rem;color:var(--ink-soft)">Paste YouTube, Instagram or TikTok URL → AI creates something similar</div>
           </div>
-          <div id="url-loading" style="display:none;font-size:.82rem;color:var(--accent)">⏳ Analyzing video...</div>
+          <span id="url-arrow" style="margin-left:auto;color:var(--accent);font-size:1.1rem">›</span>
+        </div>
+        <div id="url-area" style="display:none;margin-top:8px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px">
+          <label>Video URL</label>
+          <div style="display:flex;gap:8px;margin-bottom:4px">
+            <input type="url" id="videoUrl" placeholder="https://youtube.com/watch?v=... or youtu.be/... or instagram.com/...">
+            <button class="btn btn-sm" id="analyzeBtn" onclick="analyzeUrl()">🔍 Analyze</button>
+          </div>
+          <div style="font-size:.72rem;color:var(--ink-soft);margin-bottom:12px">Supports: YouTube, YouTube Shorts, Instagram (description only), TikTok (description only)</div>
+          <div id="url-loading" style="display:none;font-size:.85rem;color:var(--accent);padding:8px 0">⏳ Fetching video info...</div>
           <div id="url-result" style="display:none">
-            <div id="url-info" style="font-size:.82rem;color:var(--ink-soft);margin-bottom:8px"></div>
-            <textarea id="urlDescription" rows="3" placeholder="Describe the video if auto-fetch failed..." style="display:none;margin-bottom:8px"></textarea>
-            <button class="btn btn-sm" onclick="useUrlAnalysis()">✨ Create Similar Video</button>
+            <div id="url-info" style="font-size:.85rem;line-height:1.6;padding:10px;background:var(--surface);border-radius:8px;margin-bottom:10px"></div>
+            <div id="url-manual-section" style="display:none">
+              <label>Describe what the video is about</label>
+              <textarea id="urlDescription" rows="3" placeholder="e.g. The video talks about 5 ways to earn money online in Nigeria, starting with selling digital products..."></textarea>
+              <button class="btn btn-sm" onclick="useUrlAnalysis()" style="margin-top:8px;width:100%">✨ Create Similar Video</button>
+            </div>
           </div>
         </div>
       </div>
@@ -994,7 +1006,10 @@ function copyCaption() {
 
 function toggleUrlSection() {
   const a = document.getElementById('url-area');
-  a.style.display = a.style.display==='none'?'block':'none';
+  const arrow = document.getElementById('url-arrow');
+  const open = a.style.display==='none';
+  a.style.display = open?'block':'none';
+  if(arrow) arrow.textContent = open ? '⌄' : '›';
 }
 
 let _urlData = null;
@@ -1011,7 +1026,7 @@ async function analyzeUrl() {
     const desc = document.getElementById('urlDescription');
     if (data.success && data.analysis) {
       info.innerHTML = '<strong style="color:var(--ink)">'+(data.title||'Video found')+'</strong><br>Suggested idea: <span style="color:var(--accent)">'+data.analysis.suggested_idea+'</span>';
-      desc.style.display='none';
+      document.getElementById('url-manual-section').style.display='none';
       document.getElementById('url-result').style.display='block';
       document.getElementById('url-loading').style.display='none';
       // Auto-generate immediately
@@ -1019,7 +1034,7 @@ async function analyzeUrl() {
       return;
     } else {
       info.innerHTML='<span style="color:#ffaa77">'+(data.message||'Paste description below')+'</span>';
-      desc.style.display='block';
+      document.getElementById('url-manual-section').style.display='block';
     }
     document.getElementById('url-result').style.display='block';
   } catch(e) {
@@ -1030,7 +1045,7 @@ async function analyzeUrl() {
 
 async function useUrlAnalysis() {
   let idea = '';
-  const desc = document.getElementById('urlDescription').value.trim();
+  const desc = (document.getElementById('urlDescription')||{}).value||'';
   if (_urlData && _urlData.analysis) {
     idea = _urlData.analysis.suggested_idea || _urlData.analysis.topic;
     const sm={'educational':'educational','motivational':'motivational','storytelling':'storytelling','listicle':'listicle'};
