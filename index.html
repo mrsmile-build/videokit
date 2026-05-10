@@ -10,7 +10,14 @@
   <meta property="og:description" content="Type your idea. AI writes script, finds videos, adds voice. Ready to post in minutes. 100% free.">
   <meta property="og:url" content="https://mrsmile-build.github.io/videokit/">
   <link rel="canonical" href="https://mrsmile-build.github.io/videokit/">
-  <script src="https://js.puter.com/v2/"></script>
+  <script>
+  if('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('coi-serviceworker.js').then(r=>{
+      if(!crossOriginIsolated && !navigator.serviceWorker.controller) location.reload();
+    });
+  }
+</script>
+<script src="https://js.puter.com/v2/"></script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXFNM475V9"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXFNM475V9');</script>
   <style>
@@ -922,32 +929,85 @@ function downloadAll() {
 }
 
 async function mergeAndDownload() {
-  const videos = Object.values(selectedVideos);
-  if (!videos.length) { alert('No videos selected.'); return; }
-  const btn=document.getElementById('btnMerge'),prog=document.getElementById('merge-progress'),fill=document.getElementById('merge-fill');
-  const nScenes = Object.keys(selectedVideos).length;
-  btn.disabled=true; btn.textContent='⏳ Downloading '+nScenes+' clips...';
-  prog.style.display='block'; fill.style.width='10%';
+  const entries = Object.entries(selectedVideos);
+  if (!entries.length) { alert('No videos selected.'); return; }
+
+  const btn  = document.getElementById('btnMerge');
+  const prog = document.getElementById('merge-progress');
+  const fill = document.getElementById('merge-fill');
+
+  btn.disabled = true;
+  prog.style.display = 'block';
+  fill.style.width = '5%';
+
   try {
-    fill.style.width='40%';
-    btn.textContent='⚙️ Merging clips...';
-    const scenes = Object.entries(selectedVideos).map(([idx,v])=>({
-      videoUrl: (v&&v.tiny) ? v.tiny : (typeof v==='string'?v:v.url),
-      text: scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].narration.slice(0,100) : ''
-    }));
-    const res=await fetch(PROXY+'/merge-overlay',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({scenes})
+    // Load FFmpeg.wasm
+    btn.textContent = '⏳ Loading video engine...';
+    const { FFmpeg } = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.7/dist/esm/index.js');
+    const { fetchFile } = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js');
+
+    const ffmpeg = new FFmpeg();
+    ffmpeg.on('progress', ({progress}) => {
+      fill.style.width = Math.round(60 + progress * 35) + '%';
     });
-    fill.style.width='90%';
-    if (!res.ok) throw new Error((await res.json()).error||'Merge failed');
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(await res.blob()); a.download='videokit-final.mp4'; a.click();
-    fill.style.width='100%'; btn.textContent='✅ Downloaded!';
-    setTimeout(()=>{btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';fill.style.width='0%';},3000);
+
+    await ffmpeg.load({
+      coreURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+      wasmURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm'
+    });
+
+    fill.style.width = '20%';
+    btn.textContent = '⬇️ Downloading clips...';
+
+    // Fetch all clips in parallel
+    const clipEntries = entries.map(([idx, v]) => ({
+      idx,
+      url: (v && v.tiny) ? v.tiny : (typeof v === 'string' ? v : v.url),
+      narration: scriptData && scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].narration : ''
+    }));
+
+    await Promise.all(clipEntries.map(async (clip, i) => {
+      const data = await fetchFile(clip.url);
+      await ffmpeg.writeFile(`clip${i}.mp4`, data);
+    }));
+
+    fill.style.width = '50%';
+    btn.textContent = '⚙️ Merging...';
+
+    // Write concat list
+    const concatList = clipEntries.map((_, i) => `file clip${i}.mp4`).join('
+');
+    await ffmpeg.writeFile('list.txt', concatList);
+
+    // Merge with stream copy - instant
+    await ffmpeg.exec(['-f','concat','-safe','0','-i','list.txt','-c','copy','output.mp4']);
+
+    fill.style.width = '95%';
+    btn.textContent = '📦 Preparing download...';
+
+    // Read and download
+    const data = await ffmpeg.readFile('output.mp4');
+    const blob = new Blob([data.buffer], { type: 'video/mp4' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = 'videokit-final.mp4';
+    a.click();
+
+    fill.style.width = '100%';
+    btn.textContent  = '✅ Downloaded!';
+    setTimeout(() => {
+      btn.textContent       = '🎬 Create Combined Video';
+      btn.disabled          = false;
+      prog.style.display    = 'none';
+      fill.style.width      = '0%';
+    }, 3000);
+
   } catch(err) {
-    alert('Merge error: '+err.message);
-    btn.textContent='🎬 Create Combined Video'; btn.disabled=false; prog.style.display='none';
+    console.error('[Merge]', err);
+    alert('Error: ' + err.message + '\n\nTip: Use WiFi for first-time setup (30MB engine loads once then cached).');
+    btn.textContent    = '🎬 Create Combined Video';
+    btn.disabled       = false;
+    prog.style.display = 'none';
   }
 }
 
