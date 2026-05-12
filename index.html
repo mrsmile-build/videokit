@@ -919,143 +919,62 @@ function downloadAll() {
 }
 
 async function mergeAndDownload() {
-  const videos = Object.values(selectedVideos);
-  if (!videos.length) { alert('No videos selected.'); return; }
+  const entries = Object.entries(selectedVideos);
+  if (!entries.length) { alert('No videos selected.'); return; }
   const btn=document.getElementById('btnMerge'),prog=document.getElementById('merge-progress'),fill=document.getElementById('merge-fill');
-  btn.disabled=true; btn.textContent='⏳ Combining...';
-  prog.style.display='block'; fill.style.width='30%';
+  btn.disabled=true; prog.style.display='block'; fill.style.width='5%';
   try {
-    fill.style.width='60%';
-    const scenes = Object.entries(selectedVideos).map(([idx,url])=>({
-      videoUrl:url,
-      text: scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].narration.slice(0,100) : ''
-    }));
-    const res=await fetch(PROXY+'/merge-overlay',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({scenes})
+    btn.textContent='⏳ Loading video engine...';
+    const {FFmpeg} = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.7/dist/esm/index.js');
+    const {fetchFile} = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js');
+    const ffmpeg = new FFmpeg();
+    await ffmpeg.load({
+      coreURL:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+      wasmURL:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm'
     });
-    fill.style.width='90%';
-    if (!res.ok) throw new Error((await res.json()).error||'Merge failed');
+    fill.style.width='20%'; btn.textContent='⬇️ Downloading '+entries.length+' clips...';
+    const clips = entries.map(([idx,v])=>({
+      url: typeof v==='string'?v:(v.tiny||v.url),
+      text: scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration:''
+    }));
+    await Promise.all(clips.map(async(clip,i)=>{
+      const data=await fetchFile(clip.url);
+      await ffmpeg.writeFile('clip'+i+'.mp4',data);
+    }));
+    fill.style.width='60%'; btn.textContent='⚙️ Merging...';
+    const list=clips.map((_,i)=>'file clip'+i+'.mp4').join('\n');
+    await ffmpeg.writeFile('list.txt',new TextEncoder().encode(list));
+    await ffmpeg.exec(['-f','concat','-safe','0','-i','list.txt','-c','copy','out.mp4']);
+    fill.style.width='90%'; btn.textContent='📦 Saving...';
+    const data=await ffmpeg.readFile('out.mp4');
     const a=document.createElement('a');
-    a.href=URL.createObjectURL(await res.blob()); a.download='videokit-final.mp4'; a.click();
+    a.href=URL.createObjectURL(new Blob([data.buffer],{type:'video/mp4'}));
+    a.download='videokit-final.mp4'; a.click();
     fill.style.width='100%'; btn.textContent='✅ Downloaded!';
     setTimeout(()=>{btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';fill.style.width='0%';},3000);
   } catch(err) {
-    alert('Merge error: '+err.message);
-    btn.textContent='🎬 Create Combined Video'; btn.disabled=false; prog.style.display='none';
-  }
-}
-
-
-async function humanRewrite() {
-  if (!scriptData) return;
-  const btn = document.getElementById('humanBtn');
-  btn.disabled = true; btn.textContent = '⏳ Rewriting...';
-  try {
-    const res = await fetchWithRetry(PROXY + '/generate', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'llama-3.3-70b-versatile', max_tokens:3000,
-        messages:[{role:'user', content:`Rewrite this video script to sound completely human and natural. 
-Rules:
-- Remove all AI clichés (game-changer, delve, unlock, leverage, it is important to note, in conclusion)
-- Use contractions (you're, it's, don't, we've)
-- Add natural pauses with "..." where a speaker would pause
-- Use conversational phrases like "Here's the thing", "And honestly", "Look", "So here's what happened"
-- Keep the same structure and message but make it sound like a real person talking
-- Preserve all scene_number, visual_keyword, duration_seconds values exactly
-
-Return ONLY the updated JSON object with same structure. No markdown.
-
-Script: ${JSON.stringify(scriptData)}`}]
-      })
-    });
-    const data = await res.json();
-    const raw  = data.choices[0].message.content.trim().replace(/\`\`\`json|\`\`\`/g,'').trim();
-    scriptData = JSON.parse(raw);
-    renderScript(scriptData);
-    btn.textContent = '✅ Sounds Human!';
-    setTimeout(()=>{ btn.textContent='🧠 Make it Sound Human'; btn.disabled=false; }, 2000);
-  } catch(e) {
-    btn.textContent = '🧠 Make it Sound Human'; btn.disabled=false;
-    alert('Rewrite failed: ' + e.message);
-  }
-}
-
-async function generateCaption(sd) {
-  const platform = document.getElementById('platform').value;
-  try {
-    const res = await fetchWithRetry(PROXY + '/generate', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:200,
-        messages:[{role:'user',content:'Write ONE viral '+platform+' caption for a video about: "'+sd.title+'". Platform rules: Instagram=3 lines max + 5 hashtags + 2 emojis. YouTube=catchy title + 2 line description + 3 tags. TikTok=1 punchy line + trending hashtags. Facebook=conversational 2-3 sentences + 2 hashtags. Return ONLY the caption/title text, nothing else.'}]})
-    });
-    const data = await res.json();
-    const cap  = data.choices[0].message.content.trim();
-    document.getElementById('caption-text').textContent = cap;
-    document.getElementById('caption-box').style.display = 'block';
-    window._caption = cap;
-  } catch(e) {}
-}
-
-function copyCaption() {
-  const t = window._caption || '';
-  if (navigator.clipboard) navigator.clipboard.writeText(t).then(()=>alert('Copied!'));
-  else { const el=document.createElement('textarea');el.value=t;document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);alert('Copied!'); }
-}
-
-function toggleUrlSection() {
-  const a = document.getElementById('url-area');
-  const arrow = document.getElementById('url-arrow');
-  const open = a.style.display==='none';
-  a.style.display = open?'block':'none';
-  if(arrow) arrow.textContent = open ? '⌄' : '›';
-}
-
-let _urlData = null;
-async function analyzeUrl() {
-  const url = document.getElementById('videoUrl').value.trim();
-  if (!url) { alert('Paste a URL first'); return; }
-  document.getElementById('url-loading').style.display='block';
-  document.getElementById('url-result').style.display='none';
-  try {
-    const res  = await fetchWithRetry(PROXY+'/analyze-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
-    const data = await res.json();
-    _urlData   = data;
-    const info = document.getElementById('url-info');
-    const desc = document.getElementById('urlDescription');
-    if (data.success && data.analysis) {
-      info.innerHTML = '<strong style="color:var(--ink)">'+(data.title||'Video found')+'</strong><br>Suggested idea: <span style="color:var(--accent)">'+data.analysis.suggested_idea+'</span>';
-      document.getElementById('url-manual-section').style.display='none';
-      document.getElementById('url-result').style.display='block';
-      document.getElementById('url-loading').style.display='none';
-      // Auto-generate immediately
-      await useUrlAnalysis();
-      return;
-    } else {
-      info.innerHTML='<span style="color:#ffaa77">'+(data.message||'Paste description below')+'</span>';
-      document.getElementById('url-manual-section').style.display='block';
+    console.error('[Merge]',err);
+    btn.textContent='⏳ Server fallback...';
+    try {
+      fill.style.width='50%';
+      const res=await fetch(PROXY+'/merge-overlay',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({scenes:entries.map(([idx,v])=>({
+          videoUrl:typeof v==='string'?v:(v.tiny||v.url),
+          text:scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration.slice(0,100):''
+        }))})
+      });
+      fill.style.width='90%';
+      if(!res.ok) throw new Error('failed');
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(await res.blob()); a.download='videokit-final.mp4'; a.click();
+      fill.style.width='100%'; btn.textContent='✅ Downloaded!';
+      setTimeout(()=>{btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';fill.style.width='0%';},3000);
+    } catch(e2) {
+      alert('Merge failed. Connect to WiFi and try again.');
+      btn.textContent='🎬 Create Combined Video'; btn.disabled=false; prog.style.display='none';
     }
-    document.getElementById('url-result').style.display='block';
-  } catch(e) {
-    document.getElementById('url-info').textContent='Error: '+e.message;
-    document.getElementById('url-result').style.display='block';
-  } finally { document.getElementById('url-loading').style.display='none'; }
-}
-
-async function useUrlAnalysis() {
-  let idea = '';
-  const desc = (document.getElementById('urlDescription')||{}).value||'';
-  if (_urlData && _urlData.analysis) {
-    idea = _urlData.analysis.suggested_idea || _urlData.analysis.topic;
-    const sm={'educational':'educational','motivational':'motivational','storytelling':'storytelling','listicle':'listicle'};
-    const se=document.querySelector('.style-btn[data-style="'+(sm[_urlData.analysis.style]||'educational')+'"]');
-    if(se) selectStyle(se);
-  } else if (desc) { idea=desc; }
-  else { alert('Describe the video first'); return; }
-  document.getElementById('videoIdea').value=idea;
-  document.getElementById('url-area').style.display='none';
-  await generateScript();
+  }
 }
 
 function startOver() {
