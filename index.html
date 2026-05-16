@@ -977,6 +977,30 @@ async function mergeAndDownload() {
   }
 }
 
+async function humanRewrite() {
+  if (!scriptData) return;
+  const btn = document.getElementById('humanBtn');
+  btn.disabled=true; btn.textContent='⏳ Rewriting...';
+  try {
+    const res = await fetchWithRetry(PROXY+'/generate',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:3000,
+        messages:[{role:'user',content:`Rewrite this video script to sound completely human and natural. Remove all AI clichés (game-changer, delve, unlock, leverage). Use contractions (you're, it's, don't). Add natural pauses with "..." where a speaker would pause. Use phrases like "Here's the thing", "And honestly", "Look". Keep same structure and JSON format exactly. Return ONLY valid JSON.
+
+Script: ${JSON.stringify(scriptData)}`}]})
+    });
+    const data=await res.json();
+    const raw=data.choices[0].message.content.trim().replace(/\`\`\`json|\`\`\`/g,'').trim();
+    scriptData=JSON.parse(raw);
+    renderScript(scriptData);
+    btn.textContent='✅ Sounds Human!';
+    setTimeout(()=>{btn.textContent='🧠 Make it Sound Human';btn.disabled=false;},2000);
+  } catch(e) {
+    btn.textContent='🧠 Make it Sound Human'; btn.disabled=false;
+    alert('Rewrite failed: '+e.message);
+  }
+}
+
 function startOver() {
   scriptData=null; selectedVideos={}; audioBlob=null; audioUrl=null; videosLoaded=false; chatHistory=[];
   document.getElementById('videoIdea').value='';
