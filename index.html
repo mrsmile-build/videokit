@@ -977,6 +977,22 @@ async function mergeAndDownload() {
   }
 }
 
+async function generateCaption(sd) {
+  const platform = document.getElementById('platform').value;
+  try {
+    const res = await fetchWithRetry(PROXY+'/generate',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:200,
+        messages:[{role:'user',content:'Write ONE viral '+platform+' caption for a video about: "'+sd.title+'". Instagram=3 lines+5 hashtags+2 emojis. YouTube=catchy title+2 line description+3 tags. TikTok=1 punchy line+hashtags. Return ONLY the caption.'}]})
+    });
+    const data=await res.json();
+    const cap=data.choices[0].message.content.trim();
+    document.getElementById('caption-text').textContent=cap;
+    document.getElementById('caption-box').style.display='block';
+    window._caption=cap;
+  } catch(e){console.log('[Caption]',e.message);}
+}
+
 async function humanRewrite() {
   if (!scriptData) return;
   const btn = document.getElementById('humanBtn');
