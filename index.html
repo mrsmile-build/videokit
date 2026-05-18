@@ -989,7 +989,9 @@ async function mergeAndDownload() {
       const data=await fetchFile(clip.url);
       if(clip.type==='image'){
         await ff.writeFile('src'+i+'.jpg',data);
-        await ff.exec(['-loop','1','-i','src'+i+'.jpg','-c:v','libx264','-t',String(clip.dur),'-pix_fmt','yuv420p','-vf','scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2','-preset','ultrafast','clip'+i+'.mp4']);
+        console.log('[IMG] wrote image',i);
+        await ff.exec(['-loop','1','-i','src'+i+'.jpg','-t',String(clip.dur),'-c:v','libx264','-pix_fmt','yuv420p','-preset','ultrafast','-r','25','clip'+i+'.mp4']);
+        console.log('[IMG] converted to video',i);
       } else {
         await ff.writeFile('clip'+i+'.mp4',data);
       }
@@ -999,7 +1001,8 @@ async function mergeAndDownload() {
     await ff.writeFile('list.txt',new TextEncoder().encode(clips.map((_,i)=>'file clip'+i+'.mp4').join('\n')));
     await ff.exec(['-f','concat','-safe','0','-i','list.txt','-c','copy','merged.mp4']);
     let outFile='merged.mp4';
-    if(audioBlob&&audioUrl){
+    const hasAudio = audioBlob && audioUrl;
+    if(hasAudio){
       sp(78,'🎵 Adding your voice...');
       try{
         await ff.writeFile('aud.mp3',await fetchFile(audioUrl));
@@ -1011,7 +1014,7 @@ async function mergeAndDownload() {
     const out  = await ff.readFile(outFile);
     const blob = new Blob([out.buffer],{type:'video/mp4'});
     const a    = document.createElement('a');
-    a.href=URL.createObjectURL(blob); a.download='videokit-final.mp4'; a.click();
+    a.href=URL.createObjectURL(blob); a.download='videokit-'+Date.now()+'.mp4'; a.click();
     sp(100,'✅ Done! Check your downloads');
     setTimeout(()=>{btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';pct.style.display='none';fill.style.width='0%';},4000);
   } catch(err) {
@@ -1026,7 +1029,7 @@ async function mergeAndDownload() {
       sp(90,'📥 Downloading...');
       if(!res.ok) throw new Error('server failed');
       const a=document.createElement('a');
-      a.href=URL.createObjectURL(await res.blob()); a.download='videokit-final.mp4'; a.click();
+      a.href=URL.createObjectURL(await res.blob()); a.download='videokit-'+Date.now()+'.mp4'; a.click();
       sp(100,'✅ Done!');
       setTimeout(()=>{btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';pct.style.display='none';fill.style.width='0%';},3000);
     } catch(e2){
