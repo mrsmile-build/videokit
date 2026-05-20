@@ -1039,6 +1039,110 @@ async function mergeAndDownload() {
   }
 }
 
+
+async function generateCaption(sd) {
+  const platform = document.getElementById('platform').value;
+  try {
+    const res = await fetchWithRetry(PROXY+'/generate',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:200,
+        messages:[{role:'user',content:'Write ONE viral '+platform+' caption for: "'+sd.title+'". Instagram=3 lines+5 hashtags+2 emojis. YouTube=title+2 lines+3 tags. TikTok=1 punchy line+hashtags. Facebook=2-3 sentences+2 hashtags. Return ONLY the caption text.'}]})
+    });
+    const data=await res.json();
+    const cap=data.choices[0].message.content.trim();
+    const box=document.getElementById('caption-box');
+    const txt=document.getElementById('caption-text');
+    if(box&&txt){txt.textContent=cap;box.style.display='block';}
+    window._caption=cap;
+  } catch(e){console.log('[Caption]',e.message);}
+}
+
+function copyCaption() {
+  const t=window._caption||'';
+  if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>alert('Caption copied!'));}
+  else{const el=document.createElement('textarea');el.value=t;document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);alert('Copied!');}
+}
+
+async function humanRewrite() {
+  if(!scriptData)return;
+  const btn=document.getElementById('humanBtn');
+  if(!btn)return;
+  btn.disabled=true;btn.textContent='⏳ Rewriting...';
+  try{
+    const res=await fetchWithRetry(PROXY+'/generate',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:3000,
+        messages:[{role:'user',content:'Rewrite this video script to sound completely human. Remove AI cliches (game-changer,delve,unlock,leverage). Use contractions. Add natural pauses with "...". Use phrases like "Here's the thing","And honestly","Look". Keep exact JSON structure. Return ONLY valid JSON.
+
+Script: '+JSON.stringify(scriptData)}]})
+    });
+    const data=await res.json();
+    const raw=data.choices[0].message.content.trim().replace(/```json|```/g,'').trim();
+    scriptData=JSON.parse(raw);
+    renderScript(scriptData);
+    btn.textContent='✅ Sounds Human!';
+    setTimeout(()=>{btn.textContent='🧠 Make it Sound Human';btn.disabled=false;},2000);
+  }catch(e){btn.textContent='🧠 Make it Sound Human';btn.disabled=false;alert('Failed: '+e.message);}
+}
+
+function toggleUrlSection(){
+  const a=document.getElementById('url-area');
+  const arrow=document.getElementById('url-arrow');
+  if(!a)return;
+  const open=a.style.display==='none'||a.style.display==='';
+  a.style.display=open?'block':'none';
+  if(arrow)arrow.textContent=open?'⌄':'›';
+}
+
+let _urlData=null;
+async function analyzeUrl(){
+  const url=(document.getElementById('videoUrl')||{}).value||'';
+  if(!url){alert('Paste a URL first');return;}
+  const loading=document.getElementById('url-loading');
+  const result=document.getElementById('url-result');
+  const info=document.getElementById('url-info');
+  if(loading)loading.style.display='block';
+  if(result)result.style.display='none';
+  try{
+    const res=await fetchWithRetry(PROXY+'/analyze-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
+    const data=await res.json();
+    _urlData=data;
+    if(data.success&&data.analysis){
+      if(info)info.innerHTML='<strong style="color:var(--ink)">'+(data.title||'Video found')+'</strong><br>Idea: <span style="color:var(--accent)">'+data.analysis.suggested_idea+'</span>';
+      const ms=document.getElementById('url-manual-section');
+      if(ms)ms.style.display='none';
+      if(result)result.style.display='block';
+      if(loading)loading.style.display='none';
+      await useUrlAnalysis();return;
+    }else{
+      if(info)info.innerHTML='<span style="color:#ffaa77">'+(data.message||'Could not fetch. Describe the video below.')+'</span>';
+      const ms=document.getElementById('url-manual-section');
+      if(ms)ms.style.display='block';
+    }
+    if(result)result.style.display='block';
+  }catch(e){
+    if(info&&info)info.textContent='Error: '+e.message;
+    if(result)result.style.display='block';
+  }finally{if(loading)loading.style.display='none';}
+}
+
+async function useUrlAnalysis(){
+  const desc=((document.getElementById('urlDescription')||{}).value||'').trim();
+  let idea='';
+  if(_urlData&&_urlData.analysis){
+    idea=_urlData.analysis.suggested_idea||_urlData.analysis.topic;
+    const sm={educational:'educational',motivational:'motivational',storytelling:'storytelling',listicle:'listicle'};
+    const se=document.querySelector('.style-btn[data-style="'+(sm[_urlData.analysis.style]||'educational')+'"]');
+    if(se)selectStyle(se);
+  }else if(desc){idea=desc;}
+  else{alert('Describe the video first');return;}
+  const ideaEl=document.getElementById('videoIdea');
+  if(ideaEl)ideaEl.value=idea;
+  const ua=document.getElementById('url-area');
+  if(ua)ua.style.display='none';
+  await generateScript();
+}
+
 function startOver() {
   scriptData=null; selectedVideos={}; audioBlob=null; audioUrl=null; videosLoaded=false; chatHistory=[];
   document.getElementById('videoIdea').value='';
