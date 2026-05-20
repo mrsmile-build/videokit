@@ -211,22 +211,6 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Content Type</label>
-          <div class="style-grid">
-            <div class="style-btn active" onclick="selectContentType(this)" data-type="video">🎬 Stock Video</div>
-            <div class="style-btn" onclick="selectContentType(this)" data-type="image">🖼️ Image Slideshow</div>
-            <div class="style-btn" onclick="selectContentType(this)" data-type="textcard">📝 Text Cards</div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Aspect Ratio</label>
-          <div class="style-grid">
-            <div class="style-btn active" onclick="selectRatio(this)" data-ratio="9:16">📱 9:16 Reels/TikTok</div>
-            <div class="style-btn" onclick="selectRatio(this)" data-ratio="16:9">🖥️ 16:9 YouTube</div>
-            <div class="style-btn" onclick="selectRatio(this)" data-ratio="1:1">⬜ 1:1 Instagram</div>
-          </div>
-        </div>
         <div class="form-row">
           <div class="form-group">
             <label>Platform</label>
@@ -418,7 +402,6 @@
       <div class="progress-bar" id="merge-progress" style="display:none">
         <div class="progress-fill" id="merge-fill"></div>
       </div>
-      <div id="merge-pct" style="font-size:.78rem;color:var(--accent);margin:4px 0;display:none;text-align:center"></div>
       <button class="btn" id="btnMerge" onclick="mergeAndDownload()">🎬 Create Combined Video</button>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;justify-content:center">
@@ -468,8 +451,6 @@ const VOICE_CONFIG = {
 let scriptData     = null;
 let selectedVideos = {};
 let selectedVoice  = 'en-us-m';
-let contentType    = 'video';
-let aspectRatio    = '9:16';
 let videoStyle     = 'educational';
 let hookMode       = 'viral';
 let audioBlob      = null;
@@ -517,14 +498,6 @@ function selectHook(el) {
   hookMode = el.dataset.hook;
 }
 
-function selectContentType(el) {
-  document.querySelectorAll('[data-type]').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active'); contentType = el.dataset.type;
-}
-function selectRatio(el) {
-  document.querySelectorAll('[data-ratio]').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active'); aspectRatio = el.dataset.ratio;
-}
 function selectStyle(el) {
   document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
@@ -717,8 +690,7 @@ async function goToVideos() {
     for (let i = 0; i < scriptData.scenes.length; i++) {
       const scene = scriptData.scenes[i];
       document.getElementById('load-videos-step').textContent = 'Scene ' + scene.scene_number + ': "' + scene.visual_keyword + '"...';
-      const ep = contentType==='image'?'/images':'/videos';
-      const res   = await fetchWithRetry(PROXY + ep + '?q=' + encodeURIComponent(scene.visual_keyword) + '&duration=' + totalDuration);
+      const res   = await fetchWithRetry(PROXY + '/videos?q=' + encodeURIComponent(scene.visual_keyword) + '&duration=' + totalDuration);
       const data  = await res.json();
       const clips = data.hits || [];
       if (!clips.length) continue;
@@ -728,23 +700,12 @@ async function goToVideos() {
       html += '<div style="font-size:.82rem;color:var(--ink-soft);margin-bottom:10px">' + scene.narration.substring(0,80) + '...</div>';
       html += '<div class="video-grid">';
       clips.forEach((v,vi) => {
-        let url, thumb;
-        if (contentType==='image') {
-          url = v.largeImageURL||v.webformatURL; thumb = v.previewURL||v.webformatURL;
-        } else {
-          url = (v.videos&&v.videos.medium&&v.videos.medium.url)||(v.videos&&v.videos.small&&v.videos.small.url)||(v.videos&&v.videos.large&&v.videos.large.url)||null;
-          thumb = url;
-        }
+        const url = (v.videos.medium&&v.videos.medium.url)||(v.videos.small&&v.videos.small.url)||(v.videos.large&&v.videos.large.url)||null;
         if (!url) return;
-        if (vi===0 && !selectedVideos[i]) selectedVideos[i] = {url, thumb, type:contentType};
-        const stored = selectedVideos[i];
-        const isSel  = stored && stored.url===url;
-        html += '<div class="video-thumb '+(isSel?'selected':'')+'" data-url="'+url+'" data-thumb="'+(thumb||url)+'" data-ctype="'+contentType+'" data-scene="'+i+'" onclick="selectVideoEl(this)">';
-        if (contentType==='image') {
-          html += '<img src="'+(thumb||url)+'" style="width:100%;height:100%;object-fit:cover" loading="lazy">';
-        } else {
-          html += '<video src="'+url+'" muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause()"></video>';
-        }
+        if (vi===0 && !selectedVideos[i]) selectedVideos[i] = url;
+        const isSel = selectedVideos[i] === url;
+        html += '<div class="video-thumb '+(isSel?'selected':'')+'" data-url="'+url+'" data-scene="'+i+'" onclick="selectVideoEl(this)">';
+        html += '<video src="'+url+'" muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause()"></video>';
         html += '<div class="video-tag">S'+scene.scene_number+'</div>';
         html += '<div class="select-overlay">✓</div></div>';
       });
@@ -767,13 +728,11 @@ async function goToVideos() {
 }
 
 function selectVideoEl(el) {
-  const url   = el.getAttribute('data-url');
-  const thumb = el.getAttribute('data-thumb')||url;
-  const type  = el.getAttribute('data-ctype')||'video';
-  const si    = el.getAttribute('data-scene');
-  el.closest('.video-grid').querySelectorAll('.video-thumb').forEach(t=>t.classList.remove('selected'));
+  const url = el.getAttribute('data-url');
+  const si  = el.getAttribute('data-scene');
+  el.closest('.video-grid').querySelectorAll('.video-thumb').forEach(t => t.classList.remove('selected'));
   el.classList.add('selected');
-  selectedVideos[si] = {url, thumb, type};
+  selectedVideos[si] = url;
 }
 
 // ── STEP 3: Voice ─────────────────────────────────────────────
@@ -962,83 +921,61 @@ function downloadAll() {
 async function mergeAndDownload() {
   const entries = Object.entries(selectedVideos);
   if (!entries.length) { alert('No videos selected.'); return; }
-  const btn  = document.getElementById('btnMerge');
-  const prog = document.getElementById('merge-progress');
-  const fill = document.getElementById('merge-fill');
-  const pct  = document.getElementById('merge-pct');
-  const sp   = (p,m) => { fill.style.width=p+'%'; if(pct){pct.textContent=m+' — '+p+'%';pct.style.display='block';} btn.textContent=m; };
-  btn.disabled=true; prog.style.display='block'; sp(5,'⏳ Loading engine...');
+  const btn=document.getElementById('btnMerge'),prog=document.getElementById('merge-progress'),fill=document.getElementById('merge-fill');
+  btn.disabled=true; prog.style.display='block'; fill.style.width='5%';
   try {
+    btn.textContent='⏳ Loading video engine...';
     const {FFmpeg} = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.7/dist/esm/index.js');
     const {fetchFile} = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js');
-    const ff = new FFmpeg();
-    ff.on('progress',({progress})=>sp(Math.min(Math.round(65+progress*25),90),'⚙️ Encoding '+Math.round(progress*100)+'%'));
-    await ff.load({
+    const ffmpeg = new FFmpeg();
+    await ffmpeg.load({
       coreURL:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
       wasmURL:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm'
     });
-    sp(15,'⬇️ Downloading '+entries.length+' clips...');
+    fill.style.width='20%'; btn.textContent='⬇️ Downloading '+entries.length+' clips...';
     const clips = entries.map(([idx,v])=>({
-      url:   typeof v==='string'?v:(v.url||v),
-      type:  typeof v==='string'?'video':(v.type||'video'),
-      dur:   scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].duration_seconds||5:5,
-      text:  scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration:''
+      url: typeof v==='string'?v:(v.tiny||v.url),
+      text: scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration:''
     }));
-    let done=0;
     await Promise.all(clips.map(async(clip,i)=>{
       const data=await fetchFile(clip.url);
-      if(clip.type==='image'){
-        await ff.writeFile('src'+i+'.jpg',data);
-        console.log('[IMG] wrote image',i);
-        await ff.exec(['-loop','1','-i','src'+i+'.jpg','-t',String(clip.dur),'-c:v','libx264','-pix_fmt','yuv420p','-preset','ultrafast','-r','25','clip'+i+'.mp4']);
-        console.log('[IMG] converted to video',i);
-      } else {
-        await ff.writeFile('clip'+i+'.mp4',data);
-      }
-      done++; sp(15+Math.round((done/clips.length)*45),'⬇️ '+done+'/'+clips.length+' clips ready');
+      await ffmpeg.writeFile('clip'+i+'.mp4',data);
     }));
-    sp(62,'🔗 Merging clips...');
-    await ff.writeFile('list.txt',new TextEncoder().encode(clips.map((_,i)=>'file clip'+i+'.mp4').join('\n')));
-    await ff.exec(['-f','concat','-safe','0','-i','list.txt','-c','copy','merged.mp4']);
-    let outFile='merged.mp4';
-    const hasAudio = audioBlob && audioUrl;
-    if(hasAudio){
-      sp(78,'🎵 Adding your voice...');
-      try{
-        await ff.writeFile('aud.mp3',await fetchFile(audioUrl));
-        await ff.exec(['-i','merged.mp4','-i','aud.mp3','-c:v','copy','-c:a','aac','-shortest','final.mp4']);
-        outFile='final.mp4';
-      }catch(ae){console.log('[audio]',ae.message);}
-    }
-    sp(93,'📦 Preparing file...');
-    const out  = await ff.readFile(outFile);
-    const blob = new Blob([out.buffer],{type:'video/mp4'});
-    const a    = document.createElement('a');
-    a.href=URL.createObjectURL(blob); a.download='videokit-'+Date.now()+'.mp4'; a.click();
-    sp(100,'✅ Done! Check your downloads');
-    setTimeout(()=>{btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';pct.style.display='none';fill.style.width='0%';},4000);
+    fill.style.width='60%'; btn.textContent='⚙️ Merging...';
+    const list=clips.map((_,i)=>'file clip'+i+'.mp4').join('\n');
+    await ffmpeg.writeFile('list.txt',new TextEncoder().encode(list));
+    await ffmpeg.exec(['-f','concat','-safe','0','-i','list.txt','-c','copy','out.mp4']);
+    fill.style.width='90%'; btn.textContent='📦 Saving...';
+    const data=await ffmpeg.readFile('out.mp4');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([data.buffer],{type:'video/mp4'}));
+    a.download='videokit-final.mp4'; a.click();
+    fill.style.width='100%'; btn.textContent='✅ Downloaded!';
+    setTimeout(()=>{btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';fill.style.width='0%';},3000);
   } catch(err) {
-    console.error(err);
-    sp(40,'⏳ Trying server...');
+    console.error('[Merge]',err);
+    btn.textContent='⏳ Server fallback...';
     try {
-      const res=await fetch(PROXY+'/merge-overlay',{method:'POST',headers:{'Content-Type':'application/json'},
+      fill.style.width='50%';
+      const res=await fetch(PROXY+'/merge-overlay',{
+        method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({scenes:entries.map(([idx,v])=>({
-          videoUrl:typeof v==='string'?v:(v.url||v),
+          videoUrl:typeof v==='string'?v:(v.tiny||v.url),
           text:scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration.slice(0,100):''
-        }))})});
-      sp(90,'📥 Downloading...');
-      if(!res.ok) throw new Error('server failed');
+        }))})
+      });
+      fill.style.width='90%';
+      if(!res.ok) throw new Error('failed');
       const a=document.createElement('a');
-      a.href=URL.createObjectURL(await res.blob()); a.download='videokit-'+Date.now()+'.mp4'; a.click();
-      sp(100,'✅ Done!');
-      setTimeout(()=>{btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';pct.style.display='none';fill.style.width='0%';},3000);
-    } catch(e2){
-      alert('Merge failed. Use WiFi first time to load the 30MB video engine (cached forever after).');
-      btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';if(pct)pct.style.display='none';
+      a.href=URL.createObjectURL(await res.blob()); a.download='videokit-final.mp4'; a.click();
+      fill.style.width='100%'; btn.textContent='✅ Downloaded!';
+      setTimeout(()=>{btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';fill.style.width='0%';},3000);
+    } catch(e2) {
+      alert('Merge failed. Connect to WiFi and try again.');
+      btn.textContent='🎬 Create Combined Video'; btn.disabled=false; prog.style.display='none';
     }
   }
 }
-
 
 async function generateCaption(sd) {
   const platform = document.getElementById('platform').value;
@@ -1046,101 +983,38 @@ async function generateCaption(sd) {
     const res = await fetchWithRetry(PROXY+'/generate',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:200,
-        messages:[{role:'user',content:'Write ONE viral '+platform+' caption for: "'+sd.title+'". Instagram=3 lines+5 hashtags+2 emojis. YouTube=title+2 lines+3 tags. TikTok=1 punchy line+hashtags. Facebook=2-3 sentences+2 hashtags. Return ONLY the caption text.'}]})
+        messages:[{role:'user',content:'Write ONE viral '+platform+' caption for a video about: "'+sd.title+'". Instagram=3 lines+5 hashtags+2 emojis. YouTube=catchy title+2 line description+3 tags. TikTok=1 punchy line+hashtags. Return ONLY the caption.'}]})
     });
     const data=await res.json();
     const cap=data.choices[0].message.content.trim();
-    const box=document.getElementById('caption-box');
-    const txt=document.getElementById('caption-text');
-    if(box&&txt){txt.textContent=cap;box.style.display='block';}
+    document.getElementById('caption-text').textContent=cap;
+    document.getElementById('caption-box').style.display='block';
     window._caption=cap;
   } catch(e){console.log('[Caption]',e.message);}
 }
 
-function copyCaption() {
-  const t=window._caption||'';
-  if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>alert('Caption copied!'));}
-  else{const el=document.createElement('textarea');el.value=t;document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);alert('Copied!');}
-}
-
 async function humanRewrite() {
-  if(!scriptData)return;
-  const btn=document.getElementById('humanBtn');
-  if(!btn)return;
-  btn.disabled=true;btn.textContent='⏳ Rewriting...';
-  try{
-    const res=await fetchWithRetry(PROXY+'/generate',{
+  if (!scriptData) return;
+  const btn = document.getElementById('humanBtn');
+  btn.disabled=true; btn.textContent='⏳ Rewriting...';
+  try {
+    const res = await fetchWithRetry(PROXY+'/generate',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:3000,
-        messages:[{role:'user',content:'Rewrite this video script to sound completely human. Remove AI cliches (game-changer,delve,unlock,leverage). Use contractions. Add natural pauses with "...". Use phrases like "Here's the thing","And honestly","Look". Keep exact JSON structure. Return ONLY valid JSON.
+        messages:[{role:'user',content:`Rewrite this video script to sound completely human and natural. Remove all AI clichés (game-changer, delve, unlock, leverage). Use contractions (you're, it's, don't). Add natural pauses with "..." where a speaker would pause. Use phrases like "Here's the thing", "And honestly", "Look". Keep same structure and JSON format exactly. Return ONLY valid JSON.
 
-Script: '+JSON.stringify(scriptData)}]})
+Script: ${JSON.stringify(scriptData)}`}]})
     });
     const data=await res.json();
-    const raw=data.choices[0].message.content.trim().replace(/```json|```/g,'').trim();
+    const raw=data.choices[0].message.content.trim().replace(/\`\`\`json|\`\`\`/g,'').trim();
     scriptData=JSON.parse(raw);
     renderScript(scriptData);
     btn.textContent='✅ Sounds Human!';
     setTimeout(()=>{btn.textContent='🧠 Make it Sound Human';btn.disabled=false;},2000);
-  }catch(e){btn.textContent='🧠 Make it Sound Human';btn.disabled=false;alert('Failed: '+e.message);}
-}
-
-function toggleUrlSection(){
-  const a=document.getElementById('url-area');
-  const arrow=document.getElementById('url-arrow');
-  if(!a)return;
-  const open=a.style.display==='none'||a.style.display==='';
-  a.style.display=open?'block':'none';
-  if(arrow)arrow.textContent=open?'⌄':'›';
-}
-
-let _urlData=null;
-async function analyzeUrl(){
-  const url=(document.getElementById('videoUrl')||{}).value||'';
-  if(!url){alert('Paste a URL first');return;}
-  const loading=document.getElementById('url-loading');
-  const result=document.getElementById('url-result');
-  const info=document.getElementById('url-info');
-  if(loading)loading.style.display='block';
-  if(result)result.style.display='none';
-  try{
-    const res=await fetchWithRetry(PROXY+'/analyze-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});
-    const data=await res.json();
-    _urlData=data;
-    if(data.success&&data.analysis){
-      if(info)info.innerHTML='<strong style="color:var(--ink)">'+(data.title||'Video found')+'</strong><br>Idea: <span style="color:var(--accent)">'+data.analysis.suggested_idea+'</span>';
-      const ms=document.getElementById('url-manual-section');
-      if(ms)ms.style.display='none';
-      if(result)result.style.display='block';
-      if(loading)loading.style.display='none';
-      await useUrlAnalysis();return;
-    }else{
-      if(info)info.innerHTML='<span style="color:#ffaa77">'+(data.message||'Could not fetch. Describe the video below.')+'</span>';
-      const ms=document.getElementById('url-manual-section');
-      if(ms)ms.style.display='block';
-    }
-    if(result)result.style.display='block';
-  }catch(e){
-    if(info&&info)info.textContent='Error: '+e.message;
-    if(result)result.style.display='block';
-  }finally{if(loading)loading.style.display='none';}
-}
-
-async function useUrlAnalysis(){
-  const desc=((document.getElementById('urlDescription')||{}).value||'').trim();
-  let idea='';
-  if(_urlData&&_urlData.analysis){
-    idea=_urlData.analysis.suggested_idea||_urlData.analysis.topic;
-    const sm={educational:'educational',motivational:'motivational',storytelling:'storytelling',listicle:'listicle'};
-    const se=document.querySelector('.style-btn[data-style="'+(sm[_urlData.analysis.style]||'educational')+'"]');
-    if(se)selectStyle(se);
-  }else if(desc){idea=desc;}
-  else{alert('Describe the video first');return;}
-  const ideaEl=document.getElementById('videoIdea');
-  if(ideaEl)ideaEl.value=idea;
-  const ua=document.getElementById('url-area');
-  if(ua)ua.style.display='none';
-  await generateScript();
+  } catch(e) {
+    btn.textContent='🧠 Make it Sound Human'; btn.disabled=false;
+    alert('Rewrite failed: '+e.message);
+  }
 }
 
 function startOver() {
