@@ -859,6 +859,24 @@ async function goToVideos() {
       const loadEl   = document.getElementById("load-videos-step");
       if (loadEl) loadEl.textContent = "Scene " + scene.scene_number + ": searching for \"" + scene.visual_keyword + "\"...";
 
+      // Text card mode - no Pixabay needed
+      if (contentType === "textcard") {
+        const bgColors = ["#0a0a0a","#111111","#1a1a1a","#0d1117","#12111a"];
+        const bg = bgColors[i % bgColors.length];
+        const cardId = "textcard-" + i;
+        const isSelected = selectedVideos[i];
+        if (!isSelected) selectedVideos[i] = {url:"textcard://"+i, thumb:"", type:"textcard", text:scene.narration, bg};
+        let html2 = "<div style=\"margin-bottom:28px\">";
+        html2 += "<div style=\"font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:700;margin-bottom:8px\">Scene " + scene.scene_number + " — Text Card</div>";
+        html2 += "<div class=\"video-grid\">";
+        html2 += "<div class=\"video-thumb selected\" data-url=\"textcard://"+i+"\" data-ctype=\"textcard\" data-scene=\""+i+"\" style=\"aspect-ratio:9/16;max-width:160px\" onclick=\"selectVideoEl(this)\">";
+        html2 += "<div style=\"width:100%;height:100%;background:"+bg+";display:flex;align-items:center;justify-content:center;padding:12px;text-align:center;font-size:.75rem;line-height:1.5;color:#fff;font-family:Syne,sans-serif\">"+scene.narration.slice(0,80)+"...</div>";
+        html2 += "<div class=\"video-tag\">S"+scene.scene_number+"</div><div class=\"select-overlay\">✓</div></div>";
+        html2 += "</div></div>";
+        container.innerHTML += html2;
+        continue;
+      }
+
       const endpoint = contentType === "image" ? "/images" : "/videos";
       const res      = await fetchWithRetry(PROXY + endpoint + "?q=" + encodeURIComponent(scene.visual_keyword) + "&duration=" + totalDuration);
       const data     = await res.json();
@@ -1094,7 +1112,8 @@ async function mergeAndDownload() {
     if (audioBlob && audioUrl) {
       sp(78,"Adding voice...");
       try {
-        await ff.writeFile("aud.mp3", await fetchFile(audioUrl));
+        const audBuf = await audioBlob.arrayBuffer();
+        await ff.writeFile("aud.mp3", new Uint8Array(audBuf));
         await ff.exec(["-i","merged.mp4","-i","aud.mp3","-c:v","copy","-c:a","aac","-shortest","final.mp4"]);
         outFile = "final.mp4";
       } catch(ae) { console.log("[audio merge]", ae.message); }
