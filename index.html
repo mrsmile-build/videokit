@@ -1072,7 +1072,45 @@ async function mergeAndDownload() {
     btn.textContent = m;
   };
 
-  btn.disabled = true; prog.style.display = "block"; sp(5,"Loading engine...");
+  btn.disabled = true; prog.style.display = "block"; sp(5,"Preparing merge...");
+
+  const videoEntries = entries.filter(([idx,v]) => {
+    const url = typeof v==="string"?v:(v.url||"");
+    return !url.startsWith("textcard://");
+  });
+
+  if (!videoEntries.length) {
+    alert("No video or image clips selected.");
+    btn.disabled=false; prog.style.display="none"; return;
+  }
+
+  sp(10,"Connecting to server...");
+  try {
+    const res = await Promise.race([
+      fetch(PROXY + "/merge-overlay", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({scenes:videoEntries.map(([idx,v])=>({
+          videoUrl: typeof v==="string"?v:(v.url||v),
+          text: scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].narration.slice(0,100) : ""
+        }))})
+      }),
+      new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),30000))
+    ]);
+    if (res.ok) {
+      sp(90,"Downloading...");
+      const blob = await res.blob();
+      if (blob.size > 1000) {
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "videokit-" + Date.now() + ".mp4"; a.click();
+        sp(100,"Downloaded!");
+        setTimeout(()=>{btn.textContent="🎬 Create Combined Video";btn.disabled=false;prog.style.display="none";if(pct)pct.style.display="none";fill.style.width="0%";},3000);
+        return;
+      }
+    }
+  } catch(serverErr) { console.log("[Server]", serverErr.message); }
+
+  sp(15,"Server busy. Trying browser merge (needs WiFi first time)...");
 
   try {
     const {FFmpeg}    = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.7/dist/esm/index.js");
