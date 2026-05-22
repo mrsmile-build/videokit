@@ -1091,12 +1091,13 @@ async function mergeAndDownload() {
     let audioBase64 = null;
     if (audioBlob) {
       try {
-        const buf = await audioBlob.arrayBuffer();
-        const bytes = new Uint8Array(buf);
-        let binary = '';
-        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-        audioBase64 = btoa(binary);
-        sp(12,"Preparing audio + video...");
+        audioBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload  = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = () => reject(new Error('FileReader failed'));
+          reader.readAsDataURL(audioBlob);
+        });
+        sp(12,"Audio + video ready...");
       } catch(ae) { console.log('[audio b64]', ae.message); }
     }
 
