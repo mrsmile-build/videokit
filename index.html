@@ -1074,27 +1074,24 @@ async function mergeAndDownload() {
 
   btn.disabled = true; prog.style.display = "block"; sp(5,"Preparing merge...");
 
-  const videoEntries = entries.filter(([idx,v]) => {
-    const url = typeof v==="string"?v:(v.url||"");
-    return !url.startsWith("textcard://");
-  });
-
-  if (!videoEntries.length) {
-    alert("No video or image clips selected.");
-    btn.disabled=false; prog.style.display="none"; return;
-  }
-
   sp(10,"Connecting to server...");
   try {
+    const scenes = entries.map(([idx,v]) => {
+      const url = typeof v==="string"?v:(v.url||"");
+      const isCard = url.startsWith("textcard://");
+      return {
+        videoUrl: isCard ? null : url,
+        isTextCard: isCard,
+        text: scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].narration.slice(0,120) : "",
+        duration: scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].duration_seconds||5 : 5
+      };
+    });
     const res = await Promise.race([
       fetch(PROXY + "/merge-overlay", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({scenes:videoEntries.map(([idx,v])=>({
-          videoUrl: typeof v==="string"?v:(v.url||v),
-          text: scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].narration.slice(0,100) : ""
-        }))})
+        body: JSON.stringify({scenes, hasAudio: !!audioBlob})
       }),
-      new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),30000))
+      new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),60000))
     ]);
     if (res.ok) {
       sp(90,"Downloading...");
@@ -1103,14 +1100,21 @@ async function mergeAndDownload() {
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
         a.download = "videokit-" + Date.now() + ".mp4"; a.click();
-        sp(100,"Downloaded!");
+        sp(100,"Downloaded! Check your files.");
         setTimeout(()=>{btn.textContent="🎬 Create Combined Video";btn.disabled=false;prog.style.display="none";if(pct)pct.style.display="none";fill.style.width="0%";},3000);
         return;
+      } else {
+        throw new Error("Server returned empty file");
       }
+    } else {
+      throw new Error("Server error: " + res.status);
     }
-  } catch(serverErr) { console.log("[Server]", serverErr.message); }
+  } catch(serverErr) {
+    console.log("[Server]", serverErr.message);
+    sp(30,"Server failed: " + serverErr.message + ". Trying browser...");
+  }
 
-  sp(15,"Server busy. Trying browser merge (needs WiFi first time)...");
+  sp(15,"Loading browser engine (needs WiFi first time ~30MB)...");
 
   try {
     const {FFmpeg}    = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.7/dist/esm/index.js");
