@@ -1086,10 +1086,24 @@ async function mergeAndDownload() {
         duration: scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].duration_seconds||5 : 5
       };
     });
+
+    // Convert audio blob to base64 to send with merge request
+    let audioBase64 = null;
+    if (audioBlob) {
+      try {
+        const buf = await audioBlob.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        audioBase64 = btoa(binary);
+        sp(12,"Preparing audio + video...");
+      } catch(ae) { console.log('[audio b64]', ae.message); }
+    }
+
     const res = await Promise.race([
       fetch(PROXY + "/merge-overlay", {
         method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({scenes, hasAudio: !!audioBlob})
+        body: JSON.stringify({scenes, audioBase64})
       }),
       new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),60000))
     ]);
