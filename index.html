@@ -1213,7 +1213,7 @@ async function mergeAndDownload() {
         prog.style.display = "none"; if (pct) pct.style.display = "none"; fill.style.width = "0%";
       }, 3000);
     } catch(e2) {
-      alert("Merge needs WiFi first time to load the 30MB engine (cached forever after). Please connect to WiFi and try again.");
+      alert("Server merge failed. Check your internet and try again. Error: " + e2.message);
       btn.textContent = "🎬 Create Combined Video"; btn.disabled = false;
       prog.style.display = "none"; if (pct) pct.style.display = "none";
     }
