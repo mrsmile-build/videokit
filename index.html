@@ -1077,13 +1077,16 @@ async function mergeAndDownload() {
   sp(10,"Connecting to server...");
   try {
     const scenes = entries.map(([idx,v]) => {
-      const url = typeof v==="string"?v:(v.url||"");
-      const isCard = url.startsWith("textcard://");
+      const url   = typeof v==="string"?v:(v.url||"");
+      const ctype = typeof v==="string"?"video":(v.type||"video");
+      const isCard = url.startsWith("textcard://") || ctype==="textcard";
       return {
-        videoUrl: isCard ? null : url,
+        videoUrl:  isCard ? null : url,
         isTextCard: isCard,
+        isImage:   ctype==="image",
+        ctype:     ctype,
         text: scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].narration.slice(0,120) : "",
-        duration: scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].duration_seconds||5 : 5
+        duration: scriptData&&scriptData.scenes[parseInt(idx)] ? (scriptData.scenes[parseInt(idx)].duration_seconds||5) : 5
       };
     });
 
