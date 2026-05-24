@@ -9,7 +9,6 @@
   <meta property="og:description" content="Type your idea. AI writes script, finds videos, adds voice. Ready to post in minutes. 100% free.">
   <meta property="og:url" content="https://mrsmile-build.github.io/videokit/">
   <link rel="canonical" href="https://mrsmile-build.github.io/videokit/">
-  <script src="https://js.puter.com/v2/"></script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXFNM475V9"></script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-XXFNM475V9");</script>
   <style>
@@ -981,28 +980,7 @@ async function generateVoice() {
     }
   } catch(e) { console.log("[Server TTS]", e.message); }
 
-  // Layer 2: Puter.js
-  try {
-    if (typeof puter !== "undefined") {
-      const audio = await Promise.race([
-        puter.ai.txt2speech(fullScript.slice(0,1000), {voice:cfg.puter}),
-        new Promise((_,r) => setTimeout(() => r(new Error("timeout")), 20000))
-      ]);
-      if (audio) {
-        document.getElementById("audioPlayer").style.display = "none";
-        document.getElementById("previewVoiceBtn").style.display = "flex";
-        document.getElementById("audio-result").style.display = "block";
-        window._puterAudio = audio;
-        audio.play();
-        document.getElementById("previewVoiceBtn").onclick = () => { audio.currentTime=0; audio.play(); };
-        document.getElementById("load-voice").classList.remove("show");
-        document.getElementById("btnVoice").disabled = false;
-        return;
-      }
-    }
-  } catch(e) { console.log("[Puter TTS]", e.message); }
-
-  // Layer 3: Retry banner
+  // Layer 2: Retry banner
   document.getElementById("retry-voice").classList.add("show");
   document.getElementById("load-voice").classList.remove("show");
   document.getElementById("btnVoice").disabled = false;
@@ -1076,6 +1054,8 @@ async function mergeAndDownload() {
 
   sp(10,"Connecting to server...");
   try {
+    const totalLen  = parseInt(document.getElementById("videoLength").value) || 60;
+    const sceneDur  = Math.round(totalLen / entries.length);
     const scenes = entries.map(([idx,v]) => {
       const url   = typeof v==="string"?v:(v.url||"");
       const ctype = typeof v==="string"?"video":(v.type||"video");
@@ -1086,7 +1066,7 @@ async function mergeAndDownload() {
         isImage:   ctype==="image",
         ctype:     ctype,
         text: scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].narration.slice(0,120) : "",
-        duration: scriptData&&scriptData.scenes[parseInt(idx)] ? (scriptData.scenes[parseInt(idx)].duration_seconds||5) : 5
+        duration: sceneDur
       };
     });
 
