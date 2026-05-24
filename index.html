@@ -1037,166 +1037,91 @@ function downloadAll() {
 
 async function mergeAndDownload() {
   const entries = Object.entries(selectedVideos);
-  if (!entries.length) { alert("No videos selected."); return; }
+  if (!entries.length) { alert('No videos selected.'); return; }
 
-  const btn  = document.getElementById("btnMerge");
-  const prog = document.getElementById("merge-progress");
-  const fill = document.getElementById("merge-fill");
-  const pct  = document.getElementById("merge-pct");
-
-  const sp = (p, m) => {
-    fill.style.width = p + "%";
-    if (pct) { pct.textContent = m + " — " + p + "%"; pct.style.display = "block"; }
+  const btn  = document.getElementById('btnMerge');
+  const prog = document.getElementById('merge-progress');
+  const fill = document.getElementById('merge-fill');
+  const pct  = document.getElementById('merge-pct');
+  const sp   = (p,m) => {
+    fill.style.width = p+'%';
+    if(pct){pct.textContent=m+' — '+p+'%';pct.style.display='block';}
     btn.textContent = m;
   };
 
-  btn.disabled = true; prog.style.display = "block"; sp(5,"Preparing merge...");
+  btn.disabled=true; prog.style.display='block'; sp(5,'Preparing...');
 
-  sp(10,"Connecting to server...");
-  try {
-    const totalLen  = parseInt(document.getElementById("videoLength").value) || 60;
-    const sceneDur  = Math.round(totalLen / entries.length);
-    const scenes = entries.map(([idx,v]) => {
-      const url   = typeof v==="string"?v:(v.url||"");
-      const ctype = typeof v==="string"?"video":(v.type||"video");
-      const isCard = url.startsWith("textcard://") || ctype==="textcard";
-      return {
-        videoUrl:  isCard ? null : url,
-        isTextCard: isCard,
-        isImage:   ctype==="image",
-        ctype:     ctype,
-        text: scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].narration.slice(0,120) : "",
-        duration: sceneDur
-      };
-    });
+  const totalLen = parseInt(document.getElementById('videoLength').value)||60;
+  const sceneDur = Math.round(totalLen/entries.length);
+  const scenes   = entries.map(([idx,v])=>({
+    videoUrl:  (typeof v==='string'?v:(v.url||'')).startsWith('textcard://')?null:(typeof v==='string'?v:(v.url||'')),
+    isTextCard: (typeof v==='string'?v:(v.url||'')).startsWith('textcard://') || (v&&v.type==='textcard'),
+    isImage:   v&&v.type==='image',
+    ctype:     typeof v==='string'?'video':(v.type||'video'),
+    text: scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration.slice(0,120):'',
+    duration: sceneDur
+  }));
 
-    // Convert audio blob to base64 to send with merge request
-    let audioBase64 = null;
-    if (audioBlob) {
-      try {
-        audioBase64 = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload  = () => resolve(reader.result.split(',')[1]);
-          reader.onerror = () => reject(new Error('FileReader failed'));
-          reader.readAsDataURL(audioBlob);
-        });
-        sp(12,"Audio + video ready...");
-      } catch(ae) { console.log('[audio b64]', ae.message); }
-    }
-
-    const res = await Promise.race([
-      fetch(PROXY + "/merge-overlay", {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({scenes, audioBase64})
-      }),
-      new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")),60000))
-    ]);
-    if (res.ok) {
-      sp(90,"Downloading...");
-      const blob = await res.blob();
-      if (blob.size > 1000) {
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "videokit-" + Date.now() + ".mp4"; a.click();
-        sp(100,"Downloaded! Check your files.");
-        setTimeout(()=>{btn.textContent="🎬 Create Combined Video";btn.disabled=false;prog.style.display="none";if(pct)pct.style.display="none";fill.style.width="0%";},3000);
-        return;
-      } else {
-        throw new Error("Server returned empty file");
-      }
-    } else {
-      throw new Error("Server error: " + res.status);
-    }
-  } catch(serverErr) {
-    console.log("[Server]", serverErr.message);
-    sp(30,"Server failed: " + serverErr.message + ". Trying browser...");
+  // Convert audio to base64
+  let audioBase64=null;
+  if(audioBlob){
+    try{
+      audioBase64=await new Promise((resolve,reject)=>{
+        const reader=new FileReader();
+        reader.onload=()=>resolve(reader.result.split(',')[1]);
+        reader.onerror=()=>reject(new Error('FileReader failed'));
+        reader.readAsDataURL(audioBlob);
+      });
+      sp(8,'Audio ready...');
+    }catch(ae){console.log('[audio b64]',ae.message);}
   }
 
-  sp(15,"Loading browser engine (needs WiFi first time ~30MB)...");
-
   try {
-    const {FFmpeg}    = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.7/dist/esm/index.js");
-    const {fetchFile} = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js");
-    const ff = new FFmpeg();
-    ff.on("progress", ({progress}) => sp(Math.min(Math.round(65+progress*25),90),"Encoding " + Math.round(progress*100) + "%"));
-    await ff.load({
-      coreURL:"https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js",
-      wasmURL:"https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm"
+    // Start async job
+    sp(10,'Starting merge job...');
+    const startRes = await fetch(PROXY+'/merge-start',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({scenes,audioBase64})
+    });
+    if(!startRes.ok) throw new Error('Failed to start job');
+    const {jobId} = await startRes.json();
+    sp(12,'Job started — processing...');
+
+    // Poll for completion
+    const result = await new Promise((resolve,reject)=>{
+      const poll = async () => {
+        try{
+          const r = await fetch(PROXY+'/merge-status/'+jobId);
+          if(r.headers.get('content-type')||'').includes('video')) {
+            resolve(await r.blob());
+            return;
+          }
+          const data=await r.json();
+          if(data.status==='error'){reject(new Error(data.error||'Job failed'));return;}
+          if(data.status==='done'){
+            // Fetch the file
+            const fr=await fetch(PROXY+'/merge-status/'+jobId);
+            resolve(await fr.blob());
+            return;
+          }
+          sp(data.progress||12,'Processing clips... '+data.progress+'%');
+          setTimeout(poll,5000);
+        }catch(e){reject(e);}
+      };
+      poll();
     });
 
-    sp(15,"Downloading " + entries.length + " clips...");
-    const clips = entries.map(([idx,v]) => ({
-      url:  typeof v==="string" ? v : (v.url||v),
-      type: typeof v==="string" ? "video" : (v.type||"video"),
-      dur:  scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].duration_seconds||5 : 5
-    }));
-
-    let done = 0;
-    await Promise.all(clips.map(async (clip,i) => {
-      const data = await fetchFile(clip.url);
-      if (clip.type === "image") {
-        await ff.writeFile("src" + i + ".jpg", data);
-        await ff.exec(["-loop","1","-i","src"+i+".jpg","-t",String(clip.dur),"-c:v","libx264","-pix_fmt","yuv420p","-preset","ultrafast","-r","25","clip"+i+".mp4"]);
-      } else {
-        await ff.writeFile("clip" + i + ".mp4", data);
-      }
-      done++;
-      sp(15+Math.round((done/clips.length)*45),"Downloaded " + done + "/" + clips.length + " clips");
-    }));
-
-    sp(62,"Merging clips...");
-    await ff.writeFile("list.txt", new TextEncoder().encode(clips.map((_,i) => "file clip"+i+".mp4").join("\n")));
-    await ff.exec(["-f","concat","-safe","0","-i","list.txt","-c","copy","merged.mp4"]);
-
-    let outFile = "merged.mp4";
-    if (audioBlob && audioUrl) {
-      sp(78,"Adding voice...");
-      try {
-        const audBuf = await audioBlob.arrayBuffer();
-        await ff.writeFile("aud.mp3", new Uint8Array(audBuf));
-        await ff.exec(["-i","merged.mp4","-i","aud.mp3","-c:v","copy","-c:a","aac","-shortest","final.mp4"]);
-        outFile = "final.mp4";
-      } catch(ae) { console.log("[audio merge]", ae.message); }
-    }
-
-    sp(93,"Preparing download...");
-    const out  = await ff.readFile(outFile);
-    const blob = new Blob([out.buffer],{type:"video/mp4"});
-    const a    = document.createElement("a");
-    a.href     = URL.createObjectURL(blob);
-    a.download = "videokit-" + Date.now() + ".mp4"; a.click();
-
-    sp(100,"Downloaded! Check your files.");
-    setTimeout(() => {
-      btn.textContent = "🎬 Create Combined Video"; btn.disabled = false;
-      prog.style.display = "none"; if (pct) pct.style.display = "none"; fill.style.width = "0%";
-    }, 4000);
+    sp(98,'Downloading...');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(result);
+    a.download='videokit-'+Date.now()+'.mp4'; a.click();
+    sp(100,'Downloaded!');
+    setTimeout(()=>{btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';if(pct)pct.style.display='none';fill.style.width='0%';},4000);
 
   } catch(err) {
-    console.error("[Merge]", err);
-    sp(40,"Trying server...");
-    try {
-      const res = await fetch(PROXY + "/merge-overlay", {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({scenes:entries.map(([idx,v]) => ({
-          videoUrl: typeof v==="string"?v:(v.url||v),
-          text: scriptData&&scriptData.scenes[parseInt(idx)] ? scriptData.scenes[parseInt(idx)].narration.slice(0,100) : ""
-        }))})
-      });
-      sp(90,"Downloading from server...");
-      if (!res.ok) throw new Error("server failed");
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(await res.blob()); a.download = "videokit-" + Date.now() + ".mp4"; a.click();
-      sp(100,"Downloaded!");
-      setTimeout(() => {
-        btn.textContent = "🎬 Create Combined Video"; btn.disabled = false;
-        prog.style.display = "none"; if (pct) pct.style.display = "none"; fill.style.width = "0%";
-      }, 3000);
-    } catch(e2) {
-      alert("Server merge failed. Check your internet and try again. Error: " + e2.message);
-      btn.textContent = "🎬 Create Combined Video"; btn.disabled = false;
-      prog.style.display = "none"; if (pct) pct.style.display = "none";
-    }
+    alert('Merge failed: '+err.message);
+    btn.textContent='🎬 Create Combined Video';btn.disabled=false;
+    prog.style.display='none';if(pct)pct.style.display='none';
   }
 }
 
