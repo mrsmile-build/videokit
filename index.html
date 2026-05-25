@@ -1092,7 +1092,7 @@ async function mergeAndDownload() {
       const poll = async () => {
         try{
           const r = await fetch(PROXY+'/merge-status/'+jobId);
-          if(r.headers.get('content-type')||'').includes('video')) {
+          const ct = r.headers.get('content-type')||''; if(ct.includes('video')) {
             resolve(await r.blob());
             return;
           }
