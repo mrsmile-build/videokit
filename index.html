@@ -964,7 +964,7 @@ async function generateVoice() {
   try {
     const r = await fetchWithRetry(PROXY + "/tts-voicerss", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({text:fullScript.slice(0,1000), voice:selectedVoice})
+      body: JSON.stringify({text:fullScript, voice:selectedVoice})
     });
     if (r.ok) {
       audioBlob = await r.blob();
