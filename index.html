@@ -1043,85 +1043,121 @@ async function mergeAndDownload() {
   const prog = document.getElementById('merge-progress');
   const fill = document.getElementById('merge-fill');
   const pct  = document.getElementById('merge-pct');
-  const sp   = (p,m) => {
-    fill.style.width = p+'%';
-    if(pct){pct.textContent=m+' — '+p+'%';pct.style.display='block';}
-    btn.textContent = m;
-  };
+  const sp   = (p,m) => { fill.style.width=p+'%'; if(pct){pct.textContent=m+' — '+p+'%';pct.style.display='block';} btn.textContent=m; };
 
-  btn.disabled=true; prog.style.display='block'; sp(5,'Preparing...');
+  btn.disabled=true; prog.style.display='block'; sp(2,'Setting up...');
 
   const totalLen = parseInt(document.getElementById('videoLength').value)||60;
-  const sceneDur = Math.round(totalLen/entries.length);
-  const scenes   = entries.map(([idx,v])=>({
-    videoUrl:  (typeof v==='string'?v:(v.url||'')).startsWith('textcard://')?null:(typeof v==='string'?v:(v.url||'')),
-    isTextCard: (typeof v==='string'?v:(v.url||'')).startsWith('textcard://') || (v&&v.type==='textcard'),
-    isImage:   v&&v.type==='image',
-    ctype:     typeof v==='string'?'video':(v.type||'video'),
-    text: scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration.slice(0,120):'',
-    duration: sceneDur
-  }));
-
-  // Convert audio to base64
-  let audioBase64=null;
-  if(audioBlob){
-    try{
-      audioBase64=await new Promise((resolve,reject)=>{
-        const reader=new FileReader();
-        reader.onload=()=>resolve(reader.result.split(',')[1]);
-        reader.onerror=()=>reject(new Error('FileReader failed'));
-        reader.readAsDataURL(audioBlob);
-      });
-      sp(8,'Audio ready...');
-    }catch(ae){console.log('[audio b64]',ae.message);}
-  }
+  const sceneDur = Math.round(totalLen / entries.length);
 
   try {
-    // Start async job
-    sp(10,'Starting merge job...');
-    const startRes = await fetch(PROXY+'/merge-start',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({scenes,audioBase64})
-    });
-    if(!startRes.ok) throw new Error('Failed to start job');
-    const {jobId} = await startRes.json();
-    sp(12,'Job started — processing...');
+    // Create canvas
+    const canvas  = document.createElement('canvas');
+    canvas.width  = 720; canvas.height = 1280;
+    const ctx     = canvas.getContext('2d');
 
-    // Poll for completion
-    const result = await new Promise((resolve,reject)=>{
-      const poll = async () => {
-        try{
-          const r = await fetch(PROXY+'/merge-status/'+jobId);
-          const ct = r.headers.get('content-type')||''; if(ct.includes('video')) {
-            resolve(await r.blob());
-            return;
-          }
-          const data=await r.json();
-          if(data.status==='error'){reject(new Error(data.error||'Job failed'));return;}
-          if(data.status==='done'){
-            // Fetch the file
-            const fr=await fetch(PROXY+'/merge-status/'+jobId);
-            resolve(await fr.blob());
-            return;
-          }
-          sp(data.progress||12,'Processing clips... '+data.progress+'%');
-          setTimeout(poll,5000);
-        }catch(e){reject(e);}
-      };
-      poll();
-    });
+    // Setup audio
+    const audioCtx  = new (window.AudioContext||window.webkitAudioContext)();
+    const audioDest = audioCtx.createMediaStreamDestination();
+    let audioSource = null;
 
-    sp(98,'Downloading...');
+    if (audioBlob) {
+      const arrBuf  = await audioBlob.arrayBuffer();
+      const decoded = await audioCtx.decodeAudioData(arrBuf);
+      audioSource   = audioCtx.createBufferSource();
+      audioSource.buffer = decoded;
+      audioSource.connect(audioDest);
+    }
+
+    // Combine canvas + audio streams
+    const videoStream  = canvas.captureStream(30);
+    const audioTracks  = audioDest.stream.getAudioTracks();
+    audioTracks.forEach(t => videoStream.addTrack(t));
+
+    // Start recorder
+    const recorder = new MediaRecorder(videoStream, { mimeType: 'video/webm;codecs=vp8,opus' });
+    const chunks   = [];
+    recorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
+    recorder.start(100);
+
+    if (audioSource) audioSource.start(0);
+    sp(10,'Recording started...');
+
+    // Play each scene on canvas
+    for (let ei = 0; ei < entries.length; ei++) {
+      const [idx, v] = entries[ei];
+      const url   = typeof v==='string'?v:(v.url||'');
+      const ctype = typeof v==='string'?'video':(v.type||'video');
+      const dur   = sceneDur * 1000;
+      const pctV  = Math.round(10 + (ei/entries.length)*80);
+      sp(pctV, 'Scene '+(ei+1)+'/'+entries.length+'...');
+
+      if (url.startsWith('textcard://') || ctype==='textcard') {
+        // Draw text card
+        const text = scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration:'';
+        const start = Date.now();
+        while (Date.now()-start < dur) {
+          ctx.fillStyle='#0a0a0a'; ctx.fillRect(0,0,720,1280);
+          ctx.fillStyle='#ff5c00'; ctx.fillRect(0,560,720,160);
+          ctx.fillStyle='white'; ctx.font='bold 32px sans-serif'; ctx.textAlign='center';
+          const words=text.split(' '); let line=''; let y=590;
+          for(const w of words){
+            const test=line+w+' ';
+            if(ctx.measureText(test).width>680&&line){
+              ctx.fillText(line,360,y); line=w+' '; y+=44;
+            } else { line=test; }
+          }
+          ctx.fillText(line,360,y);
+          await new Promise(r=>setTimeout(r,33));
+        }
+      } else if (ctype==='image') {
+        // Draw image
+        const img = new Image();
+        img.crossOrigin='anonymous';
+        await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=url; });
+        const start=Date.now();
+        while(Date.now()-start<dur){
+          ctx.fillStyle='#000'; ctx.fillRect(0,0,720,1280);
+          const scale=Math.min(720/img.width,1280/img.height);
+          const w=img.width*scale,h=img.height*scale;
+          ctx.drawImage(img,(720-w)/2,(1280-h)/2,w,h);
+          await new Promise(r=>setTimeout(r,33));
+        }
+      } else {
+        // Play video
+        const vid=document.createElement('video');
+        vid.crossOrigin='anonymous'; vid.muted=true; vid.src=url;
+        await new Promise((res,rej)=>{vid.onloadeddata=res;vid.onerror=rej;vid.load();});
+        vid.play();
+        const start=Date.now();
+        while(Date.now()-start<dur){
+          ctx.fillStyle='#000'; ctx.fillRect(0,0,720,1280);
+          const scale=Math.min(720/vid.videoWidth,1280/vid.videoHeight);
+          const w=vid.videoWidth*scale,h=vid.videoHeight*scale;
+          ctx.drawImage(vid,(720-w)/2,(1280-h)/2,w,h);
+          await new Promise(r=>setTimeout(r,33));
+        }
+        vid.pause();
+      }
+    }
+
+    // Stop recording
+    sp(92,'Finalizing...');
+    recorder.stop();
+    if(audioSource) try{audioSource.stop();}catch(e){}
+    audioCtx.close();
+
+    await new Promise(r=>{recorder.onstop=r;});
+    const blob = new Blob(chunks,{type:'video/webm'});
     const a=document.createElement('a');
-    a.href=URL.createObjectURL(result);
-    a.download='videokit-'+Date.now()+'.mp4'; a.click();
+    a.href=URL.createObjectURL(blob); a.download='videokit-'+Date.now()+'.webm'; a.click();
     sp(100,'Downloaded!');
     setTimeout(()=>{btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';if(pct)pct.style.display='none';fill.style.width='0%';},4000);
 
   } catch(err) {
+    console.error('[Merge]',err);
     alert('Merge failed: '+err.message);
-    btn.textContent='🎬 Create Combined Video';btn.disabled=false;
-    prog.style.display='none';if(pct)pct.style.display='none';
+    btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';if(pct)pct.style.display='none';
   }
 }
 
