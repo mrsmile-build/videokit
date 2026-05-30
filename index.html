@@ -316,6 +316,18 @@
     <div class="card">
       <div class="card-title">🎬 Step 2 — Choose Your Clips</div>
       <div class="card-sub" id="video-card-sub">Pick the best clip for each scene.</div>
+      <!-- User upload own media -->
+      <div style="margin-bottom:16px;padding:12px;background:rgba(255,92,0,.06);border:1px dashed rgba(255,92,0,.3);border-radius:10px">
+        <div style="font-size:.85rem;font-weight:600;margin-bottom:8px">📁 Use your own image or video</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="file" id="userMediaFile" accept="image/*,video/*" style="display:none" onchange="handleUserUpload(this)">
+          <select id="uploadSceneIdx" style="flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:.85rem">
+            <option value="">Select scene...</option>
+          </select>
+          <button class="btn btn-sm btn-outline" onclick="document.getElementById('userMediaFile').click()">📤 Upload</button>
+        </div>
+      </div>
+
       <div class="loading" id="load-videos">
         <div class="spinner"></div>
         <p>Finding matching content...</p>
@@ -1159,6 +1171,35 @@ async function mergeAndDownload() {
     alert('Merge failed: '+err.message);
     btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';if(pct)pct.style.display='none';
   }
+}
+
+function handleUserUpload(input) {
+  if (!input.files || !input.files[0]) return;
+  const file    = input.files[0];
+  const sceneEl = document.getElementById('uploadSceneIdx');
+  const idx     = sceneEl.value;
+  if (!idx && idx !== '0') { alert('Please select which scene to use this for'); return; }
+  const url   = URL.createObjectURL(file);
+  const ctype = file.type.startsWith('video') ? 'video' : 'image';
+  selectedVideos[idx] = {url, thumb:url, type:ctype};
+  // Update UI to show selected
+  const thumbEl = document.querySelector('[data-scene="'+idx+'"]');
+  if(thumbEl) {
+    thumbEl.closest('.video-grid').querySelectorAll('.video-thumb').forEach(t=>t.classList.remove('selected'));
+    thumbEl.classList.add('selected');
+  }
+  alert('Your '+(ctype==='video'?'video':'image')+' set for Scene '+(parseInt(idx)+1)+'!');
+  input.value='';
+}
+
+function populateSceneSelect() {
+  if (!scriptData) return;
+  const sel = document.getElementById('uploadSceneIdx');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select scene...</option>';
+  scriptData.scenes.forEach((s,i)=>{
+    sel.innerHTML += '<option value="'+i+'">Scene '+s.scene_number+' — '+s.visual_keyword+'</option>';
+  });
 }
 
 function startOver() {
