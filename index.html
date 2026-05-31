@@ -1127,12 +1127,28 @@ async function mergeAndDownload() {
         const img = new Image();
         img.crossOrigin='anonymous';
         await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=url; });
+        const imgText = scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration.slice(0,100):'';
         const start=Date.now();
         while(Date.now()-start<dur){
           ctx.fillStyle='#000'; ctx.fillRect(0,0,720,1280);
           const scale=Math.min(720/img.width,1280/img.height);
           const w=img.width*scale,h=img.height*scale;
           ctx.drawImage(img,(720-w)/2,(1280-h)/2,w,h);
+          // Text overlay
+          if(imgText){
+            ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,1100,720,180);
+            ctx.fillStyle='white'; ctx.font='bold 28px sans-serif'; ctx.textAlign='center';
+            const words=imgText.split(' '); let line=''; let y=1140;
+            for(const word of words){
+              const test=line+word+' ';
+              if(ctx.measureText(test).width>680&&line){ctx.fillText(line,360,y);line=word+' ';y+=38;}
+              else line=test;
+            }
+            ctx.fillText(line.trim(),360,y);
+          }
+          // VideoKit watermark
+          ctx.fillStyle='rgba(255,92,0,0.8)'; ctx.font='bold 20px sans-serif'; ctx.textAlign='right';
+          ctx.fillText('VideoKit',710,40);
           await new Promise(r=>setTimeout(r,33));
         }
       } else {
@@ -1141,12 +1157,26 @@ async function mergeAndDownload() {
         vid.crossOrigin='anonymous'; vid.muted=true; vid.src=url;
         await new Promise((res,rej)=>{vid.onloadeddata=res;vid.onerror=rej;vid.load();});
         vid.play();
+        const vidText = scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration.slice(0,100):'';
         const start=Date.now();
         while(Date.now()-start<dur){
           ctx.fillStyle='#000'; ctx.fillRect(0,0,720,1280);
           const scale=Math.min(720/vid.videoWidth,1280/vid.videoHeight);
           const w=vid.videoWidth*scale,h=vid.videoHeight*scale;
           ctx.drawImage(vid,(720-w)/2,(1280-h)/2,w,h);
+          if(vidText){
+            ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,1100,720,180);
+            ctx.fillStyle='white'; ctx.font='bold 28px sans-serif'; ctx.textAlign='center';
+            const words=vidText.split(' '); let line=''; let y=1140;
+            for(const word of words){
+              const test=line+word+' ';
+              if(ctx.measureText(test).width>680&&line){ctx.fillText(line,360,y);line=word+' ';y+=38;}
+              else line=test;
+            }
+            ctx.fillText(line.trim(),360,y);
+          }
+          ctx.fillStyle='rgba(255,92,0,0.8)'; ctx.font='bold 20px sans-serif'; ctx.textAlign='right';
+          ctx.fillText('VideoKit',710,40);
           await new Promise(r=>setTimeout(r,33));
         }
         vid.pause();
