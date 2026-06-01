@@ -1026,7 +1026,7 @@ function downloadScript() {
 
 function downloadAudio() {
   if (!audioBlob) { alert("Generate voice first in Step 3."); return; }
-  const a = document.createElement("a"); a.href = audioUrl; a.download = "narration.mp3"; a.click();
+  const a = document.createElement("a"); a.href = audioUrl; a.download = "voice_" + new Date().toISOString().slice(0,10) + ".mp3"; a.click();
 }
 
 async function downloadVideos() {
@@ -1068,31 +1068,36 @@ async function mergeAndDownload() {
     canvas.width  = 720; canvas.height = 1280;
     const ctx     = canvas.getContext('2d');
 
-    // Setup audio
-    const audioCtx  = new (window.AudioContext||window.webkitAudioContext)();
-    const audioDest = audioCtx.createMediaStreamDestination();
-    let audioSource = null;
-
-    if (audioBlob) {
-      const arrBuf  = await audioBlob.arrayBuffer();
-      const decoded = await audioCtx.decodeAudioData(arrBuf);
-      audioSource   = audioCtx.createBufferSource();
-      audioSource.buffer = decoded;
-      audioSource.connect(audioDest);
+    // Setup audio element
+    let audioEl = null;
+    if (audioUrl) {
+      audioEl = new Audio(audioUrl);
+      audioEl.volume = 1.0;
     }
 
     // Combine canvas + audio streams
-    const videoStream  = canvas.captureStream(30);
-    const audioTracks  = audioDest.stream.getAudioTracks();
-    audioTracks.forEach(t => videoStream.addTrack(t));
+    const videoStream = canvas.captureStream(30);
+    if (audioEl && audioEl.captureStream) {
+      try {
+        const aStream = audioEl.captureStream();
+        aStream.getAudioTracks().forEach(t => videoStream.addTrack(t));
+      } catch(e) { console.log('[Audio stream]', e.message); }
+    } else if (audioEl && audioEl.mozCaptureStream) {
+      try {
+        const aStream = audioEl.mozCaptureStream();
+        aStream.getAudioTracks().forEach(t => videoStream.addTrack(t));
+      } catch(e) { console.log('[Audio stream moz]', e.message); }
+    }
 
     // Start recorder
-    const recorder = new MediaRecorder(videoStream, { mimeType: 'video/webm;codecs=vp8,opus' });
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+      ? 'video/webm;codecs=vp8,opus' : 'video/webm';
+    const recorder = new MediaRecorder(videoStream, { mimeType });
     const chunks   = [];
     recorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
     recorder.start(100);
 
-    if (audioSource) audioSource.start(0);
+    if (audioEl) audioEl.play().catch(e=>console.log('[Audio play]',e));
     sp(10,'Recording started...');
 
     // Play each scene on canvas
@@ -1186,8 +1191,7 @@ async function mergeAndDownload() {
     // Stop recording
     sp(92,'Finalizing...');
     recorder.stop();
-    if(audioSource) try{audioSource.stop();}catch(e){}
-    audioCtx.close();
+    if(audioEl) try{audioEl.pause();audioEl.src='';}catch(e){}
 
     await new Promise(r=>{recorder.onstop=r;});
     const blob = new Blob(chunks,{type:'video/webm'});
