@@ -321,7 +321,7 @@
         <div style="font-size:.85rem;font-weight:600;margin-bottom:8px">📁 Use your own image or video</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <input type="file" id="userMediaFile" accept="image/*,video/*" style="display:none" onchange="handleUserUpload(this)">
-          <select id="uploadSceneIdx" style="flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:.85rem">
+          <select id="uploadSceneIdx" onclick="populateSceneSelect()" style="flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:.85rem">
             <option value="">Select scene...</option>
           </select>
           <button class="btn btn-sm btn-outline" onclick="document.getElementById('userMediaFile').click()">📤 Upload</button>
@@ -1107,7 +1107,7 @@ async function mergeAndDownload() {
       const ctype = typeof v==='string'?'video':(v.type||'video');
       const dur   = sceneDur * 1000;
       const pctV  = Math.round(10 + (ei/entries.length)*80);
-      sp(pctV, 'Scene '+(ei+1)+'/'+entries.length+'...');
+      sp(pctV, 'Scene '+(ei+1)+'/'+entries.length+' ('+sceneDur+'s each)...');
 
       if (url.startsWith('textcard://') || ctype==='textcard') {
         // Draw text card
@@ -1125,7 +1125,7 @@ async function mergeAndDownload() {
             } else { line=test; }
           }
           ctx.fillText(line,360,y);
-          await new Promise(r=>setTimeout(r,33));
+          await new Promise(r=>setTimeout(r,100));
         }
       } else if (ctype==='image') {
         // Draw image
@@ -1154,7 +1154,7 @@ async function mergeAndDownload() {
           // VideoKit watermark
           ctx.fillStyle='rgba(255,92,0,0.8)'; ctx.font='bold 20px sans-serif'; ctx.textAlign='right';
           ctx.fillText('VideoKit',710,40);
-          await new Promise(r=>setTimeout(r,33));
+          await new Promise(r=>setTimeout(r,100));
         }
       } else {
         // Play video
@@ -1182,7 +1182,7 @@ async function mergeAndDownload() {
           }
           ctx.fillStyle='rgba(255,92,0,0.8)'; ctx.font='bold 20px sans-serif'; ctx.textAlign='right';
           ctx.fillText('VideoKit',710,40);
-          await new Promise(r=>setTimeout(r,33));
+          await new Promise(r=>setTimeout(r,100));
         }
         vid.pause();
       }
