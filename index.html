@@ -1075,19 +1075,24 @@ async function mergeAndDownload() {
     if (audioBlob) {
       try {
         const audioCtx  = new (window.AudioContext||window.webkitAudioContext)();
+        await audioCtx.resume();
         const audioDest = audioCtx.createMediaStreamDestination();
         const arrBuf    = await audioBlob.arrayBuffer();
-        const decoded   = await audioCtx.decodeAudioData(arrBuf.slice(0));
-        audioSource = audioCtx.createBufferSource();
-        audioSource.buffer = decoded;
-        audioSource.connect(audioDest);
-        audioDest.stream.getAudioTracks().forEach(t => videoStream.addTrack(t));
-        audioSource.start(0);
-        console.log('[Voice] AudioContext ready, duration:', decoded.duration);
+        await new Promise((res,rej) => {
+          audioCtx.decodeAudioData(arrBuf, (decoded) => {
+            try {
+              audioSource = audioCtx.createBufferSource();
+              audioSource.buffer = decoded;
+              audioSource.connect(audioDest);
+              audioDest.stream.getAudioTracks().forEach(t => videoStream.addTrack(t));
+              audioSource.start(0);
+              console.log('[Voice] OK, duration:', decoded.duration);
+            } catch(e) { console.warn('[Voice] connect failed:', e); }
+            res();
+          }, (e) => { console.warn('[Voice] decode failed:', e); res(); });
+        });
       } catch(ae) {
-        console.warn('[Voice] AudioContext failed:', ae.message);
-        // Fallback: play audio separately (user hears it but not in recording)
-        if (audioUrl) { const a=new Audio(audioUrl); a.play().catch(()=>{}); }
+        console.warn('[Voice] AudioContext failed:', ae);
       }
     }
 
@@ -1202,7 +1207,7 @@ async function mergeAndDownload() {
 
   } catch(err) {
     console.error('[Merge]',err);
-    alert('Merge failed: '+err.message);
+    alert('Merge failed: '+(err&&err.message?err.message:String(err)));
     btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';if(pct)pct.style.display='none';
   }
 }
