@@ -981,6 +981,15 @@ async function generateVoice() {
     if (r.ok) {
       audioBlob = await r.blob();
       audioUrl  = URL.createObjectURL(audioBlob);
+      // Measure actual voice duration
+      try {
+        const tmpAudio = new Audio(audioUrl);
+        tmpAudio.onloadedmetadata = () => {
+          window._voiceDuration = Math.ceil(tmpAudio.duration);
+          console.log('[Voice] actual duration:', window._voiceDuration, 's');
+        };
+        tmpAudio.load();
+      } catch(e) { window._voiceDuration = null; }
       const player = document.getElementById("audioPlayer");
       player.src = audioUrl; player.style.display = "block";
       document.getElementById("previewVoiceBtn").style.display = "none";
@@ -1059,8 +1068,10 @@ async function mergeAndDownload() {
 
   btn.disabled=true; prog.style.display='block'; sp(2,'Setting up...');
 
-  const totalLen = parseInt(document.getElementById('videoLength').value)||60;
-  const sceneDur = Math.round(totalLen / entries.length);
+  const selectedLen = parseInt(document.getElementById('videoLength').value)||60;
+  const totalLen  = window._voiceDuration || selectedLen;
+  const sceneDur  = Math.round(totalLen / entries.length);
+  console.log('[Merge] voice duration:', window._voiceDuration, 'scene dur:', sceneDur);
 
   try {
     // Create canvas
