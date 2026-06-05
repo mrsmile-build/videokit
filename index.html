@@ -1147,7 +1147,8 @@ async function mergeAndDownload() {
         // Draw image
         const img = new Image();
         img.crossOrigin='anonymous';
-        await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=url; });
+        const proxyUrl = url.startsWith('blob:') ? url : PROXY+'/proxy-image?url='+encodeURIComponent(url);
+        await new Promise((res,rej)=>{ img.onload=res; img.onerror=()=>{img.src=url;img.onload=res;img.onerror=rej;}; img.src=proxyUrl; });
         const imgText = scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration.slice(0,100):'';
         const start=Date.now();
         while(Date.now()-start<dur){
