@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VideoKit — Free AI Faceless Video Creator by MrSmile</title>
+  <meta name="description" content="Create faceless videos with AI in minutes. Free AI script writer, stock video finder and voiceover generator. No camera needed.">
+  <meta property="og:title" content="VideoKit — Free AI Faceless Video Creator">
+  <meta property="og:description" content="Type your idea. AI writes script, finds videos, adds voice. Ready to post in minutes. 100% free.">
+  <meta property="og:url" content="https://mrsmile-build.github.io/videokit/">
+  <link rel="canonical" href="https://mrsmile-build.github.io/videokit/">
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXFNM475V9"></script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-XXFNM475V9");</script>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap");
+    :root{--bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--border:#222;--ink:#fff;--ink-soft:rgba(255,255,255,.5);--accent:#ff5c00;--accent2:#ff8c00;--radius:14px;--font-head:"Syne",sans-serif;--font-body:"DM Sans",sans-serif}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--font-body);background:var(--bg);color:var(--ink);min-height:100vh}
+    nav{padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(10,10,10,.95);backdrop-filter:blur(10px);z-index:100}
+    .logo{font-family:var(--font-head);font-weight:800;font-size:1.3rem;letter-spacing:-1px;text-decoration:none;color:var(--ink)}
+    .logo span{color:var(--accent)}
+    .nav-right{display:flex;align-items:center;gap:16px}
+    .nav-right a{color:var(--ink-soft);text-decoration:none;font-size:.85rem}
+    .nav-badge{background:var(--accent);color:#fff;font-size:.65rem;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase}
+    .hero{text-align:center;padding:60px 20px 40px;max-width:700px;margin:0 auto}
+    .hero h1{font-family:var(--font-head);font-size:clamp(2rem,6vw,3.2rem);font-weight:800;letter-spacing:-2px;line-height:1.1;margin-bottom:16px}
+    .hero h1 span{color:var(--accent)}
+    .hero p{color:var(--ink-soft);font-size:1rem;max-width:480px;margin:0 auto 32px}
+    .steps-bar{display:flex;justify-content:center;gap:0;margin-bottom:40px;flex-wrap:wrap}
+    .step-item{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--ink-soft);cursor:pointer;padding:4px 6px;border-radius:8px;transition:all .2s}
+    .step-item.active{color:var(--accent)}
+    .step-item.locked{cursor:not-allowed;opacity:.4}
+    .step-num{width:24px;height:24px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;flex-shrink:0}
+    .step-item.done .step-num,.step-item.active .step-num{background:var(--accent);border-color:var(--accent);color:#fff}
+    .step-divider{width:30px;height:1px;background:var(--border);margin:0 4px}
+    .wrapper{max-width:860px;margin:0 auto;padding:0 20px 80px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:20px}
+    .card-title{font-family:var(--font-head);font-size:1rem;font-weight:700;margin-bottom:6px}
+    .card-sub{font-size:.82rem;color:var(--ink-soft);margin-bottom:20px}
+    label{display:block;font-size:.75rem;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-soft);margin-bottom:8px}
+    input,textarea,select{width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font-body);font-size:.95rem;background:var(--surface2);color:var(--ink);outline:none;transition:border-color .2s}
+    input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+    textarea{resize:vertical;min-height:100px;line-height:1.6}
+    .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:none;padding:13px 28px;border-radius:10px;font-family:var(--font-head);font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;text-decoration:none}
+    .btn:hover{background:#e04e00;transform:translateY(-1px)}
+    .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .btn-outline{background:transparent;color:var(--ink);border:1.5px solid var(--border)}
+    .btn-outline:hover{border-color:var(--accent);color:var(--accent);background:transparent}
+    .btn-green{background:#22c55e}.btn-green:hover{background:#16a34a}
+    .btn-sm{padding:9px 18px;font-size:.85rem}
+    .form-group{margin-bottom:20px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .style-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+    .style-btn{padding:10px 8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface2);font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s;text-align:center;color:var(--ink)}
+    .style-btn.active{border-color:var(--accent);background:rgba(255,92,0,.1);color:var(--accent);font-weight:700}
+    .loading{display:none;text-align:center;padding:32px}
+    .loading.show{display:block}
+    .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading p{color:var(--ink-soft);font-size:.9rem}
+    .loading-steps{margin-top:12px;font-size:.8rem;color:var(--accent)}
+    .section{display:none}.section.show{display:block}
+    .script-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:16px}
+    .script-scene{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+    .script-scene:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+    .scene-num{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:700;margin-bottom:6px}
+    .scene-text{font-size:.9rem;line-height:1.7;color:var(--ink-soft)}
+    .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}
+    .video-thumb{position:relative;border-radius:10px;overflow:hidden;border:2px solid var(--border);cursor:pointer;transition:border-color .2s;aspect-ratio:16/9}
+    .video-thumb.selected{border-color:var(--accent)}
+    .video-thumb video,.video-thumb img{width:100%;height:100%;object-fit:cover}
+    .select-overlay{position:absolute;inset:0;background:rgba(255,92,0,.2);display:none;align-items:center;justify-content:center;font-size:1.5rem}
+    .video-thumb.selected .select-overlay{display:flex}
+    .video-tag{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.7);color:#fff;font-size:.65rem;padding:2px 6px;border-radius:4px;font-weight:600}
+    .voice-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:20px}
+    .voice-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s}
+    .voice-card.active{border-color:var(--accent);background:rgba(255,92,0,.08)}
+    .voice-name{font-weight:600;font-size:.88rem;margin-bottom:4px}
+    .voice-desc{font-size:.75rem;color:var(--ink-soft)}
+    .voice-badge{font-size:.62rem;background:var(--accent);color:#fff;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:6px;font-weight:700;text-transform:uppercase}
+    .download-section{background:linear-gradient(135deg,rgba(255,92,0,.15),rgba(255,140,0,.05));border:1px solid rgba(255,92,0,.3);border-radius:var(--radius);padding:28px;text-align:center}
+    .download-section h3{font-family:var(--font-head);font-size:1.3rem;font-weight:800;margin-bottom:8px}
+    .download-section p{color:var(--ink-soft);font-size:.875rem;margin-bottom:20px}
+    .download-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+    .progress-bar{background:var(--border);border-radius:10px;height:8px;margin:12px 0;overflow:hidden}
+    .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:10px;transition:width .4s;width:0%}
+    .progress-text{font-size:.78rem;color:var(--accent);text-align:center;margin-top:4px}
+    .error-box{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px;color:#f87171;font-size:.85rem;margin-top:12px;display:none}
+    .error-box.show{display:block}
+    .retry-banner{background:rgba(255,92,0,.1);border:1px solid rgba(255,92,0,.4);border-radius:10px;padding:14px 18px;display:none;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+    .retry-banner.show{display:flex}
+    .retry-banner p{font-size:.85rem;color:#ffaa77}
+    .caption-box{background:rgba(255,92,0,.07);border:1px solid rgba(255,92,0,.25);border-radius:10px;padding:16px;margin-top:16px;display:none}
+    .caption-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);margin-bottom:8px}
+    .caption-text{font-size:.9rem;line-height:1.6;margin-bottom:10px}
+    .chat-box{background:var(--surface2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+    .chat-header{padding:14px 18px;border-bottom:1px solid var(--border);font-size:.85rem;font-weight:600}
+    .chat-messages{padding:16px;max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+    .chat-msg{padding:10px 14px;border-radius:10px;font-size:.85rem;line-height:1.6;max-width:90%}
+    .chat-msg.ai{background:rgba(255,92,0,.08);border:1px solid rgba(255,92,0,.15);align-self:flex-start}
+    .chat-msg.user{background:var(--surface);border:1px solid var(--border);align-self:flex-end}
+    .chat-input-row{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border)}
+    .chat-input-row input{flex:1;padding:10px 14px;border-radius:8px;font-size:.9rem}
+    .paste-toggle{font-size:.8rem;color:var(--accent);cursor:pointer;text-decoration:underline;margin-bottom:12px;display:inline-block}
+    .paste-area{display:none;margin-bottom:16px}
+    .paste-area.show{display:block}
+    .url-trigger{display:flex;align-items:center;gap:10px;background:rgba(255,92,0,.06);border:1px dashed rgba(255,92,0,.3);border-radius:10px;padding:12px 16px;cursor:pointer;margin-bottom:12px}
+    .url-trigger:hover{background:rgba(255,92,0,.1)}
+    .url-area{display:none;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
+    .toolkit-banner{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;flex-wrap:wrap}
+    .clip-hint{font-size:.74rem;color:var(--ink-soft);margin-top:6px;font-style:italic}
+    @media(max-width:600px){.form-row{grid-template-columns:1fr}.hero{padding:40px 20px 28px}.card{padding:20px 16px}}
+  </style>
+</head>
+<body style="padding-bottom:72px">
+
+<nav>
+  <a href="index.html" class="logo">Video<span>Kit</span></a>
+  <div class="nav-right">
+    <a href="about.html">About</a>
+    <a href="contact.html">Feedback</a>
+    <span class="nav-badge">Free Beta</span>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>Create <span>faceless videos</span><br>with AI in minutes</h1>
+  <p>Type your idea → AI writes the script → finds matching videos → adds voiceover → ready to post</p>
+  <div class="steps-bar">
+    <div class="step-item active" id="step1" onclick="navigateToStep(1)"><div class="step-num">1</div> Script</div>
+    <div class="step-divider"></div>
+    <div class="step-item locked" id="step2" onclick="navigateToStep(2)"><div class="step-num">2</div> Videos</div>
+    <div class="step-divider"></div>
+    <div class="step-item locked" id="step3" onclick="navigateToStep(3)"><div class="step-num">3</div> Voice</div>
+    <div class="step-divider"></div>
+    <div class="step-item locked" id="step4" onclick="navigateToStep(4)"><div class="step-num">4</div> Download</div>
+  </div>
+</div>
+
+<div class="wrapper">
+
+  <!-- STEP 1 -->
+  <div class="section show" id="section-script">
+    <div class="retry-banner" id="retry-script">
+      <p>Network failed. Will auto-retry when connection returns...</p>
+      <button class="btn btn-sm btn-outline" onclick="generateScript()">Retry Now</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Step 1 — Write Your Script</div>
+      <div class="card-sub">Describe your idea, customize in chat, or paste your own script.</div>
+
+      <!-- URL inspire -->
+      <div class="url-trigger" onclick="toggleUrlSection()">
+        <span style="font-size:1.2rem">🔗</span>
+        <div>
+          <div style="font-size:.88rem;font-weight:600">Inspire from a video</div>
+          <div style="font-size:.75rem;color:var(--ink-soft)">Paste YouTube, Instagram or TikTok URL → AI creates something similar</div>
+        </div>
+        <span id="url-arrow" style="margin-left:auto;color:var(--accent)">›</span>
+      </div>
+      <div class="url-area" id="url-area">
+        <label>Video URL</label>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="url" id="videoUrl" placeholder="https://youtube.com/watch?v=...">
+          <button class="btn btn-sm" onclick="analyzeUrl()">Analyze</button>
+        </div>
+        <div style="font-size:.72rem;color:var(--ink-soft);margin-bottom:10px">Supports YouTube. Instagram/TikTok — describe video below.</div>
+        <div id="url-loading" style="display:none;font-size:.85rem;color:var(--accent)">Analyzing...</div>
+        <div id="url-result" style="display:none">
+          <div id="url-info" style="font-size:.85rem;padding:10px;background:var(--surface);border-radius:8px;margin-bottom:10px"></div>
+          <div id="url-manual-section" style="display:none">
+            <label>Describe what the video is about</label>
+            <textarea id="urlDescription" rows="3" placeholder="e.g. The video talks about 5 ways to earn money online..."></textarea>
+            <button class="btn btn-sm" onclick="useUrlAnalysis()" style="margin-top:8px;width:100%">Create Similar Video</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paste own script -->
+      <span class="paste-toggle" onclick="togglePaste()">📋 Paste my own script instead</span>
+      <div class="paste-area" id="paste-area">
+        <label>Your Script</label>
+        <textarea id="pasteScript" rows="8" placeholder="Paste your full script here. VideoKit will turn it into proper scenes."></textarea>
+        <button class="btn" style="margin-top:12px" onclick="usePastedScript()">Use This Script</button>
+      </div>
+
+      <div id="idea-section">
+        <div class="form-group">
+          <label>Your Video Idea</label>
+          <textarea id="videoIdea" placeholder="e.g. 5 ways to make money online in Nigeria with your phone..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Video Style</label>
+          <div class="style-grid">
+            <div class="style-btn active" onclick="selectStyle(this)" data-style="educational">📚 Educational</div>
+            <div class="style-btn" onclick="selectStyle(this)" data-style="motivational">🔥 Motivational</div>
+            <div class="style-btn" onclick="selectStyle(this)" data-style="storytelling">📖 Story</div>
+            <div class="style-btn" onclick="selectStyle(this)" data-style="listicle">📋 Listicle</div>
+            <div class="style-btn" onclick="selectStyle(this)" data-style="news-style">📰 News Style</div>
+            <div class="style-btn" onclick="selectStyle(this)" data-style="documentary">🎥 Documentary</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Hook Mode</label>
+          <div class="style-grid">
+            <div class="style-btn active" onclick="selectHook(this)" data-hook="viral">🔥 Viral</div>
+            <div class="style-btn" onclick="selectHook(this)" data-hook="controversial">😱 Controversial</div>
+            <div class="style-btn" onclick="selectHook(this)" data-hook="emotional">💔 Emotional</div>
+            <div class="style-btn" onclick="selectHook(this)" data-hook="nigerian">🇳🇬 Nigerian Style</div>
+            <div class="style-btn" onclick="selectHook(this)" data-hook="storytelling">📖 Storytelling</div>
+            <div class="style-btn" onclick="selectHook(this)" data-hook="curiosity">🤔 Curiosity</div>
+            <div class="style-btn" onclick="selectHook(this)" data-hook="luxury">💎 Luxury</div>
+            <div class="style-btn" onclick="selectHook(this)" data-hook="fomo">⚡ FOMO</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Content Type</label>
+          <div class="style-grid">
+            <div class="style-btn active" onclick="selectContentType(this)" data-ctype="video">🎬 Stock Video</div>
+            <div class="style-btn" onclick="selectContentType(this)" data-ctype="image">🖼️ Image Slideshow</div>
+            <div class="style-btn" onclick="selectContentType(this)" data-ctype="textcard">📝 Text Cards</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Aspect Ratio</label>
+            <div class="style-grid" style="grid-template-columns:repeat(3,1fr)">
+              <div class="style-btn active" onclick="selectRatio(this)" data-ratio="9:16">📱 9:16</div>
+              <div class="style-btn" onclick="selectRatio(this)" data-ratio="16:9">🖥️ 16:9</div>
+              <div class="style-btn" onclick="selectRatio(this)" data-ratio="1:1">⬜ 1:1</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Platform</label>
+            <select id="platform">
+              <option value="Instagram Reels">Instagram Reels</option>
+              <option value="TikTok">TikTok</option>
+              <option value="YouTube Shorts">YouTube Shorts</option>
+              <option value="YouTube">YouTube</option>
+              <option value="Facebook">Facebook</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Video Length</label>
+          <select id="videoLength" onchange="updateClipHint(this.value)">
+            <option value="30">30 seconds</option>
+            <option value="60" selected>60 seconds</option>
+            <option value="90">90 seconds</option>
+            <option value="120">2 minutes</option>
+            <option value="300">5 minutes</option>
+            <option value="600">10 minutes</option>
+          </select>
+          <div class="clip-hint" id="clip-hint">~6 clip options shown per scene</div>
+        </div>
+
+        <button class="btn" id="btnScript" onclick="generateScript()">✨ Generate Script</button>
+      </div>
+    </div>
+
+    <div class="loading" id="load-script">
+      <div class="spinner"></div>
+      <p>Writing your script...</p>
+      <div class="loading-steps" id="load-script-step">Analyzing your idea...</div>
+    </div>
+
+    <div class="section" id="script-result">
+      <div class="card">
+        <div class="card-title">📝 Your Script</div>
+        <div id="script-scenes"></div>
+
+        <!-- Viral caption -->
+        <div class="caption-box" id="caption-box">
+          <div class="caption-label">📢 Your Viral Caption</div>
+          <div id="caption-text" class="caption-text"></div>
+          <button onclick="copyCaption()" class="btn btn-sm btn-outline">📋 Copy Caption</button>
+        </div>
+
+        <!-- Script chatbox -->
+        <div style="margin-top:20px">
+          <div class="card-title" style="font-size:.9rem">💬 Customize Your Script</div>
+          <div class="card-sub" style="margin-bottom:12px">Tell AI how to change any scene.</div>
+          <div class="chat-box">
+            <div class="chat-header">🤖 Script Assistant</div>
+            <div class="chat-messages" id="chat-messages">
+              <div class="chat-msg ai">Your script is ready! Tell me how you would like to customize it.</div>
+            </div>
+            <div class="chat-input-row">
+              <input type="text" id="chatInput" placeholder="e.g. Make scene 2 about Nigerian hustle culture..." onkeydown="if(event.key==='Enter')sendChat()">
+              <button class="btn btn-sm" onclick="sendChat()">Send</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" onclick="goToVideos()">Next: Find Videos →</button>
+          <button class="btn btn-outline" onclick="generateScript()">🔄 Regenerate</button>
+          <button class="btn btn-outline" id="humanBtn" onclick="humanRewrite()">🧠 Make it Sound Human</button>
+        </div>
+      </div>
+    </div>
+    <div class="error-box" id="err-script"></div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="section" id="section-videos">
+    <div class="retry-banner" id="retry-videos">
+      <p>Network failed loading videos. Will auto-retry...</p>
+      <button class="btn btn-sm btn-outline" onclick="goToVideos()">Retry Now</button>
+    </div>
+    <div class="card">
+      <div class="card-title">🎬 Step 2 — Choose Your Clips</div>
+      <div class="card-sub" id="video-card-sub">Pick the best clip for each scene.</div>
+      <!-- User upload own media -->
+      <div style="margin-bottom:16px;padding:12px;background:rgba(255,92,0,.06);border:1px dashed rgba(255,92,0,.3);border-radius:10px">
+        <div style="font-size:.85rem;font-weight:600;margin-bottom:8px">📁 Use your own image or video</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="file" id="userMediaFile" accept="image/*,video/*" style="display:none" onchange="handleUserUpload(this)">
+          <select id="uploadSceneIdx" onclick="populateSceneSelect()" onchange="window._uploadScene=this.value" onchange="window._uploadScene=this.value;this.style.borderColor=this.value?'#ff5c00':'#333'" style="flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:.85rem">
+            <option value="">Select scene...</option>
+          </select>
+          <button class="btn btn-sm btn-outline" onclick="if(!window._uploadScene&&window._uploadScene!=='0'){alert('Select a scene first');return;}document.getElementById('userMediaFile').click()">📤 Upload</button>
+        </div>
+      </div>
+
+      <div class="loading" id="load-videos">
+        <div class="spinner"></div>
+        <p>Finding matching content...</p>
+        <div class="loading-steps" id="load-videos-step">Searching...</div>
+      </div>
+      <div id="video-scenes"></div>
+      <div class="error-box" id="err-videos"></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+      <button class="btn btn-outline" onclick="navigateToStep(1)">← Back to Script</button>
+      <button class="btn" onclick="goToVoice()">Next: Add Voice →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="section" id="section-voice">
+    <div class="retry-banner" id="retry-voice">
+      <p>Voice failed. Will auto-retry when connection returns...</p>
+      <button class="btn btn-sm btn-outline" onclick="generateVoice()">Retry Now</button>
+    </div>
+    <div class="card">
+      <div class="card-title">🎙️ Step 3 — Choose Voice</div>
+      <div class="card-sub">Pick a voice and generate the full narration.</div>
+      <div class="voice-grid">
+        <div class="voice-card active" onclick="selectVoice('en-us-m',this)">
+          <div class="voice-name">🇺🇸 American</div>
+          <div class="voice-desc">Male · Deep</div>
+          <span class="voice-badge">Popular</span>
+        </div>
+        <div class="voice-card" onclick="selectVoice('en-us-f',this)">
+          <div class="voice-name">🇺🇸 American</div>
+          <div class="voice-desc">Female · Clear</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('en-gb-m',this)">
+          <div class="voice-name">🇬🇧 British</div>
+          <div class="voice-desc">Male · Professional</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('en-gb-f',this)">
+          <div class="voice-name">🇬🇧 British</div>
+          <div class="voice-desc">Female · Elegant</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('en-au-m',this)">
+          <div class="voice-name">🇦🇺 Australian</div>
+          <div class="voice-desc">Male · Friendly</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('en-au-f',this)">
+          <div class="voice-name">🇦🇺 Australian</div>
+          <div class="voice-desc">Female · Warm</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('en-news-m',this)">
+          <div class="voice-name">📺 News Anchor</div>
+          <div class="voice-desc">Male · Authoritative</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('en-story-f',this)">
+          <div class="voice-name">📖 Storyteller</div>
+          <div class="voice-desc">Female · Engaging</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('fr-m',this)">
+          <div class="voice-name">🇫🇷 French</div>
+          <div class="voice-desc">Male</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('de-m',this)">
+          <div class="voice-name">🇩🇪 German</div>
+          <div class="voice-desc">Male</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('es-m',this)">
+          <div class="voice-name">🇪🇸 Spanish</div>
+          <div class="voice-desc">Male</div>
+        </div>
+        <div class="voice-card" onclick="selectVoice('pt-m',this)">
+          <div class="voice-name">🇧🇷 Portuguese</div>
+          <div class="voice-desc">Male</div>
+        </div>
+      </div>
+      <button class="btn" id="btnVoice" onclick="generateVoice()">🎙️ Generate Narration</button>
+    </div>
+    <div class="loading" id="load-voice">
+      <div class="spinner"></div>
+      <p>Generating your voiceover...</p>
+    </div>
+    <div id="audio-result" style="display:none">
+      <div class="card">
+        <div class="card-title">🔊 Your Narration is Ready</div>
+        <audio id="audioPlayer" controls style="width:100%;display:none"></audio>
+        <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn btn-outline" id="previewVoiceBtn" onclick="previewVoice()" style="display:none">▶ Preview</button>
+          <button class="btn btn-outline" onclick="stopVoice()">⏹ Stop</button>
+          <button class="btn btn-outline" onclick="downloadAudio()">⬇ Download MP3</button>
+        </div>
+        <div style="margin-top:10px;padding:10px;background:rgba(255,92,0,.07);border-radius:8px;font-size:.8rem;color:var(--ink-soft)">
+          💡 Voice plays through your speaker. Download MP3 above then combine with your video clips.
+        </div>
+      </div>
+    </div>
+    <div class="error-box" id="err-voice"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+      <button class="btn btn-outline" onclick="navigateToStep(2)">← Back to Videos</button>
+      <button class="btn" onclick="goToDownload()">Next: Download →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="section" id="section-download">
+    <div class="download-section">
+      <h3>🎉 Your Video is Ready!</h3>
+      <p>Download everything you need to create your faceless video.</p>
+      <div class="download-btns">
+        <button class="btn btn-outline" onclick="downloadScript()">📄 Script</button>
+        <button class="btn btn-outline" onclick="downloadAudio()">🎵 Audio</button>
+        <button class="btn btn-outline" onclick="downloadVideos()">🎬 Videos</button>
+        <button class="btn btn-green" onclick="downloadAll()">⬇ Download All</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="card-title">🎬 Combine Into One Video</div>
+      <div class="card-sub">Merge all clips into a single MP4. First time requires WiFi to load 30MB engine (cached forever after).</div>
+      <div class="progress-bar" id="merge-progress" style="display:none">
+        <div class="progress-fill" id="merge-fill"></div>
+      </div>
+      <div class="progress-text" id="merge-pct" style="display:none"></div>
+      <button class="btn" id="btnMerge" onclick="mergeAndDownload()">🎬 Create Combined Video</button>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;justify-content:center">
+      <button class="btn btn-outline" onclick="navigateToStep(3)">← Back to Voice</button>
+      <button class="btn btn-outline" onclick="navigateToStep(2)">← Back to Videos</button>
+      <button class="btn btn-outline" onclick="startOver()">🔄 Start Over</button>
+    </div>
+    <div class="toolkit-banner">
+      <p><strong>Want more free tools?</strong> Check out the full MrSmile Build suite.</p>
+      <a href="https://mrsmile-build.github.io" class="btn btn-outline" style="font-size:.8rem;padding:8px 16px">Explore Tools</a>
+    </div>
+  </div>
+
+</div>
+
+<footer style="border-top:1px solid #222;padding:24px 20px;text-align:center;margin-top:40px">
+  <p style="color:rgba(255,255,255,.4);font-size:.8rem">
+    © 2026 VideoKit by <a href="https://mrsmile-build.github.io" style="color:#ff5c00;text-decoration:none">MrSmile Build</a> ·
+    <a href="about.html" style="color:rgba(255,255,255,.4);text-decoration:none;margin:0 8px">About</a>
+    <a href="contact.html" style="color:rgba(255,255,255,.4);text-decoration:none;margin:0 8px">Feedback</a>
+    <a href="privacy.html" style="color:rgba(255,255,255,.4);text-decoration:none;margin:0 8px">Privacy</a>
+  </p>
+</footer>
+
+<script>
+const PROXY = "https://groq-proxy-7f82.onrender.com";
+
+// ── Voice config ──────────────────────────────────────────────
+const VOICE_CONFIG = {
+  "en-us-m":    { puter: "onyx",    tiktok: "en_us_006" },
+  "en-us-f":    { puter: "nova",    tiktok: "en_us_001" },
+  "en-gb-m":    { puter: "echo",    tiktok: "en_uk_001" },
+  "en-gb-f":    { puter: "shimmer", tiktok: "en_uk_003" },
+  "en-au-m":    { puter: "fable",   tiktok: "en_au_002" },
+  "en-au-f":    { puter: "alloy",   tiktok: "en_au_001" },
+  "en-news-m":  { puter: "onyx",    tiktok: "en_us_007" },
+  "en-story-f": { puter: "nova",    tiktok: "en_us_002" },
+  "fr-m":       { puter: "echo",    tiktok: "fr_003"    },
+  "de-m":       { puter: "fable",   tiktok: "de_002"    },
+  "es-m":       { puter: "onyx",    tiktok: "es_002"    },
+  "pt-m":       { puter: "echo",    tiktok: "pt_002"    }
+};
+
+// ── State ─────────────────────────────────────────────────────
+let scriptData     = null;
+let selectedVideos = {};
+let selectedVoice  = "en-us-m";
+let videoStyle     = "educational";
+let hookMode       = "viral";
+let contentType    = "video";
+let aspectRatio    = "9:16";
+let audioBlob      = null;
+let audioUrl       = null;
+let chatHistory    = [];
+let videosLoaded   = false;
+let _urlData       = null;
+
+// ── Navigation ────────────────────────────────────────────────
+const stepSections = {1:"section-script",2:"section-videos",3:"section-voice",4:"section-download"};
+
+function navigateToStep(n) {
+  if (n >= 2 && !scriptData) return;
+  showSection(stepSections[n]);
+  setStep(n);
+  if (n === 2 && scriptData && !videosLoaded) goToVideos();
+}
+
+function showSection(id) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("show"));
+  document.getElementById(id).classList.add("show");
+  window.scrollTo(0, 0);
+}
+
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById("step" + i);
+    if (!el) continue;
+    el.classList.remove("active","done","locked");
+    if (i < n) el.classList.add("done");
+    else if (i === n) el.classList.add("active");
+    else el.classList.add(scriptData ? "done" : "locked");
+  }
+}
+
+function updateClipHint(secs) {
+  const map = {30:4,60:6,90:8,120:8,300:12,600:16};
+  const c = map[parseInt(secs)] || 6;
+  const el = document.getElementById("clip-hint");
+  if (el) el.textContent = "~" + c + " clip options shown per scene";
+}
+
+function selectStyle(el) {
+  document.querySelectorAll("[data-style]").forEach(b => b.classList.remove("active"));
+  el.classList.add("active");
+  videoStyle = el.dataset.style;
+}
+
+function selectHook(el) {
+  document.querySelectorAll("[data-hook]").forEach(b => b.classList.remove("active"));
+  el.classList.add("active");
+  hookMode = el.dataset.hook;
+}
+
+function selectContentType(el) {
+  document.querySelectorAll("[data-ctype]").forEach(b => b.classList.remove("active"));
+  el.classList.add("active");
+  contentType = el.dataset.ctype;
+}
+
+function selectRatio(el) {
+  document.querySelectorAll("[data-ratio]").forEach(b => b.classList.remove("active"));
+  el.classList.add("active");
+  aspectRatio = el.dataset.ratio;
+}
+
+function selectVoice(voice, el) {
+  selectedVoice = voice;
+  document.querySelectorAll(".voice-card").forEach(c => c.classList.remove("active"));
+  el.classList.add("active");
+}
+
+function togglePaste() {
+  const area = document.getElementById("paste-area");
+  const idea = document.getElementById("idea-section");
+  const show = area.classList.toggle("show");
+  idea.style.display = show ? "none" : "block";
+}
+
+function toggleUrlSection() {
+  const a = document.getElementById("url-area");
+  const arrow = document.getElementById("url-arrow");
+  const open = a.style.display !== "block";
+  a.style.display = open ? "block" : "none";
+  if (arrow) arrow.textContent = open ? "⌄" : "›";
+}
+
+async function fetchWithRetry(url, options, max=3) {
+  for (let i = 0; i < max; i++) {
+    try { return await fetch(url, options); }
+    catch(e) { if (i === max-1) throw e; await new Promise(r=>setTimeout(r,2000*(i+1))); }
+  }
+}
+
+// ── STEP 1: Script ────────────────────────────────────────────
+const HOOK_PROMPTS = {
+  viral:         "Use a shocking scroll-stopping hook. Make every line punchy and shareable.",
+  controversial: "Start with a bold controversial statement that challenges common beliefs.",
+  emotional:     "Use emotional storytelling. Connect with pain points and aspirations deeply.",
+  nigerian:      "Write in a relatable Nigerian style. Reference hustle culture and street wisdom.",
+  storytelling:  "Open with a story format. Build narrative tension scene by scene.",
+  curiosity:     "Use curiosity gaps throughout. What most people do not know about format.",
+  luxury:        "Aspirational and premium tone. Paint a picture of success and status.",
+  fomo:          "Create urgent fear of missing out. While you sleep others are format."
+};
+
+async function generateScript() {
+  const idea = document.getElementById("videoIdea").value.trim();
+  if (!idea) { alert("Please enter your video idea!"); return; }
+  const platform = document.getElementById("platform").value;
+  const length   = document.getElementById("videoLength").value;
+  const sceneCounts = {30:3,60:5,90:7,120:9,300:15,600:25};
+  const sceneCount  = sceneCounts[parseInt(length)] || 5;
+  const hookInstr   = HOOK_PROMPTS[hookMode] || HOOK_PROMPTS.viral;
+
+  document.getElementById("load-script").classList.add("show");
+  document.getElementById("script-result").classList.remove("show");
+  document.getElementById("err-script").classList.remove("show");
+  document.getElementById("retry-script").classList.remove("show");
+  document.getElementById("btnScript").disabled = true;
+
+  const steps = ["Analyzing your idea...","Writing hook...","Building scenes...","Adding CTA..."];
+  let si = 0;
+  const stepInt = setInterval(() => {
+    document.getElementById("load-script-step").textContent = steps[si++ % steps.length];
+  }, 1500);
+
+  const prompt = "You are a viral video script writer. Write a " + videoStyle + " video script for " + platform + " about: \"" + idea + "\". The video is " + length + " seconds long. Hook instruction: " + hookInstr + " Return ONLY a valid JSON object with: title (catchy), hook (max 15 words scroll-stopping), scenes (array of exactly " + sceneCount + " objects each with: scene_number, narration (2-3 full sentences), visual_keyword (2-3 words for stock search), duration_seconds), cta. No markdown. No extra text.";
+
+  try {
+    const res  = await fetchWithRetry(PROXY + "/generate", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"llama-3.3-70b-versatile", messages:[{role:"user",content:prompt}], temperature:0.8, max_tokens:3000 })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || "API error");
+    scriptData = JSON.parse(data.choices[0].message.content.trim().replace(/```json|```/g,"").trim());
+    chatHistory = [];
+    renderScript(scriptData);
+    document.getElementById("script-result").classList.add("show");
+    videosLoaded = false;
+    setStep(1);
+    generateCaption(scriptData);
+  } catch(err) {
+    if (!navigator.onLine) {
+      document.getElementById("retry-script").classList.add("show");
+      window.addEventListener("online", generateScript, {once:true});
+    } else {
+      const box = document.getElementById("err-script");
+      box.textContent = "Error: " + err.message + ". Please try again.";
+      box.classList.add("show");
+    }
+  } finally {
+    clearInterval(stepInt);
+    document.getElementById("load-script").classList.remove("show");
+    document.getElementById("btnScript").disabled = false;
+  }
+}
+
+async function generateCaption(sd) {
+  const platform = document.getElementById("platform").value;
+  const rules = platform === "YouTube"
+    ? "Write a YouTube title (max 10 words) then 2 line description then 3 hashtags. Format: TITLE\\nDESCRIPTION\\nHASHTAGS"
+    : platform === "TikTok"
+    ? "Write 1 punchy line then 5 trending hashtags."
+    : platform === "Facebook"
+    ? "Write 2-3 conversational sentences then 2 hashtags."
+    : "Write 3 lines max then 5 hashtags then 2 emojis.";
+  try {
+    const res = await fetchWithRetry(PROXY + "/generate", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"llama-3.3-70b-versatile", max_tokens:200,
+        messages:[{role:"user",content:"Write a viral " + platform + " caption for a video about: \"" + sd.title + "\". Rules: " + rules + " Return ONLY the caption text."}]
+      })
+    });
+    const data = await res.json();
+    const cap  = data.choices[0].message.content.trim();
+    document.getElementById("caption-text").textContent = cap;
+    document.getElementById("caption-box").style.display = "block";
+    window._caption = cap;
+  } catch(e) { console.log("[Caption]", e.message); }
+}
+
+function copyCaption() {
+  const t = window._caption || document.getElementById("caption-text").textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(t).then(() => alert("Caption copied!"));
+  } else {
+    const el = document.createElement("textarea");
+    el.value = t; document.body.appendChild(el); el.select();
+    document.execCommand("copy"); document.body.removeChild(el);
+    alert("Copied!");
+  }
+}
+
+async function humanRewrite() {
+  if (!scriptData) return;
+  const btn = document.getElementById("humanBtn");
+  btn.disabled = true; btn.textContent = "Rewriting...";
+  try {
+    const prompt = "Rewrite this video script to sound completely human and natural. Remove all AI cliches like game-changer, delve, unlock, leverage. Use contractions. Add natural pauses with ellipsis. Use phrases like Here is the thing and And honestly and Look. Keep the same JSON structure exactly. Return ONLY valid JSON. Script: " + JSON.stringify(scriptData);
+    const res  = await fetchWithRetry(PROXY + "/generate", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ model:"llama-3.3-70b-versatile", max_tokens:3000, messages:[{role:"user",content:prompt}] })
+    });
+    const data = await res.json();
+    const raw  = data.choices[0].message.content.trim().replace(/```json|```/g,"").trim();
+    scriptData = JSON.parse(raw);
+    renderScript(scriptData);
+    btn.textContent = "Sounds Human!";
+    setTimeout(() => { btn.textContent = "🧠 Make it Sound Human"; btn.disabled = false; }, 2000);
+  } catch(e) {
+    btn.textContent = "🧠 Make it Sound Human"; btn.disabled = false;
+    alert("Rewrite failed: " + e.message);
+  }
+}
+
+function renderScript(data) {
+  let html = "<div class=\"script-box\">";
+  html += "<div style=\"font-family:var(--font-head);font-size:1.1rem;font-weight:700;margin-bottom:4px\">" + data.title + "</div>";
+  html += "<div style=\"font-size:.82rem;color:var(--accent);font-style:italic;margin-bottom:16px\">\"" + data.hook + "\"</div>";
+  data.scenes.forEach(s => {
+    html += "<div class=\"script-scene\"><div class=\"scene-num\">Scene " + s.scene_number + " · " + s.duration_seconds + "s · 🔍 " + s.visual_keyword + "</div>";
+    html += "<div class=\"scene-text\">" + s.narration + "</div></div>";
+  });
+  if (data.cta) html += "<div class=\"script-scene\"><div class=\"scene-num\">Call to Action</div><div class=\"scene-text\">" + data.cta + "</div></div>";
+  html += "</div>";
+  document.getElementById("script-scenes").innerHTML = html;
+}
+
+async function usePastedScript() {
+  const raw = document.getElementById("pasteScript").value.trim();
+  if (!raw) { alert("Please paste your script first."); return; }
+  document.getElementById("load-script").classList.add("show");
+  try {
+    const res  = await fetchWithRetry(PROXY + "/generate", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"llama-3.3-70b-versatile",
+        messages:[{role:"user",content:"Convert this script into a proper JSON video script. Return ONLY a valid JSON object with: title, hook (max 15 words), scenes (array with: scene_number, narration, visual_keyword, duration_seconds), cta. Preserve the words. Script:\n" + raw}],
+        temperature:0.3, max_tokens:2000
+      })
+    });
+    const data = await res.json();
+    scriptData = JSON.parse(data.choices[0].message.content.trim().replace(/```json|```/g,"").trim());
+    renderScript(scriptData);
+    document.getElementById("script-result").classList.add("show");
+    generateCaption(scriptData);
+  } catch(err) { alert("Could not parse script: " + err.message); }
+  finally { document.getElementById("load-script").classList.remove("show"); }
+}
+
+async function sendChat() {
+  const input = document.getElementById("chatInput");
+  const msg   = input.value.trim();
+  if (!msg || !scriptData) return;
+  input.value = "";
+  addChatMsg(msg, "user");
+  addChatMsg("Updating your script...", "ai", "chat-typing");
+  chatHistory.push({role:"user", content:msg});
+  try {
+    const res  = await fetchWithRetry(PROXY + "/generate", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        model:"llama-3.3-70b-versatile",
+        messages:[
+          {role:"system", content:"You are a script editor. The user has this video script: " + JSON.stringify(scriptData) + ". Apply the change and return the COMPLETE updated script as valid JSON with same structure: title, hook, scenes, cta. No markdown."},
+          ...chatHistory
+        ],
+        temperature:0.5, max_tokens:3000
+      })
+    });
+    const data   = await res.json();
+    const raw    = data.choices[0].message.content.trim().replace(/```json|```/g,"").trim();
+    scriptData   = JSON.parse(raw);
+    const typing = document.getElementById("chat-typing");
+    if (typing) typing.remove();
+    renderScript(scriptData);
+    addChatMsg("Done! Script updated.", "ai");
+    chatHistory.push({role:"assistant", content:raw});
+  } catch(err) {
+    const typing = document.getElementById("chat-typing");
+    if (typing) typing.textContent = "Failed: " + err.message;
+  }
+}
+
+function addChatMsg(text, who, id) {
+  const box = document.getElementById("chat-messages");
+  const el  = document.createElement("div");
+  el.className = "chat-msg " + who;
+  el.textContent = text;
+  if (id) el.id = id;
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ── URL Analyzer ──────────────────────────────────────────────
+async function analyzeUrl() {
+  const url = (document.getElementById("videoUrl") || {}).value || "";
+  if (!url) { alert("Paste a URL first"); return; }
+  const loading = document.getElementById("url-loading");
+  const result  = document.getElementById("url-result");
+  const info    = document.getElementById("url-info");
+  if (loading) loading.style.display = "block";
+  if (result)  result.style.display  = "none";
+  try {
+    const res  = await fetchWithRetry(PROXY + "/analyze-url", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})});
+    const data = await res.json();
+    _urlData = data;
+    if (data.success && data.analysis) {
+      if (info) info.innerHTML = "<strong style=\"color:var(--ink)\">" + (data.title||"Video found") + "</strong><br>Idea: <span style=\"color:var(--accent)\">" + data.analysis.suggested_idea + "</span>";
+      const ms = document.getElementById("url-manual-section");
+      if (ms) ms.style.display = "none";
+      if (result) result.style.display = "block";
+      if (loading) loading.style.display = "none";
+      await useUrlAnalysis(); return;
+    } else {
+      if (info) info.innerHTML = "<span style=\"color:#ffaa77\">" + (data.message||"Could not fetch. Describe the video below.") + "</span>";
+      const ms = document.getElementById("url-manual-section");
+      if (ms) ms.style.display = "block";
+    }
+    if (result) result.style.display = "block";
+  } catch(e) {
+    if (info) info.textContent = "Error: " + e.message;
+    if (result) result.style.display = "block";
+  } finally { if (loading) loading.style.display = "none"; }
+}
+
+async function useUrlAnalysis() {
+  const desc = ((document.getElementById("urlDescription")||{}).value || "").trim();
+  let idea = "";
+  if (_urlData && _urlData.analysis) {
+    idea = _urlData.analysis.suggested_idea || _urlData.analysis.topic;
+    const sm = {educational:"educational",motivational:"motivational",storytelling:"storytelling",listicle:"listicle"};
+    const se = document.querySelector(".style-btn[data-style=\"" + (sm[_urlData.analysis.style]||"educational") + "\"]");
+    if (se) selectStyle(se);
+  } else if (desc) { idea = desc; }
+  else { alert("Describe the video first"); return; }
+  const ideaEl = document.getElementById("videoIdea");
+  if (ideaEl) ideaEl.value = idea;
+  const ua = document.getElementById("url-area");
+  if (ua) ua.style.display = "none";
+  await generateScript();
+}
+
+// ── STEP 2: Videos ────────────────────────────────────────────
+async function goToVideos() {
+  if (!scriptData) return;
+  showSection("section-videos");
+  setStep(2);
+  document.getElementById("load-videos").classList.add("show");
+  document.getElementById("video-scenes").innerHTML = "";
+  document.getElementById("err-videos").classList.remove("show");
+  document.getElementById("retry-videos").classList.remove("show");
+
+  const totalDuration = scriptData.scenes.reduce((sum,s) => sum+(parseInt(s.duration_seconds)||10), 0);
+  const map = {30:4,60:6,90:8,120:8,300:12,600:16};
+  let clipsPerScene = 6;
+  for (const [s,c] of Object.entries(map)) { if (totalDuration <= parseInt(s)) { clipsPerScene=c; break; } }
+
+  const subEl = document.getElementById("video-card-sub");
+  if (subEl) subEl.textContent = "Pick the best " + (contentType==="image"?"image":"clip") + " per scene — " + clipsPerScene + " options each.";
+
+  try {
+    const container = document.getElementById("video-scenes");
+    for (let i = 0; i < scriptData.scenes.length; i++) {
+      const scene    = scriptData.scenes[i];
+      const loadEl   = document.getElementById("load-videos-step");
+      if (loadEl) loadEl.textContent = "Scene " + scene.scene_number + ": searching for \"" + scene.visual_keyword + "\"...";
+
+      // Text card mode - no Pixabay needed
+      if (contentType === "textcard") {
+        const bgColors = ["#0a0a0a","#111111","#1a1a1a","#0d1117","#12111a"];
+        const bg = bgColors[i % bgColors.length];
+        const cardId = "textcard-" + i;
+        const isSelected = selectedVideos[i];
+        if (!isSelected) selectedVideos[i] = {url:"textcard://"+i, thumb:"", type:"textcard", text:scene.narration, bg};
+        let html2 = "<div style=\"margin-bottom:28px\">";
+        html2 += "<div style=\"font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:700;margin-bottom:8px\">Scene " + scene.scene_number + " — Text Card</div>";
+        html2 += "<div class=\"video-grid\">";
+        html2 += "<div class=\"video-thumb selected\" data-url=\"textcard://"+i+"\" data-ctype=\"textcard\" data-scene=\""+i+"\" style=\"aspect-ratio:9/16;max-width:160px\" onclick=\"selectVideoEl(this)\">";
+        html2 += "<div style=\"width:100%;height:100%;background:"+bg+";display:flex;align-items:center;justify-content:center;padding:12px;text-align:center;font-size:.75rem;line-height:1.5;color:#fff;font-family:Syne,sans-serif\">"+scene.narration.slice(0,80)+"...</div>";
+        html2 += "<div class=\"video-tag\">S"+scene.scene_number+"</div><div class=\"select-overlay\">✓</div></div>";
+        html2 += "</div></div>";
+        container.innerHTML += html2;
+        continue;
+      }
+
+      const endpoint = contentType === "image" ? "/images" : "/videos";
+      const res      = await fetchWithRetry(PROXY + endpoint + "?q=" + encodeURIComponent(scene.visual_keyword) + "&duration=" + totalDuration);
+      const data     = await res.json();
+      const clips    = data.hits || [];
+      if (!clips.length) continue;
+
+      let html = "<div style=\"margin-bottom:28px\">";
+      html += "<div style=\"font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:700;margin-bottom:8px\">Scene " + scene.scene_number + " — " + scene.visual_keyword + " <span style=\"color:var(--ink-soft);text-transform:none;font-weight:400\">(" + clips.length + " options)</span></div>";
+      html += "<div style=\"font-size:.82rem;color:var(--ink-soft);margin-bottom:10px\">" + scene.narration.substring(0,80) + "...</div>";
+      html += "<div class=\"video-grid\">";
+
+      clips.forEach((v, vi) => {
+        let url, thumb;
+        if (contentType === "image") {
+          url   = v.largeImageURL || v.webformatURL;
+          thumb = v.previewURL    || v.webformatURL;
+        } else {
+          url   = (v.videos&&v.videos.medium&&v.videos.medium.url) || (v.videos&&v.videos.small&&v.videos.small.url) || (v.videos&&v.videos.large&&v.videos.large.url) || null;
+          thumb = url;
+        }
+        if (!url) return;
+        if (vi===0 && !selectedVideos[i]) selectedVideos[i] = {url, thumb, type:contentType};
+        const stored = selectedVideos[i];
+        const isSel  = stored && stored.url === url;
+        html += "<div class=\"video-thumb " + (isSel?"selected":"") + "\" data-url=\"" + url + "\" data-thumb=\"" + (thumb||url) + "\" data-ctype=\"" + contentType + "\" data-scene=\"" + i + "\" onclick=\"selectVideoEl(this)\">";
+        if (contentType === "image") {
+          html += "<img src=\"" + (thumb||url) + "\" loading=\"lazy\" style=\"width:100%;height:100%;object-fit:cover\">";
+        } else {
+          html += "<video src=\"" + url + "\" muted loop playsinline onmouseenter=\"this.play()\" onmouseleave=\"this.pause()\"></video>";
+        }
+        html += "<div class=\"video-tag\">S" + scene.scene_number + "</div>";
+        html += "<div class=\"select-overlay\">✓</div></div>";
+      });
+      html += "</div></div>";
+      container.innerHTML += html;
+    }
+    videosLoaded = true;
+  } catch(err) {
+    if (!navigator.onLine) {
+      document.getElementById("retry-videos").classList.add("show");
+      window.addEventListener("online", goToVideos, {once:true});
+    } else {
+      const box = document.getElementById("err-videos");
+      box.textContent = "Error: " + err.message;
+      box.classList.add("show");
+    }
+  } finally {
+    document.getElementById("load-videos").classList.remove("show");
+  }
+}
+
+function selectVideoEl(el) {
+  const url   = el.getAttribute("data-url");
+  const thumb = el.getAttribute("data-thumb") || url;
+  const type  = el.getAttribute("data-ctype") || "video";
+  const si    = el.getAttribute("data-scene");
+  el.closest(".video-grid").querySelectorAll(".video-thumb").forEach(t => t.classList.remove("selected"));
+  el.classList.add("selected");
+  selectedVideos[si] = {url, thumb, type};
+}
+
+// ── STEP 3: Voice ─────────────────────────────────────────────
+function goToVoice() { showSection("section-voice"); setStep(3); }
+
+async function generateVoice() {
+  if (!scriptData) return;
+  const fullScript = scriptData.scenes.map(s => s.narration).join(" ") + " " + (scriptData.cta||"");
+  const cfg        = VOICE_CONFIG[selectedVoice] || VOICE_CONFIG["en-us-m"];
+  const isMale     = ["onyx","echo","fable"].includes(cfg.puter);
+
+  document.getElementById("load-voice").classList.add("show");
+  document.getElementById("audio-result").style.display = "none";
+  document.getElementById("err-voice").classList.remove("show");
+  document.getElementById("retry-voice").classList.remove("show");
+  document.getElementById("btnVoice").disabled = true;
+
+  if (!navigator.onLine) {
+    document.getElementById("retry-voice").classList.add("show");
+    window.addEventListener("online", generateVoice, {once:true});
+    document.getElementById("load-voice").classList.remove("show");
+    document.getElementById("btnVoice").disabled = false;
+    return;
+  }
+
+  // Layer 1: Server TikTok TTS
+  try {
+    const r = await fetchWithRetry(PROXY + "/tts-voicerss", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({text:fullScript, voice:selectedVoice})
+    });
+    if (r.ok) {
+      audioBlob = await r.blob();
+      audioUrl  = URL.createObjectURL(audioBlob);
+      // Measure actual voice duration
+      try {
+        const tmpAudio = new Audio(audioUrl);
+        tmpAudio.onloadedmetadata = () => {
+          window._voiceDuration = Math.ceil(tmpAudio.duration);
+          console.log('[Voice] actual duration:', window._voiceDuration, 's');
+        };
+        tmpAudio.load();
+      } catch(e) { window._voiceDuration = null; }
+      const player = document.getElementById("audioPlayer");
+      player.src = audioUrl; player.style.display = "block";
+      document.getElementById("previewVoiceBtn").style.display = "none";
+      document.getElementById("audio-result").style.display = "block";
+      document.getElementById("load-voice").classList.remove("show");
+      document.getElementById("btnVoice").disabled = false;
+      player.play();
+      return;
+    }
+  } catch(e) { console.log("[Server TTS]", e.message); }
+
+  // Layer 2: Retry banner
+  document.getElementById("retry-voice").classList.add("show");
+  document.getElementById("load-voice").classList.remove("show");
+  document.getElementById("btnVoice").disabled = false;
+  window.addEventListener("online", generateVoice, {once:true});
+}
+
+function previewVoice() {
+  if (window._puterAudio) { window._puterAudio.currentTime=0; window._puterAudio.play(); return; }
+  const p = document.getElementById("audioPlayer");
+  if (p) { p.currentTime=0; p.play(); }
+}
+
+function stopVoice() {
+  if (window._puterAudio) { window._puterAudio.pause(); window._puterAudio.currentTime=0; }
+  const p = document.getElementById("audioPlayer");
+  if (p) p.pause();
+}
+
+// ── STEP 4: Download ──────────────────────────────────────────
+function goToDownload() { showSection("section-download"); setStep(4); }
+
+function downloadScript() {
+  if (!scriptData) return;
+  let text = scriptData.title + "\n\nHOOK: " + scriptData.hook + "\n\n";
+  scriptData.scenes.forEach(s => { text += "SCENE " + s.scene_number + " (" + s.duration_seconds + "s)\n" + s.narration + "\n\n"; });
+  if (scriptData.cta) text += "CTA: " + scriptData.cta;
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text],{type:"text/plain"}));
+  a.download = "videokit-script.txt"; a.click();
+}
+
+function downloadAudio() {
+  if (!audioBlob) { alert("Generate voice first in Step 3."); return; }
+  const a = document.createElement("a"); a.href = audioUrl; a.download = "voice_" + new Date().toISOString().slice(0,10) + ".mp3"; a.click();
+}
+
+async function downloadVideos() {
+  const entries = Object.entries(selectedVideos);
+  if (!entries.length) { alert("No videos selected."); return; }
+  for (let i = 0; i < entries.length; i++) {
+    const [sceneIdx, vObj] = entries[i];
+    const url = vObj && vObj.url ? vObj.url : (typeof vObj === "string" ? vObj : null);
+    if (!url) continue;
+    await new Promise(r => setTimeout(r, 800));
+    const a = document.createElement("a"); a.href = url; a.download = "scene-" + (i+1) + ".mp4"; a.target = "_blank"; a.click();
+  }
+}
+
+function downloadAll() {
+  downloadScript();
+  setTimeout(downloadAudio, 500);
+  setTimeout(downloadVideos, 1000);
+}
+
+async function mergeAndDownload() {
+  const entries = Object.entries(selectedVideos);
+  if (!entries.length) { alert('No videos selected.'); return; }
+
+  const btn  = document.getElementById('btnMerge');
+  const prog = document.getElementById('merge-progress');
+  const fill = document.getElementById('merge-fill');
+  const pct  = document.getElementById('merge-pct');
+  const sp   = (p,m) => { fill.style.width=p+'%'; if(pct){pct.textContent=m+' — '+p+'%';pct.style.display='block';} btn.textContent=m; };
+
+  btn.disabled=true; prog.style.display='block'; sp(2,'Setting up...');
+
+  const selectedLen = parseInt(document.getElementById('videoLength').value)||60;
+  const totalLen  = window._voiceDuration || selectedLen;
+  const sceneDur  = Math.round(totalLen / entries.length);
+  console.log('[Merge] voice duration:', window._voiceDuration, 'scene dur:', sceneDur);
+
+  try {
+    // Create canvas
+    const canvas  = document.createElement('canvas');
+    canvas.width  = 720; canvas.height = 1280;
+    const ctx     = canvas.getContext('2d');
+
+    // Setup audio via AudioContext (most reliable on Android)
+    const videoStream = canvas.captureStream(15);
+    let audioSource = null;
+
+    if (audioBlob) {
+      try {
+        const audioCtx  = new (window.AudioContext||window.webkitAudioContext)();
+        await audioCtx.resume();
+        const audioDest = audioCtx.createMediaStreamDestination();
+        const arrBuf    = await audioBlob.arrayBuffer();
+        await new Promise((res,rej) => {
+          audioCtx.decodeAudioData(arrBuf, (decoded) => {
+            try {
+              audioSource = audioCtx.createBufferSource();
+              audioSource.buffer = decoded;
+              audioSource.connect(audioDest);
+              audioDest.stream.getAudioTracks().forEach(t => videoStream.addTrack(t));
+              audioSource.start(0);
+              console.log('[Voice] OK, duration:', decoded.duration);
+            } catch(e) { console.warn('[Voice] connect failed:', e); }
+            res();
+          }, (e) => { console.warn('[Voice] decode failed:', e); res(); });
+        });
+      } catch(ae) {
+        console.warn('[Voice] AudioContext failed:', ae);
+      }
+    }
+
+    // Start recorder
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+      ? 'video/webm;codecs=vp8,opus' : 'video/webm';
+    const recorder = new MediaRecorder(videoStream, { mimeType });
+    const chunks   = [];
+    recorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
+    recorder.start(100);
+    sp(10,'Recording started...');
+
+    // Play each scene on canvas
+    for (let ei = 0; ei < entries.length; ei++) {
+      const [idx, v] = entries[ei];
+      const url   = typeof v==='string'?v:(v.url||'');
+      const ctype = typeof v==='string'?'video':(v.type||'video');
+      const dur   = sceneDur * 1000;
+      const pctV  = Math.round(10 + (ei/entries.length)*80);
+      sp(pctV, 'Scene '+(ei+1)+'/'+entries.length+' ('+sceneDur+'s each)...');
+
+      if (url.startsWith('textcard://') || ctype==='textcard') {
+        // Draw text card
+        const text = scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration:'';
+        const start = Date.now();
+        while (Date.now()-start < dur) {
+          ctx.fillStyle='#0a0a0a'; ctx.fillRect(0,0,720,1280);
+          ctx.fillStyle='#ff5c00'; ctx.fillRect(0,560,720,160);
+          ctx.fillStyle='white'; ctx.font='bold 32px sans-serif'; ctx.textAlign='center';
+          const words=text.split(' '); let line=''; let y=590;
+          for(const w of words){
+            const test=line+w+' ';
+            if(ctx.measureText(test).width>680&&line){
+              ctx.fillText(line,360,y); line=w+' '; y+=44;
+            } else { line=test; }
+          }
+          ctx.fillText(line,360,y);
+          await new Promise(r=>setTimeout(r,100));
+        }
+      } else if (ctype==='image') {
+        // Draw image
+        const img = new Image();
+        img.crossOrigin='anonymous';
+        await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=url; });
+        const imgText = scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration.slice(0,100):'';
+        const start=Date.now();
+        while(Date.now()-start<dur){
+          ctx.fillStyle='#000'; ctx.fillRect(0,0,720,1280);
+          const scale=Math.min(720/img.width,1280/img.height);
+          const w=img.width*scale,h=img.height*scale;
+          ctx.drawImage(img,(720-w)/2,(1280-h)/2,w,h);
+          // Text overlay
+          if(imgText){
+            ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,1100,720,180);
+            ctx.fillStyle='white'; ctx.font='bold 28px sans-serif'; ctx.textAlign='center';
+            const words=imgText.split(' '); let line=''; let y=1140;
+            for(const word of words){
+              const test=line+word+' ';
+              if(ctx.measureText(test).width>680&&line){ctx.fillText(line,360,y);line=word+' ';y+=38;}
+              else line=test;
+            }
+            ctx.fillText(line.trim(),360,y);
+          }
+          // VideoKit watermark
+          ctx.fillStyle='rgba(255,92,0,0.8)'; ctx.font='bold 20px sans-serif'; ctx.textAlign='right';
+          ctx.fillText('VideoKit',710,40);
+          await new Promise(r=>setTimeout(r,100));
+        }
+      } else {
+        // Play video
+        const vid=document.createElement('video');
+        vid.crossOrigin='anonymous'; vid.muted=true; vid.src=url;
+        await new Promise((res,rej)=>{vid.onloadeddata=res;vid.onerror=rej;vid.load();});
+        vid.play();
+        const vidText = scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration.slice(0,100):'';
+        const start=Date.now();
+        while(Date.now()-start<dur){
+          ctx.fillStyle='#000'; ctx.fillRect(0,0,720,1280);
+          const scale=Math.min(720/vid.videoWidth,1280/vid.videoHeight);
+          const w=vid.videoWidth*scale,h=vid.videoHeight*scale;
+          ctx.drawImage(vid,(720-w)/2,(1280-h)/2,w,h);
+          if(vidText){
+            ctx.fillStyle='rgba(0,0,0,0.55)'; ctx.fillRect(0,1100,720,180);
+            ctx.fillStyle='white'; ctx.font='bold 28px sans-serif'; ctx.textAlign='center';
+            const words=vidText.split(' '); let line=''; let y=1140;
+            for(const word of words){
+              const test=line+word+' ';
+              if(ctx.measureText(test).width>680&&line){ctx.fillText(line,360,y);line=word+' ';y+=38;}
+              else line=test;
+            }
+            ctx.fillText(line.trim(),360,y);
+          }
+          ctx.fillStyle='rgba(255,92,0,0.8)'; ctx.font='bold 20px sans-serif'; ctx.textAlign='right';
+          ctx.fillText('VideoKit',710,40);
+          await new Promise(r=>setTimeout(r,100));
+        }
+        vid.pause();
+      }
+    }
+
+    // Stop recording
+    sp(92,'Finalizing...');
+    recorder.stop();
+    if(audioSource) try{audioSource.stop();}catch(e){}
+
+    await new Promise(r=>{recorder.onstop=r;});
+    const blob = new Blob(chunks,{type:'video/webm'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download='videokit-'+Date.now()+'.webm'; a.click();
+    sp(100,'Downloaded!');
+    setTimeout(()=>{btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';if(pct)pct.style.display='none';fill.style.width='0%';},4000);
+
+  } catch(err) {
+    console.error('[Merge]',err);
+    alert('Merge failed: '+(err&&err.message?err.message:String(err)));
+    btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';if(pct)pct.style.display='none';
+  }
+}
+
+function handleUserUpload(input) {
+  if (!input.files || !input.files[0]) return;
+  const file    = input.files[0];
+  const sceneEl = document.getElementById('uploadSceneIdx');
+  const idx     = sceneEl.value;
+  if (!idx && idx !== '0') { alert('Please select which scene to use this for'); return; }
+  const url   = URL.createObjectURL(file);
+  const ctype = file.type.startsWith('video') ? 'video' : 'image';
+  selectedVideos[idx] = {url, thumb:url, type:ctype};
+  // Update UI to show selected
+  const thumbEl = document.querySelector('[data-scene="'+idx+'"]');
+  if(thumbEl) {
+    thumbEl.closest('.video-grid').querySelectorAll('.video-thumb').forEach(t=>t.classList.remove('selected'));
+    thumbEl.classList.add('selected');
+  }
+  alert('Your '+(ctype==='video'?'video':'image')+' set for Scene '+(parseInt(idx)+1)+'!');
+  input.value='';
+}
+
+function populateSceneSelect() {
+  if (!scriptData) return;
+  const sel = document.getElementById('uploadSceneIdx');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select scene...</option>';
+  scriptData.scenes.forEach((s,i)=>{
+    sel.innerHTML += '<option value="'+i+'">Scene '+s.scene_number+' — '+s.visual_keyword+'</option>';
+  });
+}
+
+function startOver() {
+  scriptData=null; selectedVideos={}; audioBlob=null; audioUrl=null;
+  videosLoaded=false; chatHistory=[]; _urlData=null;
+  document.getElementById("videoIdea").value = "";
+  document.getElementById("chat-messages").innerHTML = "<div class=\"chat-msg ai\">Your script is ready! Tell me how you would like to customize it.</div>";
+  document.getElementById("caption-box").style.display = "none";
+  document.getElementById("audio-result").style.display = "none";
+  showSection("section-script"); setStep(1);
+  document.getElementById("script-result").classList.remove("show");
+}
+</script>
+
+<div id="vkNav" style="position:fixed;bottom:0;left:0;right:0;background:#0d0d0d;border-top:1px solid #1e1e1e;display:flex;z-index:99999">
+  <a href="index.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;color:#555;text-decoration:none;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:4px">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
+  </a>
+  <a href="create.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;color:#ff5c00;text-decoration:none;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:4px">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Create
+  </a>
+  <a href="history.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;color:#555;text-decoration:none;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:4px">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>History
+  </a>
+  <a href="menu.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;color:#555;text-decoration:none;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:4px">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>Menu
+  </a>
+</div>
+</body>
+</html>

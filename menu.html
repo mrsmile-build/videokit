@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu — VideoKit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/shared.css">
+  <style>
+    .profile-header {
+      padding: 52px 20px 28px; text-align: center;
+      background: linear-gradient(160deg, #0f0f0f 60%, #1a0900);
+    }
+    .avatar {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: linear-gradient(135deg, #ff5c00, #ff9500);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem; font-weight: 800; margin: 0 auto 12px;
+      color: white;
+    }
+    .profile-name { font-size: 1.2rem; font-weight: 800; margin-bottom: 6px; }
+    .plan-badge {
+      display: inline-block; padding: 4px 14px;
+      background: #ff5c00; color: white; border-radius: 20px;
+      font-size: .72rem; font-weight: 800; text-transform: uppercase;
+    }
+    .edit-btn {
+      display: block; margin: 14px auto 0; padding: 8px 20px;
+      background: #1a1a1a; border: 1px solid #333; border-radius: 20px;
+      color: #ccc; font-size: .8rem; font-weight: 600;
+      cursor: pointer; font-family: 'Syne', sans-serif;
+    }
+    .section-label {
+      padding: 20px 20px 8px; font-size: .7rem; color: #444;
+      text-transform: uppercase; letter-spacing: .08em; font-weight: 700;
+    }
+    .menu-list { padding: 0 20px; }
+    .menu-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 15px 0; border-bottom: 1px solid #111;
+      cursor: pointer; text-decoration: none; color: inherit;
+    }
+    .menu-item:last-child { border-bottom: none; }
+    .menu-icon {
+      width: 40px; height: 40px; background: #1a1a1a;
+      border-radius: 12px; display: flex; align-items: center;
+      justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .menu-text { flex: 1; }
+    .menu-title { font-weight: 700; font-size: .9rem; }
+    .menu-sub { font-size: .75rem; color: #555; margin-top: 2px; }
+    .menu-arrow { color: #333; font-size: 1.1rem; }
+    .danger .menu-title { color: #ff4444; }
+    .danger .menu-icon { background: #1a0000; }
+
+    /* Edit Profile Sheet */
+    .sheet-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.85);
+      z-index: 9998; display: none; align-items: flex-end;
+      justify-content: center;
+    }
+    .sheet-overlay.open { display: flex; }
+    .sheet {
+      background: #111; border-radius: 20px 20px 0 0;
+      padding: 24px 20px 40px; width: 100%; max-width: 480px;
+    }
+    .sheet-handle {
+      width: 40px; height: 4px; background: #333;
+      border-radius: 2px; margin: 0 auto 20px;
+    }
+    .sheet-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 20px; }
+    .field-label { font-size: .78rem; color: #666; margin-bottom: 6px; }
+    .field-input {
+      width: 100%; padding: 14px; background: #1a1a1a;
+      border: 1px solid #333; border-radius: 12px; color: white;
+      font-family: 'Syne', sans-serif; font-size: .95rem;
+      box-sizing: border-box; margin-bottom: 16px;
+    }
+    .field-input:focus { border-color: #ff5c00; outline: none; }
+    .save-btn {
+      width: 100%; padding: 14px; background: #ff5c00;
+      border: none; border-radius: 12px; color: white;
+      font-family: 'Syne', sans-serif; font-size: 1rem;
+      font-weight: 800; cursor: pointer;
+    }
+
+    /* Plans Sheet */
+    .plan-card {
+      border-radius: 14px; padding: 16px; margin-bottom: 12px;
+      border: 1px solid #222;
+    }
+    .plan-card.current { border-color: #ff5c00; }
+    .plan-top {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 10px;
+    }
+    .plan-name { font-weight: 800; font-size: 1rem; }
+    .plan-price { color: #ff5c00; font-weight: 800; }
+    .plan-features { list-style: none; }
+    .plan-features li {
+      font-size: .78rem; color: #999; padding: 3px 0;
+    }
+    .plan-features li::before { content: '✓ '; color: #ff5c00; }
+    .plan-btn {
+      width: 100%; margin-top: 12px; padding: 10px;
+      background: #ff5c00; border: none; border-radius: 10px;
+      color: white; font-weight: 700; cursor: pointer;
+      font-family: 'Syne', sans-serif; font-size: .88rem;
+    }
+    .current-badge {
+      display: inline-block; padding: 3px 10px;
+      background: #1a0900; color: #ff5c00; border-radius: 20px;
+      font-size: .68rem; font-weight: 700; margin-top: 10px;
+    }
+
+    .version-text {
+      text-align: center; padding: 20px; color: #333; font-size: .75rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Profile Header -->
+  <div class="profile-header">
+    <div class="avatar" id="menuAvatar">E</div>
+    <div class="profile-name" id="menuName">VideoKit User</div>
+    <div class="plan-badge" id="menuPlan">FREE</div>
+    <button class="edit-btn" onclick="openEditProfile()">✏️ Edit Profile</button>
+  </div>
+
+  <!-- Account -->
+  <div class="section-label">Account</div>
+  <div class="menu-list">
+    <div class="menu-item" onclick="openEditProfile()">
+      <div class="menu-icon">👤</div>
+      <div class="menu-text">
+        <div class="menu-title">Edit Profile</div>
+        <div class="menu-sub">Change name and display</div>
+      </div>
+      <div class="menu-arrow">›</div>
+    </div>
+    <div class="menu-item" onclick="openPlans()">
+      <div class="menu-icon">⭐</div>
+      <div class="menu-text">
+        <div class="menu-title">Subscription & Plans</div>
+        <div class="menu-sub" id="menuPlanSub">You are on the Free plan</div>
+      </div>
+      <div class="menu-arrow">›</div>
+    </div>
+    <a href="history.html" class="menu-item">
+      <div class="menu-icon">📚</div>
+      <div class="menu-text">
+        <div class="menu-title">Script History</div>
+        <div class="menu-sub" id="menuHistorySub">0 saved scripts</div>
+      </div>
+      <div class="menu-arrow">›</div>
+    </a>
+  </div>
+
+  <!-- Settings -->
+  <div class="section-label">Settings</div>
+  <div class="menu-list">
+    <div class="menu-item" onclick="openSettings()">
+      <div class="menu-icon">⚙️</div>
+      <div class="menu-text">
+        <div class="menu-title">App Settings</div>
+        <div class="menu-sub">Preferences and notifications</div>
+      </div>
+      <div class="menu-arrow">›</div>
+    </div>
+    <div class="menu-item" onclick="shareApp()">
+      <div class="menu-icon">📣</div>
+      <div class="menu-text">
+        <div class="menu-title">Share VideoKit</div>
+        <div class="menu-sub">Invite a friend</div>
+      </div>
+      <div class="menu-arrow">›</div>
+    </div>
+    <a href="about.html" class="menu-item">
+      <div class="menu-icon">ℹ️</div>
+      <div class="menu-text">
+        <div class="menu-title">About VideoKit</div>
+        <div class="menu-sub">Version, credits, legal</div>
+      </div>
+      <div class="menu-arrow">›</div>
+    </a>
+  </div>
+
+  <!-- Danger Zone -->
+  <div class="section-label">Account Actions</div>
+  <div class="menu-list">
+    <div class="menu-item danger" onclick="confirmLogout()">
+      <div class="menu-icon">🚪</div>
+      <div class="menu-text">
+        <div class="menu-title">Log Out</div>
+        <div class="menu-sub">Clear session data</div>
+      </div>
+    </div>
+    <div class="menu-item danger" onclick="confirmDelete()">
+      <div class="menu-icon">🗑️</div>
+      <div class="menu-text">
+        <div class="menu-title">Delete Account</div>
+        <div class="menu-sub">Permanently delete all data</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="version-text">VideoKit v1.0 · by MrSmile Build · Nigeria 🇳🇬</div>
+
+  <!-- Edit Profile Sheet -->
+  <div class="sheet-overlay" id="editSheet" onclick="if(event.target===this)closeSheet('editSheet')">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">Edit Profile</div>
+      <div class="field-label">Display Name</div>
+      <input class="field-input" id="editName" placeholder="Your name">
+      <button class="save-btn" onclick="saveProfile()">Save Changes</button>
+    </div>
+  </div>
+
+  <!-- Plans Sheet -->
+  <div class="sheet-overlay" id="plansSheet" onclick="if(event.target===this)closeSheet('plansSheet')">
+    <div class="sheet" style="max-height:85vh;overflow-y:auto">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">Choose Your Plan</div>
+      <div id="plansList"></div>
+    </div>
+  </div>
+
+  <!-- Settings Sheet -->
+  <div class="sheet-overlay" id="settingsSheet" onclick="if(event.target===this)closeSheet('settingsSheet')">
+    <div class="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-title">Settings</div>
+      <div class="menu-item" style="border-bottom:1px solid #1a1a1a">
+        <div class="menu-text">
+          <div class="menu-title">Auto-save scripts</div>
+          <div class="menu-sub">Save generated scripts to history</div>
+        </div>
+        <div id="autoSaveToggle" onclick="toggleAutoSave()"
+          style="width:44px;height:24px;border-radius:12px;position:relative;cursor:pointer;background:#ff5c00">
+          <div style="width:20px;height:20px;background:white;border-radius:50%;position:absolute;top:2px;right:2px;transition:.2s"></div>
+        </div>
+      </div>
+      <div class="menu-item">
+        <div class="menu-text">
+          <div class="menu-title">Watermark on videos</div>
+          <div class="menu-sub">Free plan always includes watermark</div>
+        </div>
+        <div style="width:44px;height:24px;border-radius:12px;position:relative;background:#333">
+          <div style="width:20px;height:20px;background:#666;border-radius:50%;position:absolute;top:2px;left:2px"></div>
+        </div>
+      </div>
+      <button class="save-btn" style="margin-top:20px" onclick="closeSheet('settingsSheet')">Done</button>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div id="vkNav" style="position:fixed;bottom:0;left:0;right:0;background:#0d0d0d;border-top:1px solid #1e1e1e;display:flex;z-index:99999">
+    <a href="index.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;color:#555;text-decoration:none;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:4px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
+    </a>
+    <a href="create.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;color:#555;text-decoration:none;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:4px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Create
+    </a>
+    <a href="history.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;color:#555;text-decoration:none;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:4px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>History
+    </a>
+    <a href="menu.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;color:#ff5c00;text-decoration:none;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:4px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>Menu
+    </a>
+  </div>
+
+  <script src="js/shared.js"></script>
+  <script>
+    const PLANS = [
+      { id:'free', name:'Free', price:'₦0', color:'#111',
+        features:['3 scripts/week','8 AI edits/week','30s max video','VideoKit watermark','No merge'] },
+      { id:'starter', name:'Starter', price:'₦1,500/mo', color:'#0d1a0d',
+        features:['8 scripts/week','15 AI edits/week','3 uploads/week','Merge enabled','60s max video'] },
+      { id:'pro', name:'Pro', price:'₦4,000/mo', color:'#0d0d1a',
+        features:['25 scripts/week','50 AI edits/week','15 uploads/week','No watermark','5 min max','Background music','All voices'] },
+      { id:'business', name:'Business', price:'₦8,000/mo', color:'#1a0d0d',
+        features:['60 scripts/week','Unlimited AI edits','30 uploads/week','Custom watermark','Priority merge','10 min max'] }
+    ];
+
+    function initMenu() {
+      const user = getUser();
+      const plan = getPlan();
+      const name = user ? user.name : 'VideoKit User';
+      document.getElementById('menuAvatar').textContent = name.charAt(0).toUpperCase();
+      document.getElementById('menuName').textContent = name;
+      document.getElementById('menuPlan').textContent = plan.toUpperCase();
+      document.getElementById('menuPlanSub').textContent = 'You are on the ' + plan.charAt(0).toUpperCase()+plan.slice(1) + ' plan';
+      document.getElementById('menuHistorySub').textContent = getHistory().length + ' saved scripts';
+    }
+
+    function openEditProfile() {
+      const user = getUser();
+      document.getElementById('editName').value = user ? user.name : '';
+      document.getElementById('editSheet').classList.add('open');
+    }
+
+    function saveProfile() {
+      const name = document.getElementById('editName').value.trim();
+      if (!name) return;
+      const user = getUser() || {};
+      saveUser({...user, name});
+      closeSheet('editSheet');
+      initMenu();
+    }
+
+    function openPlans() {
+      const current = getPlan();
+      document.getElementById('plansList').innerHTML = PLANS.map(p => `
+        <div class="plan-card ${p.id===current?'current':''}" style="background:${p.color}">
+          <div class="plan-top">
+            <div class="plan-name">${p.name}</div>
+            <div class="plan-price">${p.price}</div>
+          </div>
+          <ul class="plan-features">
+            ${p.features.map(f=>`<li>${f}</li>`).join('')}
+          </ul>
+          ${p.id===current
+            ? '<div class="current-badge">✓ Current Plan</div>'
+            : `<button class="plan-btn" onclick="upgradePlan('${p.id}')">Get ${p.name}</button>`
+          }
+        </div>
+      `).join('');
+      document.getElementById('plansSheet').classList.add('open');
+    }
+
+    function upgradePlan(plan) {
+      alert('Paystack payment coming soon!\n\nFor now contact @mrsmile.hustle on Instagram to upgrade manually.');
+    }
+
+    function openSettings() {
+      document.getElementById('settingsSheet').classList.add('open');
+    }
+
+    function closeSheet(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    function toggleAutoSave() {
+      const on = localStorage.getItem('vk_autosave') !== 'off';
+      localStorage.setItem('vk_autosave', on ? 'off' : 'on');
+      const t = document.getElementById('autoSaveToggle');
+      t.style.background = on ? '#333' : '#ff5c00';
+      const dot = t.querySelector('div');
+      dot.style.right = on ? 'auto' : '2px';
+      dot.style.left = on ? '2px' : 'auto';
+    }
+
+    function shareApp() {
+      if (navigator.share) {
+        navigator.share({
+          title: 'VideoKit',
+          text: 'Create faceless videos with AI in minutes! 🎬',
+          url: 'https://mrsmile-build.github.io/videokit'
+        });
+      } else {
+        alert('Share: mrsmile-build.github.io/videokit');
+      }
+    }
+
+    function confirmLogout() {
+      if (confirm('Log out? Your data stays on this device.')) {
+        localStorage.removeItem('vk_user');
+        window.location.href = 'index.html';
+      }
+    }
+
+    function confirmDelete() {
+      if (confirm('Delete account? This permanently clears ALL VideoKit data.')) {
+        if (confirm('Are you 100% sure? This cannot be undone.')) {
+          localStorage.clear();
+          window.location.href = 'index.html';
+        }
+      }
+    }
+
+    initMenu();
+  </script>
+</body>
+</html>

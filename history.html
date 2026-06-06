@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>History — VideoKit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/shared.css">
+  <style>
+    .page-header {
+      padding: 52px 20px 20px;
+      background: linear-gradient(160deg, #0f0f0f 60%, #1a0900);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .page-title { font-size: 1.3rem; font-weight: 800; }
+    .clear-btn {
+      font-size: .75rem; color: #ff4444; background: none;
+      border: 1px solid #ff444433; border-radius: 8px;
+      padding: 6px 12px; cursor: pointer; font-family: 'Syne', sans-serif;
+    }
+    .tabs {
+      display: flex; border-bottom: 1px solid #1e1e1e;
+      padding: 0 20px; gap: 0;
+    }
+    .tab {
+      flex: 1; padding: 14px 0; text-align: center;
+      font-size: .8rem; font-weight: 700; color: #555;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .tab.active { color: #ff5c00; border-bottom-color: #ff5c00; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .history-list { padding: 16px 20px; }
+    .history-card {
+      background: #111; border: 1px solid #1e1e1e;
+      border-radius: 14px; padding: 16px; margin-bottom: 12px;
+    }
+    .history-card-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 8px;
+    }
+    .history-topic { font-weight: 700; font-size: .95rem; flex: 1; }
+    .history-del {
+      color: #444; padding: 0 4px; font-size: 1.2rem;
+      cursor: pointer; background: none; border: none; color: #555;
+    }
+    .history-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .tag {
+      padding: 3px 10px; background: #1a0900; color: #ff5c00;
+      border-radius: 20px; font-size: .7rem; font-weight: 700;
+    }
+    .date { font-size: .72rem; color: #555; }
+    .history-actions { display: flex; gap: 8px; }
+    .history-btn {
+      flex: 1; padding: 8px; border-radius: 8px; border: none;
+      font-family: 'Syne', sans-serif; font-size: .78rem;
+      font-weight: 700; cursor: pointer; text-align: center;
+    }
+    .btn-use { background: #ff5c00; color: white; text-decoration: none; display: block; }
+    .btn-del { background: #1a1a1a; color: #888; border: 1px solid #222; }
+    .empty {
+      text-align: center; padding: 60px 20px; color: #444;
+    }
+    .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty-title { font-weight: 700; margin-bottom: 6px; }
+    .empty-sub { font-size: .82rem; color: #555; }
+    .search-bar {
+      margin: 16px 20px 0; padding: 12px 16px;
+      background: #111; border: 1px solid #1e1e1e;
+      border-radius: 12px; color: white; font-family: 'Syne', sans-serif;
+      font-size: .88rem; width: calc(100% - 40px); box-sizing: border-box;
+    }
+    .search-bar:focus { border-color: #ff5c00; outline: none; }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <div class="page-title">📚 History</div>
+    <button class="clear-btn" onclick="clearAll()">Clear All</button>
+  </div>
+
+  <input class="search-bar" id="searchBar" placeholder="🔍 Search scripts..." oninput="renderScripts()">
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('scripts',this)">Scripts</div>
+    <div class="tab" onclick="switchTab('videos',this)">Videos</div>
+  </div>
+
+  <div id="tab-scripts" class="tab-content active">
+    <div class="history-list" id="scriptsList"></div>
+  </div>
+
+  <div id="tab-videos" class="tab-content">
+    <div class="history-list" id="videosList">
+      <div class="empty">
+        <div class="empty-icon">🎬</div>
+        <div class="empty-title">No saved videos yet</div>
+        <div class="empty-sub">Merged videos will appear here</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="vkNav" style="position:fixed;bottom:0;left:0;right:0;background:#0d0d0d;border-top:1px solid #1e1e1e;display:flex;z-index:99999">
+    <a href="index.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;color:#555;text-decoration:none;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:4px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
+    </a>
+    <a href="create.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;color:#555;text-decoration:none;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:4px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Create
+    </a>
+    <a href="history.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;color:#ff5c00;text-decoration:none;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:4px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>History
+    </a>
+    <a href="menu.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;color:#555;text-decoration:none;font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:4px">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>Menu
+    </a>
+  </div>
+
+  <script src="js/shared.js"></script>
+  <script>
+    function switchTab(tab, el) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('tab-' + tab).classList.add('active');
+    }
+
+    function renderScripts() {
+      const query = (document.getElementById('searchBar').value || '').toLowerCase();
+      const history = getHistory().filter(s =>
+        !query || (s.topic || '').toLowerCase().includes(query)
+      );
+      const el = document.getElementById('scriptsList');
+      if (!history.length) {
+        el.innerHTML = `<div class="empty">
+          <div class="empty-icon">📭</div>
+          <div class="empty-title">${query ? 'No results found' : 'No scripts yet'}</div>
+          <div class="empty-sub">${query ? 'Try a different search' : 'Generate a script in Create to see it here'}</div>
+        </div>`;
+        return;
+      }
+      el.innerHTML = history.map(s => `
+        <div class="history-card" id="card-${s.id}">
+          <div class="history-card-top">
+            <div class="history-topic">${s.topic || 'Untitled script'}</div>
+            <button class="history-del" onclick="deleteScript('${s.id}')">×</button>
+          </div>
+          <div class="history-meta">
+            <span class="date">${new Date(s.date).toLocaleDateString()}</span>
+            <span class="tag">${s.style || 'Educational'}</span>
+            <span class="tag">${s.length || 60}s</span>
+          </div>
+          <div class="history-actions">
+            <a href="create.html" class="history-btn btn-use" onclick="localStorage.setItem('vk_restore','${s.id}')">▶ Use Script</a>
+            <button class="history-btn btn-del" onclick="copyScript('${s.id}')">📋 Copy</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteScript(id) {
+      deleteFromHistory(id);
+      renderScripts();
+    }
+
+    function copyScript(id) {
+      const s = getHistory().find(h => h.id === id);
+      if (!s || !s.scriptText) { alert('Script text not saved'); return; }
+      navigator.clipboard.writeText(s.scriptText).then(() => alert('Copied!'));
+    }
+
+    function clearAll() {
+      if (confirm('Clear all script history?')) {
+        localStorage.removeItem('vk_history');
+        renderScripts();
+      }
+    }
+
+    renderScripts();
+  </script>
+</body>
+</html>
