@@ -451,73 +451,64 @@ Return ONLY valid JSON:
 }
 
 async function createVideoFromScenes(scenes, media, audioBlob2, totalLen) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 720; canvas.height = 1280;
-  const ctx = canvas.getContext('2d');
-  const stream = canvas.captureStream(15);
+  // Try backend merge first (faster than canvas)
+  const sceneDur = Math.round((totalLen || 60) / scenes.length);
 
+  const payload = {
+    scenes: scenes.map((s, i) => ({
+      videoUrl: media[i] ? media[i].url : null,
+      isImage: media[i] ? media[i].type === 'image' : false,
+      isTextCard: !media[i],
+      text: s.narration ? s.narration.slice(0, 100) : '',
+      duration: sceneDur
+    }))
+  };
+
+  // Add audio as base64 if available
   if (audioBlob2) {
     try {
-      const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-      const audioDest = audioCtx.createMediaStreamDestination();
-      const buf = await audioBlob2.arrayBuffer();
-      audioCtx.decodeAudioData(buf, decoded => {
-        const src = audioCtx.createBufferSource();
-        src.buffer = decoded; src.connect(audioDest);
-        audioDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
-        src.start(0);
+      payload.audioBase64 = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result.split(',')[1]);
+        reader.onerror = rej;
+        reader.readAsDataURL(audioBlob2);
       });
-    } catch(e) {}
+    } catch(e) { console.log('[Audio b64]', e); }
   }
 
-  const recorder = new MediaRecorder(stream, { mimeType:'video/webm' });
-  const chunks = [];
-  recorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
-  recorder.start(100);
+  // Start async job on backend
+  const startRes = await fetch(PROXY + '/merge-start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
 
-  const sceneDur = Math.round((totalLen || 60) / scenes.length) * 1000;
+  if (!startRes.ok) throw new Error('Backend merge failed to start');
+  const { jobId } = await startRes.json();
 
-  for (let i = 0; i < scenes.length; i++) {
-    const scene = scenes[i];
-    const m = media[i];
-    const start = Date.now();
+  // Update progress message
+  const bar = document.getElementById('progressBar');
+  if (bar) bar.style.width = '80%';
 
-    let img = null;
-    if (m && m.type === 'image') {
-      img = new Image(); img.crossOrigin = 'anonymous';
-      await new Promise(r => { img.onload=r; img.onerror=r; img.src=m.url; });
+  // Poll for completion
+  for (let attempt = 0; attempt < 60; attempt++) {
+    await new Promise(r => setTimeout(r, 5000));
+    const statusRes = await fetch(PROXY + '/merge-status/' + jobId);
+    const ct = statusRes.headers.get('content-type') || '';
+
+    if (ct.includes('video')) {
+      return await statusRes.blob();
     }
 
-    while (Date.now() - start < sceneDur) {
-      ctx.fillStyle = '#000'; ctx.fillRect(0,0,720,1280);
-      if (img && img.naturalWidth) {
-        const scale = Math.min(720/img.naturalWidth, 1280/img.naturalHeight);
-        const w = img.naturalWidth*scale, h = img.naturalHeight*scale;
-        ctx.drawImage(img, (720-w)/2, (1280-h)/2, w, h);
-      } else {
-        ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0,0,720,1280);
-      }
-      // Text overlay
-      ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(0, 1080, 720, 200);
-      ctx.fillStyle = 'white'; ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'center';
-      const words = (scene.narration||'').split(' ');
-      let line='', y=1110;
-      for (const w of words) {
-        const test = line+w+' ';
-        if (ctx.measureText(test).width > 680 && line) { ctx.fillText(line.trim(),360,y); line=w+' '; y+=34; }
-        else line=test;
-      }
-      if (line.trim()) ctx.fillText(line.trim(),360,y);
-      // Watermark
-      ctx.fillStyle='rgba(255,92,0,.8)'; ctx.font='bold 18px sans-serif'; ctx.textAlign='right';
-      ctx.fillText('VideoKit',710,36);
-      await new Promise(r => setTimeout(r, 67));
+    const status = await statusRes.json();
+    if (status.status === 'error') throw new Error(status.error || 'Merge failed');
+    if (status.status === 'done') {
+      const fileRes = await fetch(PROXY + '/merge-status/' + jobId);
+      return await fileRes.blob();
     }
+    if (bar) bar.style.width = Math.min(95, 80 + status.progress/20) + '%';
   }
-
-  recorder.stop();
-  await new Promise(r => { recorder.onstop = r; });
-  return new Blob(chunks, { type:'video/webm' });
+  throw new Error('Video creation timed out');
 }
 
 function openInCreate(data) {
