@@ -321,7 +321,7 @@
         <div style="font-size:.85rem;font-weight:600;margin-bottom:8px">📁 Use your own image or video</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <input type="file" id="userMediaFile" accept="image/*,video/*" style="display:none" onchange="handleUserUpload(this)">
-          <select id="uploadSceneIdx" onclick="populateSceneSelect()" onchange="window._uploadScene=this.value;this.style.borderColor=this.value?'#ff5c00':'#333'" style="flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:.85rem">
+          <select id="uploadSceneIdx" onchange="window._uploadScene=this.value;this.style.borderColor=this.value?'#ff5c00':'#333'" style="flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:.85rem">
             <option value="">Select scene...</option>
           </select>
           <button class="btn btn-sm btn-outline" onclick="if(!window._uploadScene&&window._uploadScene!=='0'){alert('Select a scene first');return;}document.getElementById('userMediaFile').click()">📤 Upload</button>
