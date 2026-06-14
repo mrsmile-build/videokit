@@ -10,130 +10,214 @@
   <meta property="og:url" content="https://mrsmile-build.github.io/videokit/">
   <link rel="canonical" href="https://mrsmile-build.github.io/videokit/">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXFNM475V9">
-// ── Auto Create Full Video ──────────────────────────────────
-async function autoCreate() {
-  const idea = document.getElementById('videoIdea').value.trim();
-  if (!idea) { alert('Enter your video idea first'); return; }
+// ── Usage Tracking (localStorage) ──────────────────
+const PLAN_LIMITS = {
+  free:    { scripts: 3, edits: 8, uploads: 3, merge: false, maxSecs: 30 },
+  starter: { scripts: 8, edits: 15, uploads: 3, merge: true, maxSecs: 60 },
+  pro:     { scripts: 25, edits: 50, uploads: 15, merge: true, maxSecs: 300 },
+  business:{ scripts: 60, edits: 999, uploads: 30, merge: true, maxSecs: 600 }
+};
 
-  const btn = document.getElementById('btnAuto');
-  btn.disabled = true;
-  btn.textContent = '⏳ Step 1/4: Writing script...';
-
-  try {
-    // Step 1: Generate script
-    await generateScript();
-    await waitFor(() => scriptData !== null, 60000);
-    btn.textContent = '⏳ Step 2/4: Finding images...';
-
-    // Step 2: Auto-go to videos and pick first image per scene
-    await goToVideos();
-    await waitFor(() => document.querySelectorAll('.video-thumb').length > 0, 30000);
-    document.querySelectorAll('[data-scene]').forEach(el => {
-      const scene = el.dataset.scene;
-      if (!selectedVideos[scene]) {
-        el.click();
-      }
-    });
-    btn.textContent = '⏳ Step 3/4: Generating voice...';
-
-    // Step 3: Auto-generate voice
-    goToVoice();
-    await new Promise(r => setTimeout(r, 1000));
-    selectVoice(document.querySelector('.voice-card'));
-    await generateVoice();
-    await waitFor(() => audioBlob !== null, 60000);
-    btn.textContent = '⏳ Step 4/4: Creating video...';
-
-    // Step 4: Auto merge
-    goToDownload();
-    await new Promise(r => setTimeout(r, 500));
-    await mergeAndDownload();
-
-    btn.textContent = '✅ Done!';
-    setTimeout(() => { btn.disabled = false; btn.textContent = '🚀 Auto Create Full Video'; }, 4000);
-
-  } catch(err) {
-    console.error('[AutoCreate]', err);
-    btn.disabled = false;
-    btn.textContent = '🚀 Auto Create Full Video';
-    alert('Auto create failed: ' + (err.message||err));
-  }
+function getUsage() {
+  const week = Math.floor(Date.now() / (7*24*60*60*1000));
+  const key  = 'vk_usage_' + week;
+  const def  = { scripts:0, edits:0, uploads:0, week };
+  try { return JSON.parse(localStorage.getItem(key)) || def; } catch(e) { return def; }
 }
 
-function waitFor(condition, timeout) {
-  return new Promise((resolve, reject) => {
-    const start = Date.now();
-    const check = () => {
-      if (condition()) return resolve();
-      if (Date.now() - start > timeout) return reject(new Error('Timeout'));
-      setTimeout(check, 500);
-    };
-    check();
-  });
+function saveUsage(u) {
+  const week = Math.floor(Date.now() / (7*24*60*60*1000));
+  localStorage.setItem('vk_usage_' + week, JSON.stringify({...u, week}));
+}
+
+function getPlan() {
+  try { return localStorage.getItem('vk_plan') || 'free'; } catch(e) { return 'free'; }
+}
+
+function canDo(action) {
+  const plan   = getPlan();
+  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+  const usage  = getUsage();
+  if (action === 'script')  return usage.scripts  < limits.scripts;
+  if (action === 'edit')    return usage.edits    < limits.edits;
+  if (action === 'upload')  return usage.uploads  < limits.uploads;
+  if (action === 'merge')   return limits.merge;
+  return false;
+}
+
+function trackUsage(action) {
+  const u = getUsage();
+  if (action === 'script')  u.scripts++;
+  if (action === 'edit')    u.edits++;
+  if (action === 'upload')  u.uploads++;
+  saveUsage(u);
+}
+
+function showUpgradePrompt(action) {
+  const plan = getPlan();
+  const msgs = {
+    script:  'You have used all your scripts this week.',
+    edit:    'You have used all your AI edits this week.',
+    upload:  'You have used all your uploads this week.',
+    merge:   'Video merge is not available on the free plan.'
+  };
+  const msg = (msgs[action]||'Limit reached') + ' Upgrade to continue.';
+  if (confirm(msg + '\n\nTap OK to see plans.')) showPlansModal();
+}
+
+function showPlansModal() {
+  const existing = document.getElementById('plansModal');
+  if (existing) { existing.style.display='flex'; return; }
+  const modal = document.createElement('div');
+  modal.id = 'plansModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML = `
+    <div style="background:#111;border-radius:16px;padding:24px;max-width:380px;width:100%;max-height:90vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-size:1.2rem;font-weight:700">Upgrade VideoKit</div>
+        <button onclick="document.getElementById('plansModal').style.display='none'" style="background:none;border:none;color:#999;font-size:1.5rem;cursor:pointer">×</button>
+      </div>
+      ${[
+        {name:'Free',price:'₦0',color:'#333',features:['3 scripts/week','8 AI edits/week','No merge','30s max','Watermark'],plan:'free'},
+        {name:'Starter',price:'₦1,500/mo',color:'#1a3a1a',features:['8 scripts/week','15 AI edits/week','3 uploads/week','Merge enabled','60s max'],plan:'starter'},
+        {name:'Pro',price:'₦4,000/mo',color:'#1a1a3a',features:['25 scripts/week','50 AI edits/week','15 uploads/week','No watermark','5 min max','Background music'],plan:'pro'},
+        {name:'Business',price:'₦8,000/mo',color:'#2a1a1a',features:['60 scripts/week','Unlimited edits','30 uploads/week','Custom watermark','Priority merge'],plan:'business'}
+      ].map(p => `
+        <div style="background:${p.color};border-radius:12px;padding:16px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-weight:700;font-size:1rem">${p.name}</div>
+            <div style="color:#ff5c00;font-weight:700">${p.price}</div>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:.8rem;color:#ccc;line-height:1.8">
+            ${p.features.map(f=>`<li>${f}</li>`).join('')}
+          </ul>
+          ${p.plan!=='free'?`<button onclick="handleUpgrade('${p.plan}')" style="margin-top:10px;width:100%;padding:10px;background:#ff5c00;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-size:.9rem">Get ${p.name}</button>`:''}
+        </div>
+      `).join('')}
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function handleUpgrade(plan) {
+  // Paystack integration placeholder
+  alert('Paystack payment coming soon! For now contact @mrsmile.hustle on Instagram to upgrade.');
+}
+
+function showUsageBadge() {
+  const plan  = getPlan();
+  const usage = getUsage();
+  const lim   = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+  const badge = document.getElementById('usageBadge');
+  if (!badge) return;
+  badge.textContent = plan.toUpperCase() + ' · ' + usage.scripts + '/' + lim.scripts + ' scripts';
+  badge.style.display = 'inline-block';
 }
 
 </script>
   <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-XXFNM475V9");
-// ── Auto Create Full Video ──────────────────────────────────
-async function autoCreate() {
-  const idea = document.getElementById('videoIdea').value.trim();
-  if (!idea) { alert('Enter your video idea first'); return; }
+// ── Usage Tracking (localStorage) ──────────────────
+const PLAN_LIMITS = {
+  free:    { scripts: 3, edits: 8, uploads: 3, merge: false, maxSecs: 30 },
+  starter: { scripts: 8, edits: 15, uploads: 3, merge: true, maxSecs: 60 },
+  pro:     { scripts: 25, edits: 50, uploads: 15, merge: true, maxSecs: 300 },
+  business:{ scripts: 60, edits: 999, uploads: 30, merge: true, maxSecs: 600 }
+};
 
-  const btn = document.getElementById('btnAuto');
-  btn.disabled = true;
-  btn.textContent = '⏳ Step 1/4: Writing script...';
-
-  try {
-    // Step 1: Generate script
-    await generateScript();
-    await waitFor(() => scriptData !== null, 60000);
-    btn.textContent = '⏳ Step 2/4: Finding images...';
-
-    // Step 2: Auto-go to videos and pick first image per scene
-    await goToVideos();
-    await waitFor(() => document.querySelectorAll('.video-thumb').length > 0, 30000);
-    document.querySelectorAll('[data-scene]').forEach(el => {
-      const scene = el.dataset.scene;
-      if (!selectedVideos[scene]) {
-        el.click();
-      }
-    });
-    btn.textContent = '⏳ Step 3/4: Generating voice...';
-
-    // Step 3: Auto-generate voice
-    goToVoice();
-    await new Promise(r => setTimeout(r, 1000));
-    selectVoice(document.querySelector('.voice-card'));
-    await generateVoice();
-    await waitFor(() => audioBlob !== null, 60000);
-    btn.textContent = '⏳ Step 4/4: Creating video...';
-
-    // Step 4: Auto merge
-    goToDownload();
-    await new Promise(r => setTimeout(r, 500));
-    await mergeAndDownload();
-
-    btn.textContent = '✅ Done!';
-    setTimeout(() => { btn.disabled = false; btn.textContent = '🚀 Auto Create Full Video'; }, 4000);
-
-  } catch(err) {
-    console.error('[AutoCreate]', err);
-    btn.disabled = false;
-    btn.textContent = '🚀 Auto Create Full Video';
-    alert('Auto create failed: ' + (err.message||err));
-  }
+function getUsage() {
+  const week = Math.floor(Date.now() / (7*24*60*60*1000));
+  const key  = 'vk_usage_' + week;
+  const def  = { scripts:0, edits:0, uploads:0, week };
+  try { return JSON.parse(localStorage.getItem(key)) || def; } catch(e) { return def; }
 }
 
-function waitFor(condition, timeout) {
-  return new Promise((resolve, reject) => {
-    const start = Date.now();
-    const check = () => {
-      if (condition()) return resolve();
-      if (Date.now() - start > timeout) return reject(new Error('Timeout'));
-      setTimeout(check, 500);
-    };
-    check();
-  });
+function saveUsage(u) {
+  const week = Math.floor(Date.now() / (7*24*60*60*1000));
+  localStorage.setItem('vk_usage_' + week, JSON.stringify({...u, week}));
+}
+
+function getPlan() {
+  try { return localStorage.getItem('vk_plan') || 'free'; } catch(e) { return 'free'; }
+}
+
+function canDo(action) {
+  const plan   = getPlan();
+  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+  const usage  = getUsage();
+  if (action === 'script')  return usage.scripts  < limits.scripts;
+  if (action === 'edit')    return usage.edits    < limits.edits;
+  if (action === 'upload')  return usage.uploads  < limits.uploads;
+  if (action === 'merge')   return limits.merge;
+  return false;
+}
+
+function trackUsage(action) {
+  const u = getUsage();
+  if (action === 'script')  u.scripts++;
+  if (action === 'edit')    u.edits++;
+  if (action === 'upload')  u.uploads++;
+  saveUsage(u);
+}
+
+function showUpgradePrompt(action) {
+  const plan = getPlan();
+  const msgs = {
+    script:  'You have used all your scripts this week.',
+    edit:    'You have used all your AI edits this week.',
+    upload:  'You have used all your uploads this week.',
+    merge:   'Video merge is not available on the free plan.'
+  };
+  const msg = (msgs[action]||'Limit reached') + ' Upgrade to continue.';
+  if (confirm(msg + '\n\nTap OK to see plans.')) showPlansModal();
+}
+
+function showPlansModal() {
+  const existing = document.getElementById('plansModal');
+  if (existing) { existing.style.display='flex'; return; }
+  const modal = document.createElement('div');
+  modal.id = 'plansModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML = `
+    <div style="background:#111;border-radius:16px;padding:24px;max-width:380px;width:100%;max-height:90vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-size:1.2rem;font-weight:700">Upgrade VideoKit</div>
+        <button onclick="document.getElementById('plansModal').style.display='none'" style="background:none;border:none;color:#999;font-size:1.5rem;cursor:pointer">×</button>
+      </div>
+      ${[
+        {name:'Free',price:'₦0',color:'#333',features:['3 scripts/week','8 AI edits/week','No merge','30s max','Watermark'],plan:'free'},
+        {name:'Starter',price:'₦1,500/mo',color:'#1a3a1a',features:['8 scripts/week','15 AI edits/week','3 uploads/week','Merge enabled','60s max'],plan:'starter'},
+        {name:'Pro',price:'₦4,000/mo',color:'#1a1a3a',features:['25 scripts/week','50 AI edits/week','15 uploads/week','No watermark','5 min max','Background music'],plan:'pro'},
+        {name:'Business',price:'₦8,000/mo',color:'#2a1a1a',features:['60 scripts/week','Unlimited edits','30 uploads/week','Custom watermark','Priority merge'],plan:'business'}
+      ].map(p => `
+        <div style="background:${p.color};border-radius:12px;padding:16px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-weight:700;font-size:1rem">${p.name}</div>
+            <div style="color:#ff5c00;font-weight:700">${p.price}</div>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:.8rem;color:#ccc;line-height:1.8">
+            ${p.features.map(f=>`<li>${f}</li>`).join('')}
+          </ul>
+          ${p.plan!=='free'?`<button onclick="handleUpgrade('${p.plan}')" style="margin-top:10px;width:100%;padding:10px;background:#ff5c00;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-size:.9rem">Get ${p.name}</button>`:''}
+        </div>
+      `).join('')}
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function handleUpgrade(plan) {
+  // Paystack integration placeholder
+  alert('Paystack payment coming soon! For now contact @mrsmile.hustle on Instagram to upgrade.');
+}
+
+function showUsageBadge() {
+  const plan  = getPlan();
+  const usage = getUsage();
+  const lim   = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+  const badge = document.getElementById('usageBadge');
+  if (!badge) return;
+  badge.textContent = plan.toUpperCase() + ' · ' + usage.scripts + '/' + lim.scripts + ' scripts';
+  badge.style.display = 'inline-block';
 }
 
 </script>
@@ -238,7 +322,7 @@ function waitFor(condition, timeout) {
     @media(max-width:600px){.form-row{grid-template-columns:1fr}.hero{padding:40px 20px 28px}.card{padding:20px 16px}}
   </style>
 </head>
-<body style="padding-bottom:72px">
+<body>
 
 <nav>
   <a href="index.html" class="logo">Video<span>Kit</span></a>
@@ -447,7 +531,7 @@ function waitFor(condition, timeout) {
         <div style="font-size:.85rem;font-weight:600;margin-bottom:8px">📁 Use your own image or video</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <input type="file" id="userMediaFile" accept="image/*,video/*" style="display:none" onchange="handleUserUpload(this)">
-          <select id="uploadSceneIdx" onfocus="populateSceneSelect()" onchange="window._uploadScene=this.value;this.style.borderColor=this.value?'#ff5c00':'#333'" style="flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:.85rem">
+          <select id="uploadSceneIdx" onclick="populateSceneSelect()" onchange="window._uploadScene=this.value;this.style.borderColor=this.value?'#ff5c00':'#333'" style="flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#fff;font-size:.85rem">
             <option value="">Select scene...</option>
           </select>
           <button class="btn btn-sm btn-outline" onclick="if(!window._uploadScene&&window._uploadScene!=='0'){alert('Select a scene first');return;}document.getElementById('userMediaFile').click()">📤 Upload</button>
@@ -732,6 +816,7 @@ const HOOK_PROMPTS = {
 };
 
 async function generateScript() {
+  if (!canDo('script')) { showUpgradePrompt('script'); return; }
   const idea = document.getElementById("videoIdea").value.trim();
   if (!idea) { alert("Please enter your video idea!"); return; }
   const platform = document.getElementById("platform").value;
@@ -822,6 +907,7 @@ function copyCaption() {
 }
 
 async function humanRewrite() {
+  if (!canDo('edit')) { showUpgradePrompt('edit'); return; }
   if (!scriptData) return;
   const btn = document.getElementById("humanBtn");
   btn.disabled = true; btn.textContent = "Rewriting...";
@@ -1240,7 +1326,6 @@ async function mergeAndDownload() {
     const chunks   = [];
     recorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
     recorder.start(100);
-    const recordStart = Date.now();
     sp(10,'Recording started...');
 
     // Play each scene on canvas
@@ -1274,7 +1359,8 @@ async function mergeAndDownload() {
         // Draw image
         const img = new Image();
         img.crossOrigin='anonymous';
-        await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=url; });
+        const proxyUrl = url.startsWith('blob:') ? url : PROXY+'/proxy-image?url='+encodeURIComponent(url);
+        await new Promise((res,rej)=>{ img.onload=res; img.onerror=()=>{img.src=url;img.onload=res;img.onerror=rej;}; img.src=proxyUrl; });
         const imgText = scriptData&&scriptData.scenes[parseInt(idx)]?scriptData.scenes[parseInt(idx)].narration.slice(0,100):'';
         const start=Date.now();
         while(Date.now()-start<dur){
@@ -1331,19 +1417,6 @@ async function mergeAndDownload() {
       }
     }
 
-    // Hold last scene visible until voice duration ends
-    if (window._voiceDuration) {
-      const elapsed = (Date.now() - recordStart) / 1000;
-      const remaining = Math.max(0, window._voiceDuration - elapsed) * 1000;
-      if (remaining > 500) {
-        sp(90, 'Finishing voice...');
-        // Keep last scene on canvas
-        const lastEntry = entries[entries.length - 1];
-        const lastUrl = typeof lastEntry[1]==='string'?lastEntry[1]:(lastEntry[1].url||'');
-        await new Promise(r => setTimeout(r, remaining));
-      }
-    }
-
     // Stop recording
     sp(92,'Finalizing...');
     recorder.stop();
@@ -1361,54 +1434,6 @@ async function mergeAndDownload() {
     alert('Merge failed: '+(err&&err.message?err.message:String(err)));
     btn.textContent='🎬 Create Combined Video';btn.disabled=false;prog.style.display='none';if(pct)pct.style.display='none';
   }
-}
-
-function markSceneSelected(idx, url, ctype) {
-  // Find all thumbs for this scene and deselect
-  document.querySelectorAll('[data-scene="'+idx+'"]').forEach(el => el.classList.remove('selected'));
-  // Find the scene container and prepend uploaded preview
-  const sceneHeader = document.getElementById('scene-header-'+idx);
-  if (!sceneHeader) return;
-  const grid = sceneHeader.nextElementSibling;
-  if (!grid) return;
-  // Remove existing upload preview if any
-  const existing = grid.querySelector('.upload-preview');
-  if (existing) existing.remove();
-  // Add new preview
-  const div = document.createElement('div');
-  div.className = 'video-thumb selected upload-preview';
-  div.dataset.scene = idx;
-  div.dataset.url = url;
-  div.dataset.ctype = ctype;
-  div.onclick = function() { selectVideoEl(this); };
-  div.innerHTML = ctype==='video'
-    ? '<video src="'+url+'" muted loop playsinline style="width:100%;height:100%;object-fit:cover"></video><div class="video-tag">MY VIDEO</div><div class="select-overlay">✓</div>'
-    : '<img src="'+url+'" style="width:100%;height:100%;object-fit:cover"><div class="video-tag">MY IMAGE</div><div class="select-overlay">✓</div>';
-  grid.insertBefore(div, grid.firstChild);
-}
-
-function markSceneSelected(idx, url, ctype) {
-  // Find all thumbs for this scene and deselect
-  document.querySelectorAll('[data-scene="'+idx+'"]').forEach(el => el.classList.remove('selected'));
-  // Find the scene container and prepend uploaded preview
-  const sceneHeader = document.getElementById('scene-header-'+idx);
-  if (!sceneHeader) return;
-  const grid = sceneHeader.nextElementSibling;
-  if (!grid) return;
-  // Remove existing upload preview if any
-  const existing = grid.querySelector('.upload-preview');
-  if (existing) existing.remove();
-  // Add new preview
-  const div = document.createElement('div');
-  div.className = 'video-thumb selected upload-preview';
-  div.dataset.scene = idx;
-  div.dataset.url = url;
-  div.dataset.ctype = ctype;
-  div.onclick = function() { selectVideoEl(this); };
-  div.innerHTML = ctype==='video'
-    ? '<video src="'+url+'" muted loop playsinline style="width:100%;height:100%;object-fit:cover"></video><div class="video-tag">MY VIDEO</div><div class="select-overlay">✓</div>'
-    : '<img src="'+url+'" style="width:100%;height:100%;object-fit:cover"><div class="video-tag">MY IMAGE</div><div class="select-overlay">✓</div>';
-  grid.insertBefore(div, grid.firstChild);
 }
 
 function handleUserUpload(input) {
@@ -1451,84 +1476,110 @@ function startOver() {
   document.getElementById("script-result").classList.remove("show");
 }
 
-// ── Auto Create Full Video ──────────────────────────────────
-async function autoCreate() {
-  const idea = document.getElementById('videoIdea').value.trim();
-  if (!idea) { alert('Enter your video idea first'); return; }
+// ── Usage Tracking (localStorage) ──────────────────
+const PLAN_LIMITS = {
+  free:    { scripts: 3, edits: 8, uploads: 3, merge: false, maxSecs: 30 },
+  starter: { scripts: 8, edits: 15, uploads: 3, merge: true, maxSecs: 60 },
+  pro:     { scripts: 25, edits: 50, uploads: 15, merge: true, maxSecs: 300 },
+  business:{ scripts: 60, edits: 999, uploads: 30, merge: true, maxSecs: 600 }
+};
 
-  const btn = document.getElementById('btnAuto');
-  btn.disabled = true;
-  btn.textContent = '⏳ Step 1/4: Writing script...';
-
-  try {
-    // Step 1: Generate script
-    await generateScript();
-    await waitFor(() => scriptData !== null, 60000);
-    btn.textContent = '⏳ Step 2/4: Finding images...';
-
-    // Step 2: Auto-go to videos and pick first image per scene
-    await goToVideos();
-    await waitFor(() => document.querySelectorAll('.video-thumb').length > 0, 30000);
-    document.querySelectorAll('[data-scene]').forEach(el => {
-      const scene = el.dataset.scene;
-      if (!selectedVideos[scene]) {
-        el.click();
-      }
-    });
-    btn.textContent = '⏳ Step 3/4: Generating voice...';
-
-    // Step 3: Auto-generate voice
-    goToVoice();
-    await new Promise(r => setTimeout(r, 1000));
-    selectVoice(document.querySelector('.voice-card'));
-    await generateVoice();
-    await waitFor(() => audioBlob !== null, 60000);
-    btn.textContent = '⏳ Step 4/4: Creating video...';
-
-    // Step 4: Auto merge
-    goToDownload();
-    await new Promise(r => setTimeout(r, 500));
-    await mergeAndDownload();
-
-    btn.textContent = '✅ Done!';
-    setTimeout(() => { btn.disabled = false; btn.textContent = '🚀 Auto Create Full Video'; }, 4000);
-
-  } catch(err) {
-    console.error('[AutoCreate]', err);
-    btn.disabled = false;
-    btn.textContent = '🚀 Auto Create Full Video';
-    alert('Auto create failed: ' + (err.message||err));
-  }
+function getUsage() {
+  const week = Math.floor(Date.now() / (7*24*60*60*1000));
+  const key  = 'vk_usage_' + week;
+  const def  = { scripts:0, edits:0, uploads:0, week };
+  try { return JSON.parse(localStorage.getItem(key)) || def; } catch(e) { return def; }
 }
 
-function waitFor(condition, timeout) {
-  return new Promise((resolve, reject) => {
-    const start = Date.now();
-    const check = () => {
-      if (condition()) return resolve();
-      if (Date.now() - start > timeout) return reject(new Error('Timeout'));
-      setTimeout(check, 500);
-    };
-    check();
-  });
+function saveUsage(u) {
+  const week = Math.floor(Date.now() / (7*24*60*60*1000));
+  localStorage.setItem('vk_usage_' + week, JSON.stringify({...u, week}));
+}
+
+function getPlan() {
+  try { return localStorage.getItem('vk_plan') || 'free'; } catch(e) { return 'free'; }
+}
+
+function canDo(action) {
+  const plan   = getPlan();
+  const limits = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+  const usage  = getUsage();
+  if (action === 'script')  return usage.scripts  < limits.scripts;
+  if (action === 'edit')    return usage.edits    < limits.edits;
+  if (action === 'upload')  return usage.uploads  < limits.uploads;
+  if (action === 'merge')   return limits.merge;
+  return false;
+}
+
+function trackUsage(action) {
+  const u = getUsage();
+  if (action === 'script')  u.scripts++;
+  if (action === 'edit')    u.edits++;
+  if (action === 'upload')  u.uploads++;
+  saveUsage(u);
+}
+
+function showUpgradePrompt(action) {
+  const plan = getPlan();
+  const msgs = {
+    script:  'You have used all your scripts this week.',
+    edit:    'You have used all your AI edits this week.',
+    upload:  'You have used all your uploads this week.',
+    merge:   'Video merge is not available on the free plan.'
+  };
+  const msg = (msgs[action]||'Limit reached') + ' Upgrade to continue.';
+  if (confirm(msg + '\n\nTap OK to see plans.')) showPlansModal();
+}
+
+function showPlansModal() {
+  const existing = document.getElementById('plansModal');
+  if (existing) { existing.style.display='flex'; return; }
+  const modal = document.createElement('div');
+  modal.id = 'plansModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML = `
+    <div style="background:#111;border-radius:16px;padding:24px;max-width:380px;width:100%;max-height:90vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-size:1.2rem;font-weight:700">Upgrade VideoKit</div>
+        <button onclick="document.getElementById('plansModal').style.display='none'" style="background:none;border:none;color:#999;font-size:1.5rem;cursor:pointer">×</button>
+      </div>
+      ${[
+        {name:'Free',price:'₦0',color:'#333',features:['3 scripts/week','8 AI edits/week','No merge','30s max','Watermark'],plan:'free'},
+        {name:'Starter',price:'₦1,500/mo',color:'#1a3a1a',features:['8 scripts/week','15 AI edits/week','3 uploads/week','Merge enabled','60s max'],plan:'starter'},
+        {name:'Pro',price:'₦4,000/mo',color:'#1a1a3a',features:['25 scripts/week','50 AI edits/week','15 uploads/week','No watermark','5 min max','Background music'],plan:'pro'},
+        {name:'Business',price:'₦8,000/mo',color:'#2a1a1a',features:['60 scripts/week','Unlimited edits','30 uploads/week','Custom watermark','Priority merge'],plan:'business'}
+      ].map(p => `
+        <div style="background:${p.color};border-radius:12px;padding:16px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-weight:700;font-size:1rem">${p.name}</div>
+            <div style="color:#ff5c00;font-weight:700">${p.price}</div>
+          </div>
+          <ul style="margin:0;padding-left:16px;font-size:.8rem;color:#ccc;line-height:1.8">
+            ${p.features.map(f=>`<li>${f}</li>`).join('')}
+          </ul>
+          ${p.plan!=='free'?`<button onclick="handleUpgrade('${p.plan}')" style="margin-top:10px;width:100%;padding:10px;background:#ff5c00;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;font-size:.9rem">Get ${p.name}</button>`:''}
+        </div>
+      `).join('')}
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function handleUpgrade(plan) {
+  // Paystack integration placeholder
+  alert('Paystack payment coming soon! For now contact @mrsmile.hustle on Instagram to upgrade.');
+}
+
+function showUsageBadge() {
+  const plan  = getPlan();
+  const usage = getUsage();
+  const lim   = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+  const badge = document.getElementById('usageBadge');
+  if (!badge) return;
+  badge.textContent = plan.toUpperCase() + ' · ' + usage.scripts + '/' + lim.scripts + ' scripts';
+  badge.style.display = 'inline-block';
 }
 
 </script>
-
-<div id="vkNav" style="position:fixed;bottom:0;left:0;right:0;background:#0d0d0d;border-top:1px solid #1e1e1e;display:flex;z-index:99999">
-  <a href="index.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#555;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
-  </a>
-  <a href="create.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#ff5c00;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Create
-  </a>
-  <a href="ai.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#555;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>AI</a>
-    <a href="history.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#555;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>History
-  </a>
-  <a href="menu.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#555;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>Menu
-  </a>
-</div>
 </body>
 </html>

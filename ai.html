@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Studio — VideoKit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/shared.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { padding-bottom: 80px; background: #0a0a0a; }
+
+    .ai-header {
+      padding: 52px 20px 16px;
+      background: linear-gradient(160deg,#0f0f0f 60%,#1a0900);
+      border-bottom: 1px solid #1e1e1e;
+    }
+    .ai-title { font-size:1.3rem; font-weight:800; }
+    .ai-sub { color:#666; font-size:.82rem; margin-top:4px; }
+
+    /* Chat Messages */
+    .chat-area {
+      padding: 16px 20px;
+      min-height: calc(100vh - 280px);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .msg { display:flex; gap:10px; align-items:flex-start; }
+    .msg.user { flex-direction:row-reverse; }
+    .msg-avatar {
+      width:32px; height:32px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:.9rem; flex-shrink:0;
+    }
+    .msg-avatar.ai { background: linear-gradient(135deg,#ff5c00,#ff9500); }
+    .msg-avatar.user { background:#1a1a1a; border:1px solid #333; }
+    .msg-bubble {
+      max-width: 80%; padding:12px 14px;
+      border-radius:14px; font-size:.875rem; line-height:1.6;
+    }
+    .msg.ai .msg-bubble {
+      background:#111; border:1px solid #1e1e1e;
+      border-top-left-radius:4px;
+    }
+    .msg.user .msg-bubble {
+      background:#ff5c00; color:white;
+      border-top-right-radius:4px;
+    }
+    .msg-bubble.typing { color:#555; font-style:italic; }
+
+    /* Progress Card */
+    .progress-card {
+      background:#111; border:1px solid #1e1e1e;
+      border-radius:14px; padding:16px; margin:4px 0;
+    }
+    .progress-step {
+      display:flex; align-items:center; gap:10px;
+      padding:6px 0; font-size:.82rem;
+    }
+    .step-icon { width:22px; text-align:center; }
+    .step-done { color:#22c55e; }
+    .step-active { color:#ff5c00; }
+    .step-pending { color:#333; }
+    .mini-bar {
+      height:3px; background:#1e1e1e; border-radius:2px;
+      margin-top:10px;
+    }
+    .mini-bar-fill {
+      height:100%; background:#ff5c00; border-radius:2px;
+      transition: width .5s ease;
+    }
+
+    /* Input Area */
+    .input-area {
+      position:fixed; bottom:72px; left:0; right:0;
+      background:#0a0a0a; border-top:1px solid #1e1e1e;
+      padding:12px 16px;
+    }
+    .input-row {
+      display:flex; gap:8px; align-items:flex-end;
+    }
+    .chat-input {
+      flex:1; padding:12px 14px; background:#111;
+      border:1px solid #222; border-radius:12px;
+      color:white; font-family:'Syne',sans-serif;
+      font-size:.88rem; resize:none; max-height:100px;
+      overflow-y:auto;
+    }
+    .chat-input:focus { border-color:#ff5c00; outline:none; }
+    .send-btn {
+      width:44px; height:44px; background:#ff5c00;
+      border:none; border-radius:12px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; font-size:1.1rem;
+    }
+    .attach-btn {
+      width:44px; height:44px; background:#1a1a1a;
+      border:1px solid #222; border-radius:12px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; font-size:1.1rem;
+    }
+    .quick-prompts {
+      display:flex; gap:8px; overflow-x:auto;
+      padding-bottom:8px; margin-bottom:10px;
+      scrollbar-width:none;
+    }
+    .quick-prompt {
+      white-space:nowrap; padding:6px 12px;
+      background:#111; border:1px solid #222;
+      border-radius:20px; font-size:.72rem;
+      font-weight:600; cursor:pointer; color:#ccc;
+      font-family:'Syne',sans-serif; flex-shrink:0;
+    }
+    .quick-prompt:active { background:#1a0900; border-color:#ff5c00; color:#ff5c00; }
+
+    /* Uploaded files preview */
+    .uploads-preview {
+      display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;
+    }
+    .upload-chip {
+      display:flex; align-items:center; gap:6px;
+      background:#1a1a1a; border:1px solid #333;
+      border-radius:8px; padding:4px 8px 4px 4px;
+      font-size:.72rem;
+    }
+    .upload-thumb {
+      width:28px; height:28px; border-radius:4px;
+      object-fit:cover;
+    }
+
+    /* Result card */
+    .result-card {
+      background: linear-gradient(135deg,#1a0900,#111);
+      border:1px solid #ff5c00; border-radius:14px;
+      padding:16px; margin:4px 0;
+    }
+    .result-title { font-weight:800; font-size:.95rem; margin-bottom:10px; color:#ff5c00; }
+    .result-btn {
+      display:block; width:100%; padding:12px;
+      background:#ff5c00; border:none; border-radius:10px;
+      color:white; font-family:'Syne',sans-serif;
+      font-weight:700; font-size:.88rem; cursor:pointer;
+      text-align:center; margin-top:10px; text-decoration:none;
+    }
+    .result-btn.secondary {
+      background:#1a1a1a; color:#ccc;
+      border:1px solid #333; margin-top:6px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="ai-header">
+  <div class="ai-title">🤖 AI Studio</div>
+  <div class="ai-sub">Just describe your video — AI creates everything</div>
+</div>
+
+<div class="chat-area" id="chatArea">
+  <!-- Initial AI message -->
+  <div class="msg ai">
+    <div class="msg-avatar ai">🎬</div>
+    <div class="msg-bubble">
+      <strong>Hey! I'm VideoKit AI.</strong><br><br>
+      Tell me what video you want and I'll create it automatically. You can also upload your own images or videos to use.<br><br>
+      <em style="color:#666">Examples:<br>
+      "40 second motivational video about making money in Nigeria"<br>
+      "Create a professional intro for my salon business"<br>
+      "Funny video about Nigerian hustle culture, 60 seconds"</em>
+    </div>
+  </div>
+</div>
+
+<!-- Input Area -->
+<div class="input-area">
+  <div class="quick-prompts">
+    <div class="quick-prompt" onclick="usePrompt('40 second video about making money in Nigeria')">💰 Money Nigeria</div>
+    <div class="quick-prompt" onclick="usePrompt('Motivational video for entrepreneurs, 60 seconds')">🔥 Motivation</div>
+    <div class="quick-prompt" onclick="usePrompt('Professional business intro video, 30 seconds')">💼 Business</div>
+    <div class="quick-prompt" onclick="usePrompt('Viral crypto video for TikTok, 30 seconds')">₿ Crypto</div>
+    <div class="quick-prompt" onclick="usePrompt('Nigerian gist style entertainment video, 60 seconds')">🇳🇬 Nigerian Gist</div>
+    <div class="quick-prompt" onclick="usePrompt('Luxury lifestyle video, 45 seconds')">💎 Luxury</div>
+  </div>
+  <div id="uploadsPreview" class="uploads-preview"></div>
+  <div class="input-row">
+    <button class="attach-btn" onclick="document.getElementById('aiFileInput').click()">📎</button>
+    <input type="file" id="aiFileInput" accept="image/*,video/*" multiple style="display:none" onchange="handleAiUpload(this)">
+    <textarea class="chat-input" id="chatInput" placeholder="Describe your video..." rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
+      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+    <button class="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<div style="position:fixed;bottom:0;left:0;right:0;background:#0d0d0d;border-top:1px solid #1e1e1e;display:flex;z-index:99999">
+  <a href="index.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#555;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
+  </a>
+  <a href="create.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#555;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Create
+  </a>
+  <a href="ai.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#ff5c00;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>AI
+  </a>
+  <a href="history.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#555;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>History
+  </a>
+  <a href="menu.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#555;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>Menu
+  </a>
+</div>
+
+<script src="js/shared.js"></script>
+<script>
+const PROXY = 'https://groq-proxy-7f82.onrender.com';
+let uploadedFiles = [];
+let isProcessing = false;
+
+function addMsg(role, content, isHTML=false) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  const avatar = role==='ai' ? '<div class="msg-avatar ai">🎬</div>' : '<div class="msg-avatar user">👤</div>';
+  const bubble = `<div class="msg-bubble">${isHTML ? content : content.replace(/\n/g,'<br>')}</div>`;
+  div.innerHTML = role==='ai' ? avatar+bubble : bubble+avatar;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  return div.querySelector('.msg-bubble');
+}
+
+function addProgress(steps) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'progressCard';
+  div.innerHTML = `<div class="msg-avatar ai">🎬</div>
+    <div class="progress-card">
+      ${steps.map((s,i) => `
+        <div class="progress-step" id="step-${i}">
+          <span class="step-icon step-pending">○</span>
+          <span>${s}</span>
+        </div>`).join('')}
+      <div class="mini-bar"><div class="mini-bar-fill" id="progressBar" style="width:0%"></div></div>
+    </div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  return div;
+}
+
+function updateStep(i, status) {
+  const el = document.getElementById('step-'+i);
+  if (!el) return;
+  const icon = el.querySelector('.step-icon');
+  icon.className = 'step-icon ' + status;
+  icon.textContent = status==='step-done' ? '✓' : status==='step-active' ? '▶' : '○';
+  const pct = Math.round(((i+1)/4)*100);
+  const bar = document.getElementById('progressBar');
+  if (bar) bar.style.width = pct + '%';
+}
+
+function usePrompt(text) {
+  document.getElementById('chatInput').value = text;
+  document.getElementById('chatInput').focus();
+}
+
+function handleAiUpload(input) {
+  const files = Array.from(input.files);
+  uploadedFiles = [...uploadedFiles, ...files];
+  const preview = document.getElementById('uploadsPreview');
+  preview.innerHTML = uploadedFiles.map((f,i) => {
+    const url = URL.createObjectURL(f);
+    const isImg = f.type.startsWith('image');
+    return `<div class="upload-chip">
+      ${isImg ? `<img class="upload-thumb" src="${url}">` : '🎬'}
+      <span>${f.name.slice(0,15)}...</span>
+      <span onclick="removeUpload(${i})" style="cursor:pointer;color:#555">×</span>
+    </div>`;
+  }).join('');
+}
+
+function removeUpload(i) {
+  uploadedFiles.splice(i, 1);
+  handleAiUpload({files: uploadedFiles});
+}
+
+async function sendMessage() {
+  if (isProcessing) return;
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMsg('user', text);
+  input.value = '';
+  input.style.height = 'auto';
+
+  isProcessing = true;
+  await processVideoRequest(text);
+  isProcessing = false;
+}
+
+async function processVideoRequest(prompt) {
+  // Ask AI to analyze the prompt
+  const typingBubble = addMsg('ai', 'Analyzing your request...', false);
+  typingBubble.classList.add('typing');
+
+  try {
+    // Step 1: AI extracts video parameters from prompt
+    const analysisRes = await fetch(PROXY + '/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages:[{role:'user', content:`Extract video parameters from this request: "${prompt}"
+        
+Return ONLY valid JSON (no markdown, no explanation):
+{
+  "topic": "the main topic",
+  "style": "educational|motivational|storytelling|listicle|news-style|documentary",
+  "hook": "viral|controversial|emotional|nigerian-style|storytelling|curiosity|luxury|fomo",
+  "length": 60,
+  "contentType": "image|video|textcard",
+  "platform": "instagram|tiktok|youtube",
+  "hasUserMedia": false
+}`}],
+        model:'llama-3.3-70b-versatile',
+        temperature:0.3
+      })
+    });
+    const analysisData = await analysisRes.json();
+    let params;
+    try {
+      const raw = analysisData.content || analysisData.choices?.[0]?.message?.content || '{}';
+      const clean = raw.replace(/```json|```/g,'').trim();
+      params = JSON.parse(clean);
+    } catch(e) {
+      params = { topic: prompt, style:'educational', hook:'viral', length:60, contentType:'image', platform:'instagram' };
+    }
+
+    // Update typing bubble with understanding
+    typingBubble.classList.remove('typing');
+    typingBubble.innerHTML = `Got it! I'll create a <strong>${params.length}s ${params.style}</strong> video about <strong>"${params.topic}"</strong> for ${params.platform}.${uploadedFiles.length ? ' Using your ' + uploadedFiles.length + ' uploaded file(s).' : ' Using stock images.'}<br><br>Starting now...`;
+
+    // Show progress card
+    const steps = ['Writing script', 'Finding visuals', 'Generating voice', 'Creating video'];
+    addProgress(steps);
+
+    // Step 1: Generate script
+    updateStep(0, 'step-active');
+    await new Promise(r => setTimeout(r, 500));
+
+    const scriptRes = await fetch(PROXY + '/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages:[{role:'user', content:`Create a ${params.length}-second ${params.style} faceless video script about: ${params.topic}.
+        
+Return ONLY valid JSON:
+{
+  "title": "video title",
+  "hook": "opening hook line",
+  "scenes": [
+    {"scene_number":1,"narration":"text","visual_keyword":"search term","duration_seconds":10},
+    ...
+  ],
+  "cta": "call to action"
+}`}],
+        model:'llama-3.3-70b-versatile',
+        temperature:0.7
+      })
+    });
+    const scriptData2 = await scriptRes.json();
+    let script;
+    try {
+      const raw2 = scriptData2.content || scriptData2.choices?.[0]?.message?.content || '{}';
+      script = JSON.parse(raw2.replace(/```json|```/g,'').trim());
+    } catch(e) {
+      throw new Error('Script generation failed');
+    }
+    updateStep(0, 'step-done');
+
+    // Step 2: Find visuals (or use uploaded)
+    updateStep(1, 'step-active');
+    const scenes = script.scenes || [];
+    const sceneMedia = [];
+
+    if (uploadedFiles.length) {
+      // Use uploaded files
+      uploadedFiles.forEach((f,i) => {
+        const url = URL.createObjectURL(f);
+        sceneMedia[i] = { url, type: f.type.startsWith('video')?'video':'image' };
+      });
+      // Fill remaining scenes with stock
+      for (let i = uploadedFiles.length; i < scenes.length; i++) {
+        try {
+          const imgRes = await fetch(PROXY + '/images?q=' + encodeURIComponent(scenes[i].visual_keyword));
+          const imgData = await imgRes.json();
+          if (imgData.hits && imgData.hits[0]) {
+            sceneMedia[i] = { url: imgData.hits[0].largeImageURL || imgData.hits[0].webformatURL, type:'image' };
+          }
+        } catch(e) {}
+      }
+    } else {
+      // All stock images
+      for (let i = 0; i < Math.min(scenes.length, 5); i++) {
+        try {
+          const imgRes = await fetch(PROXY + '/images?q=' + encodeURIComponent(scenes[i].visual_keyword));
+          const imgData = await imgRes.json();
+          if (imgData.hits && imgData.hits[0]) {
+            sceneMedia[i] = { url: imgData.hits[0].largeImageURL || imgData.hits[0].webformatURL, type:'image' };
+          }
+        } catch(e) {}
+      }
+    }
+    updateStep(1, 'step-done');
+// Step 3: Generate voice
+    updateStep(2, 'step-active');
+    let audioBlob2 = null;
+    try {
+      const fullScript = scenes.map(s => s.narration).join(' ');
+      const voiceRes = await fetch(PROXY + '/tts-voicerss', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: fullScript, voice: 'american_male_deep' })
+      });
+      if (voiceRes.ok) audioBlob2 = await voiceRes.blob();
+    } catch(e) { console.log('[Voice]', e); }
+    updateStep(2, 'step-done');
+
+    // Step 4: Create video via canvas
+    updateStep(3, 'step-active');
+    const videoBlob = await createVideoFromScenes(scenes, sceneMedia, audioBlob2, params.length);
+    updateStep(3, 'step-done');
+
+    // Remove progress card
+    document.getElementById('progressCard')?.remove();
+
+    // Show result
+    const url2 = URL.createObjectURL(videoBlob);
+    addMsg('ai', `
+      <div class="result-card">
+        <div class="result-title">✅ Your video is ready!</div>
+        <div style="font-size:.82rem;color:#999;margin-bottom:10px">${script.title || params.topic} · ${params.length}s</div>
+        <a href="${url2}" download="videokit-${Date.now()}.webm" class="result-btn">⬇ Download Video</a>
+        <button class="result-btn secondary" onclick="openInCreate(${JSON.stringify({script:script, media:sceneMedia}).replace(/"/g,'&quot;')})">✏️ Edit in Create</button>
+      </div>
+    `, true);
+
+    // Save to history
+    saveToHistory({ topic: params.topic, style: params.style, length: params.length, scriptData: script });
+
+  } catch(err) {
+    console.error('[AI Studio]', err);
+    document.getElementById('progressCard')?.remove();
+    addMsg('ai', 'Sorry, something went wrong: ' + err.message + '\n\nPlease try again or use the Create tab.');
+  }
+}
+
+async function createVideoFromScenes(scenes, media, audioBlob2, totalLen) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 720; canvas.height = 1280;
+  const ctx = canvas.getContext('2d');
+  const stream = canvas.captureStream(15);
+
+  if (audioBlob2) {
+    try {
+      const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      const audioDest = audioCtx.createMediaStreamDestination();
+      const buf = await audioBlob2.arrayBuffer();
+      audioCtx.decodeAudioData(buf, decoded => {
+        const src = audioCtx.createBufferSource();
+        src.buffer = decoded; src.connect(audioDest);
+        audioDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+        src.start(0);
+      });
+    } catch(e) {}
+  }
+
+  const recorder = new MediaRecorder(stream, { mimeType:'video/webm' });
+  const chunks = [];
+  recorder.ondataavailable = e => { if(e.data.size>0) chunks.push(e.data); };
+  recorder.start(100);
+
+  const sceneDur = Math.round((totalLen || 60) / scenes.length) * 1000;
+
+  for (let i = 0; i < scenes.length; i++) {
+    const scene = scenes[i];
+    const m = media[i];
+    const start = Date.now();
+
+    let img = null;
+    if (m && m.type === 'image') {
+      img = new Image(); img.crossOrigin = 'anonymous';
+      await new Promise(r => { img.onload=r; img.onerror=r; img.src=m.url; });
+    }
+
+    while (Date.now() - start < sceneDur) {
+      ctx.fillStyle = '#000'; ctx.fillRect(0,0,720,1280);
+      if (img && img.naturalWidth) {
+        const scale = Math.min(720/img.naturalWidth, 1280/img.naturalHeight);
+        const w = img.naturalWidth*scale, h = img.naturalHeight*scale;
+        ctx.drawImage(img, (720-w)/2, (1280-h)/2, w, h);
+      } else {
+        ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0,0,720,1280);
+      }
+      // Text overlay
+      ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(0, 1080, 720, 200);
+      ctx.fillStyle = 'white'; ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'center';
+      const words = (scene.narration||'').split(' ');
+      let line='', y=1110;
+      for (const w of words) {
+        const test = line+w+' ';
+        if (ctx.measureText(test).width > 680 && line) { ctx.fillText(line.trim(),360,y); line=w+' '; y+=34; }
+        else line=test;
+      }
+      if (line.trim()) ctx.fillText(line.trim(),360,y);
+      // Watermark
+      ctx.fillStyle='rgba(255,92,0,.8)'; ctx.font='bold 18px sans-serif'; ctx.textAlign='right';
+      ctx.fillText('VideoKit',710,36);
+      await new Promise(r => setTimeout(r, 67));
+    }
+  }
+
+  recorder.stop();
+  await new Promise(r => { recorder.onstop = r; });
+  return new Blob(chunks, { type:'video/webm' });
+}
+
+function openInCreate(data) {
+  localStorage.setItem('vk_ai_restore', JSON.stringify(data));
+  window.location.href = 'create.html';
+}
+</script>
+</body>
+</html>
