@@ -9,8 +9,134 @@
   <meta property="og:description" content="Type your idea. AI writes script, finds videos, adds voice. Ready to post in minutes. 100% free.">
   <meta property="og:url" content="https://mrsmile-build.github.io/videokit/">
   <link rel="canonical" href="https://mrsmile-build.github.io/videokit/">
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXFNM475V9"></script>
-  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-XXFNM475V9");</script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXFNM475V9">
+// ── Auto Create Full Video ──────────────────────────────────
+async function autoCreate() {
+  const idea = document.getElementById('videoIdea').value.trim();
+  if (!idea) { alert('Enter your video idea first'); return; }
+
+  const btn = document.getElementById('btnAuto');
+  btn.disabled = true;
+  btn.textContent = '⏳ Step 1/4: Writing script...';
+
+  try {
+    // Step 1: Generate script
+    await generateScript();
+    await waitFor(() => scriptData !== null, 60000);
+    btn.textContent = '⏳ Step 2/4: Finding images...';
+
+    // Step 2: Auto-go to videos and pick first image per scene
+    await goToVideos();
+    await waitFor(() => document.querySelectorAll('.video-thumb').length > 0, 30000);
+    document.querySelectorAll('[data-scene]').forEach(el => {
+      const scene = el.dataset.scene;
+      if (!selectedVideos[scene]) {
+        el.click();
+      }
+    });
+    btn.textContent = '⏳ Step 3/4: Generating voice...';
+
+    // Step 3: Auto-generate voice
+    goToVoice();
+    await new Promise(r => setTimeout(r, 1000));
+    selectVoice(document.querySelector('.voice-card'));
+    await generateVoice();
+    await waitFor(() => audioBlob !== null, 60000);
+    btn.textContent = '⏳ Step 4/4: Creating video...';
+
+    // Step 4: Auto merge
+    goToDownload();
+    await new Promise(r => setTimeout(r, 500));
+    await mergeAndDownload();
+
+    btn.textContent = '✅ Done!';
+    setTimeout(() => { btn.disabled = false; btn.textContent = '🚀 Auto Create Full Video'; }, 4000);
+
+  } catch(err) {
+    console.error('[AutoCreate]', err);
+    btn.disabled = false;
+    btn.textContent = '🚀 Auto Create Full Video';
+    alert('Auto create failed: ' + (err.message||err));
+  }
+}
+
+function waitFor(condition, timeout) {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    const check = () => {
+      if (condition()) return resolve();
+      if (Date.now() - start > timeout) return reject(new Error('Timeout'));
+      setTimeout(check, 500);
+    };
+    check();
+  });
+}
+
+</script>
+  <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-XXFNM475V9");
+// ── Auto Create Full Video ──────────────────────────────────
+async function autoCreate() {
+  const idea = document.getElementById('videoIdea').value.trim();
+  if (!idea) { alert('Enter your video idea first'); return; }
+
+  const btn = document.getElementById('btnAuto');
+  btn.disabled = true;
+  btn.textContent = '⏳ Step 1/4: Writing script...';
+
+  try {
+    // Step 1: Generate script
+    await generateScript();
+    await waitFor(() => scriptData !== null, 60000);
+    btn.textContent = '⏳ Step 2/4: Finding images...';
+
+    // Step 2: Auto-go to videos and pick first image per scene
+    await goToVideos();
+    await waitFor(() => document.querySelectorAll('.video-thumb').length > 0, 30000);
+    document.querySelectorAll('[data-scene]').forEach(el => {
+      const scene = el.dataset.scene;
+      if (!selectedVideos[scene]) {
+        el.click();
+      }
+    });
+    btn.textContent = '⏳ Step 3/4: Generating voice...';
+
+    // Step 3: Auto-generate voice
+    goToVoice();
+    await new Promise(r => setTimeout(r, 1000));
+    selectVoice(document.querySelector('.voice-card'));
+    await generateVoice();
+    await waitFor(() => audioBlob !== null, 60000);
+    btn.textContent = '⏳ Step 4/4: Creating video...';
+
+    // Step 4: Auto merge
+    goToDownload();
+    await new Promise(r => setTimeout(r, 500));
+    await mergeAndDownload();
+
+    btn.textContent = '✅ Done!';
+    setTimeout(() => { btn.disabled = false; btn.textContent = '🚀 Auto Create Full Video'; }, 4000);
+
+  } catch(err) {
+    console.error('[AutoCreate]', err);
+    btn.disabled = false;
+    btn.textContent = '🚀 Auto Create Full Video';
+    alert('Auto create failed: ' + (err.message||err));
+  }
+}
+
+function waitFor(condition, timeout) {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    const check = () => {
+      if (condition()) return resolve();
+      if (Date.now() - start > timeout) return reject(new Error('Timeout'));
+      setTimeout(check, 500);
+    };
+    check();
+  });
+}
+
+</script>
   <style>
     @import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap");
     :root{--bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--border:#222;--ink:#fff;--ink-soft:rgba(255,255,255,.5);--accent:#ff5c00;--accent2:#ff8c00;--radius:14px;--font-head:"Syne",sans-serif;--font-body:"DM Sans",sans-serif}
@@ -1276,6 +1402,69 @@ function startOver() {
   showSection("section-script"); setStep(1);
   document.getElementById("script-result").classList.remove("show");
 }
+
+// ── Auto Create Full Video ──────────────────────────────────
+async function autoCreate() {
+  const idea = document.getElementById('videoIdea').value.trim();
+  if (!idea) { alert('Enter your video idea first'); return; }
+
+  const btn = document.getElementById('btnAuto');
+  btn.disabled = true;
+  btn.textContent = '⏳ Step 1/4: Writing script...';
+
+  try {
+    // Step 1: Generate script
+    await generateScript();
+    await waitFor(() => scriptData !== null, 60000);
+    btn.textContent = '⏳ Step 2/4: Finding images...';
+
+    // Step 2: Auto-go to videos and pick first image per scene
+    await goToVideos();
+    await waitFor(() => document.querySelectorAll('.video-thumb').length > 0, 30000);
+    document.querySelectorAll('[data-scene]').forEach(el => {
+      const scene = el.dataset.scene;
+      if (!selectedVideos[scene]) {
+        el.click();
+      }
+    });
+    btn.textContent = '⏳ Step 3/4: Generating voice...';
+
+    // Step 3: Auto-generate voice
+    goToVoice();
+    await new Promise(r => setTimeout(r, 1000));
+    selectVoice(document.querySelector('.voice-card'));
+    await generateVoice();
+    await waitFor(() => audioBlob !== null, 60000);
+    btn.textContent = '⏳ Step 4/4: Creating video...';
+
+    // Step 4: Auto merge
+    goToDownload();
+    await new Promise(r => setTimeout(r, 500));
+    await mergeAndDownload();
+
+    btn.textContent = '✅ Done!';
+    setTimeout(() => { btn.disabled = false; btn.textContent = '🚀 Auto Create Full Video'; }, 4000);
+
+  } catch(err) {
+    console.error('[AutoCreate]', err);
+    btn.disabled = false;
+    btn.textContent = '🚀 Auto Create Full Video';
+    alert('Auto create failed: ' + (err.message||err));
+  }
+}
+
+function waitFor(condition, timeout) {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    const check = () => {
+      if (condition()) return resolve();
+      if (Date.now() - start > timeout) return reject(new Error('Timeout'));
+      setTimeout(check, 500);
+    };
+    check();
+  });
+}
+
 </script>
 
 <div id="vkNav" style="position:fixed;bottom:0;left:0;right:0;background:#0d0d0d;border-top:1px solid #1e1e1e;display:flex;z-index:99999">
