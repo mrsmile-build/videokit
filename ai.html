@@ -374,7 +374,32 @@ Return ONLY valid JSON:
     }
     updateStep(0, 'step-done');
 
-    // Step 2: Find visuals (or use uploaded)
+    // Step 2: Generate voice FIRST (so we know exact duration)
+    updateStep(2, 'step-active');
+    let audioBlob2 = null;
+    let voiceDuration = params.length || 60;
+    try {
+      const fullScript2 = scenes.map(s => s.narration).join(' ');
+      const voiceRes = await fetch(PROXY + '/tts-voicerss', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: fullScript2, voice: 'american_male_deep' })
+      });
+      if (voiceRes.ok) {
+        audioBlob2 = await voiceRes.blob();
+        // Measure actual voice duration
+        const tmpAudio = new Audio(URL.createObjectURL(audioBlob2));
+        voiceDuration = await new Promise(res => {
+          tmpAudio.onloadedmetadata = () => res(Math.ceil(tmpAudio.duration));
+          tmpAudio.onerror = () => res(params.length || 60);
+          tmpAudio.load();
+          setTimeout(() => res(params.length || 60), 3000);
+        });
+        console.log('[Voice] actual duration:', voiceDuration, 's');
+      }
+    } catch(e) { console.log('[Voice]', e); }
+    updateStep(2, 'step-done');
+
+    // Step 3: Find visuals (or use uploaded)
     updateStep(1, 'step-active');
     const scenes = script.scenes || [];
     const sceneMedia = [];
@@ -452,7 +477,7 @@ Return ONLY valid JSON:
 
 async function createVideoFromScenes(scenes, media, audioBlob2, totalLen) {
   // Try backend merge first (faster than canvas)
-  const sceneDur = Math.round((totalLen || 60) / scenes.length);
+  const sceneDur = Math.round((totalLen || 60) / Math.max(1, scenes.length));
 
   const payload = {
     scenes: scenes.map((s, i) => ({
