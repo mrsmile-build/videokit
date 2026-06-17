@@ -210,10 +210,21 @@
 </div>
 
 <script src="js/shared.js"></script>
+<script>window.addEventListener("DOMContentLoaded", loadChatHistory);</script>
 <script>
 const PROXY = 'https://groq-proxy-7f82.onrender.com';
 let uploadedFiles = [];
 let isProcessing = false;
+
+function saveChatHistory() {
+  const area = document.getElementById('chatArea');
+  localStorage.setItem('vk_ai_chat', area.innerHTML);
+}
+
+function loadChatHistory() {
+  const saved = localStorage.getItem('vk_ai_chat');
+  if (saved) document.getElementById('chatArea').innerHTML = saved;
+}
 
 function addMsg(role, content, isHTML=false) {
   const area = document.getElementById('chatArea');
@@ -224,6 +235,7 @@ function addMsg(role, content, isHTML=false) {
   div.innerHTML = role==='ai' ? avatar+bubble : bubble+avatar;
   area.appendChild(div);
   area.scrollTop = area.scrollHeight;
+  saveChatHistory();
   return div.querySelector('.msg-bubble');
 }
 
