@@ -385,6 +385,7 @@ Return ONLY valid JSON:
       throw new Error('Script generation failed');
     }
     updateStep(0, 'step-done');
+    const scenes = script.scenes || [];
 
     // Step 2: Generate voice FIRST (so we know exact duration)
     updateStep(2, 'step-active');
@@ -425,7 +426,6 @@ Return ONLY valid JSON:
 
     // Step 3: Find visuals (or use uploaded)
     updateStep(1, 'step-active');
-    const scenes = script.scenes || [];
     const sceneMedia = [];
 
     if (uploadedFiles.length) {
