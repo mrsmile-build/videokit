@@ -390,6 +390,7 @@ Return ONLY valid JSON:
     updateStep(2, 'step-active');
     let audioBlob2 = null;
     let voiceDuration = params.length || 60;
+    let voiceError = null;
     try {
       const fullScript2 = scenes.map(s => s.narration).join(' ');
       const voiceRes = await fetch(PROXY + '/tts-voicerss', {
@@ -397,18 +398,29 @@ Return ONLY valid JSON:
         body: JSON.stringify({ text: fullScript2, voice: 'american_male_deep' })
       });
       if (voiceRes.ok) {
-        audioBlob2 = await voiceRes.blob();
-        // Measure actual voice duration
-        const tmpAudio = new Audio(URL.createObjectURL(audioBlob2));
-        voiceDuration = await new Promise(res => {
-          tmpAudio.onloadedmetadata = () => res(Math.ceil(tmpAudio.duration));
-          tmpAudio.onerror = () => res(params.length || 60);
-          tmpAudio.load();
-          setTimeout(() => res(params.length || 60), 3000);
-        });
-        console.log('[Voice] actual duration:', voiceDuration, 's');
+        const blob = await voiceRes.blob();
+        if (blob.size < 500) {
+          voiceError = 'Voice file too small (' + blob.size + ' bytes) - likely an error response';
+        } else if (!blob.type.includes('audio') && blob.type !== '') {
+          voiceError = 'Unexpected response type: ' + blob.type;
+        } else {
+          audioBlob2 = blob;
+          const tmpAudio = new Audio(URL.createObjectURL(audioBlob2));
+          voiceDuration = await new Promise(res => {
+            tmpAudio.onloadedmetadata = () => res(Math.ceil(tmpAudio.duration));
+            tmpAudio.onerror = () => res(params.length || 60);
+            tmpAudio.load();
+            setTimeout(() => res(params.length || 60), 3000);
+          });
+          console.log('[Voice] actual duration:', voiceDuration, 's, size:', blob.size);
+        }
+      } else {
+        voiceError = 'TTS server returned status ' + voiceRes.status;
       }
-    } catch(e) { console.log('[Voice]', e); }
+    } catch(e) { voiceError = e.message; }
+    if (voiceError) {
+      addMsg('ai', '⚠️ Voice generation issue: ' + voiceError + ' (continuing without voice)');
+    }
     updateStep(2, 'step-done');
 
     // Step 3: Find visuals (or use uploaded)
