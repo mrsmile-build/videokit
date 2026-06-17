@@ -304,6 +304,154 @@ function selectNoMusic() {
   document.getElementById('musicModal').style.display = 'none';
 }
 
+
+// ── Batch Video Generation ──────────────────────────────────
+async function processBatchRequest(originalPrompt, params, qty) {
+  try {
+    // Generate N script variations in one Groq call
+    const sampleNote = params.isSampleScript
+      ? `The user provided this SAMPLE SCRIPT to follow as a style template:\n"""${originalPrompt}"""\n\nGenerate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
+      : `Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
+
+    const batchRes = await fetch(PROXY + '/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages:[{role:'user', content:`${sampleNote}
+
+Each script should be ~${params.length||60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
+{"title":"...","hook":"...","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","duration_seconds":10}],"cta":"..."}`}],
+        model:'llama-3.3-70b-versatile',
+        temperature:0.8
+      })
+    });
+    const batchData = await batchRes.json();
+    let scriptsArray;
+    try {
+      const raw = batchData.content || batchData.choices?.[0]?.message?.content || '[]';
+      const clean = raw.replace(/```json|```/g,'').trim();
+      scriptsArray = JSON.parse(clean);
+      if (!Array.isArray(scriptsArray)) scriptsArray = [scriptsArray];
+    } catch(e) {
+      addMsg('ai', 'Sorry, I had trouble generating the batch scripts. Please try again.');
+      return;
+    }
+
+    // Show batch preview card
+    const area = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = 'batchCard';
+    div.innerHTML = `<div class="msg-avatar ai">🎬</div>
+      <div class="progress-card" style="text-align:left">
+        <div style="font-weight:800;margin-bottom:10px">📦 ${scriptsArray.length} Scripts Ready</div>
+        ${scriptsArray.map((s,i) => `
+          <div style="padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem">
+            <strong>${i+1}. ${s.title||'Untitled'}</strong><br>
+            <span style="color:#888">${(s.hook||'').slice(0,60)}...</span>
+          </div>
+        `).join('')}
+        <button class="result-btn" onclick="createAllBatchVideos()" style="margin-top:14px">🚀 Create All ${scriptsArray.length} Videos</button>
+      </div>`;
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+    saveChatHistory();
+
+    window._batchScripts = scriptsArray;
+    window._batchParams = params;
+
+  } catch(err) {
+    addMsg('ai', 'Batch generation failed: ' + err.message);
+  }
+}
+
+async function createAllBatchVideos() {
+  const scripts = window._batchScripts || [];
+  const params = window._batchParams || {};
+  document.getElementById('batchCard')?.remove();
+
+  const area = document.getElementById('chatArea');
+  const resultsDiv = document.createElement('div');
+  resultsDiv.className = 'msg ai';
+  resultsDiv.id = 'batchResults';
+  resultsDiv.innerHTML = `<div class="msg-avatar ai">🎬</div>
+    <div class="progress-card" style="text-align:left">
+      <div style="font-weight:800;margin-bottom:10px">Creating ${scripts.length} videos...</div>
+      <div id="batchRows"></div>
+    </div>`;
+  area.appendChild(resultsDiv);
+  area.scrollTop = area.scrollHeight;
+
+  const rows = document.getElementById('batchRows');
+  scripts.forEach((s,i) => {
+    const row = document.createElement('div');
+    row.id = 'batchRow-'+i;
+    row.style.cssText = 'padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem;display:flex;justify-content:space-between;align-items:center';
+    row.innerHTML = `<span>${i+1}. ${(s.title||'Video '+(i+1)).slice(0,28)}</span><span id="batchStatus-${i}" style="color:#666">Waiting...</span>`;
+    rows.appendChild(row);
+  });
+
+  for (let i = 0; i < scripts.length; i++) {
+    const statusEl = document.getElementById('batchStatus-'+i);
+    try {
+      statusEl.textContent = 'Finding images...';
+      statusEl.style.color = '#ff5c00';
+      const sceneMedia = [];
+      for (let j = 0; j < Math.min(scripts[i].scenes.length, 5); j++) {
+        try {
+          const imgRes = await fetch(PROXY + '/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
+          const imgData = await imgRes.json();
+          if (imgData.hits && imgData.hits[0]) {
+            sceneMedia[j] = { url: imgData.hits[0].largeImageURL || imgData.hits[0].webformatURL, type:'image' };
+          }
+        } catch(e) {}
+      }
+
+      statusEl.textContent = 'Generating voice...';
+      let audioB = null, vDur = params.length || 60;
+      try {
+        const fullText = scripts[i].scenes.map(s=>s.narration).join(' ');
+        const vRes = await fetch(PROXY + '/tts-voicerss', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ text: fullText, voice: params.voice || 'en-us-m' })
+        });
+        if (vRes.ok) {
+          const blob = await vRes.blob();
+          if (blob.size > 500) {
+            audioB = blob;
+            const tmpA = new Audio(URL.createObjectURL(blob));
+            vDur = await new Promise(res => {
+              tmpA.onloadedmetadata = () => res(Math.ceil(tmpA.duration));
+              tmpA.onerror = () => res(params.length||60);
+              tmpA.load();
+              setTimeout(()=>res(params.length||60), 3000);
+            });
+          }
+        }
+      } catch(e) {}
+
+      statusEl.textContent = 'Creating video...';
+      const blob = await createVideoFromScenes(scripts[i].scenes, sceneMedia, audioB, vDur, params.musicUrl);
+
+      const url = URL.createObjectURL(blob);
+      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.webm" style="color:#22c55e;font-weight:700;text-decoration:none">✓ Download</a>`;
+
+      saveToHistory({
+        topic: scripts[i].title || params.topic, style: params.style||'educational', length: vDur,
+        scriptData: scripts[i],
+        scriptText: scripts[i].scenes.map(s=>s.narration).join(' ')
+      });
+
+    } catch(err) {
+      statusEl.textContent = '✗ Failed';
+      statusEl.style.color = '#f87171';
+      console.error('[Batch '+i+']', err);
+    }
+    saveChatHistory();
+  }
+
+  addMsg('ai', `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
+}
+
 </script>
 <script>window.addEventListener("DOMContentLoaded", loadChatHistory);
 // ── Confirm & Customize Card ────────────────────────────────
@@ -398,6 +546,154 @@ function selectNoMusic() {
   document.getElementById('musicLabel').textContent = '🎵 No music — tap to choose';
   document.getElementById('musicLabel').style.color = '#888';
   document.getElementById('musicModal').style.display = 'none';
+}
+
+
+// ── Batch Video Generation ──────────────────────────────────
+async function processBatchRequest(originalPrompt, params, qty) {
+  try {
+    // Generate N script variations in one Groq call
+    const sampleNote = params.isSampleScript
+      ? `The user provided this SAMPLE SCRIPT to follow as a style template:\n"""${originalPrompt}"""\n\nGenerate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
+      : `Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
+
+    const batchRes = await fetch(PROXY + '/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages:[{role:'user', content:`${sampleNote}
+
+Each script should be ~${params.length||60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
+{"title":"...","hook":"...","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","duration_seconds":10}],"cta":"..."}`}],
+        model:'llama-3.3-70b-versatile',
+        temperature:0.8
+      })
+    });
+    const batchData = await batchRes.json();
+    let scriptsArray;
+    try {
+      const raw = batchData.content || batchData.choices?.[0]?.message?.content || '[]';
+      const clean = raw.replace(/```json|```/g,'').trim();
+      scriptsArray = JSON.parse(clean);
+      if (!Array.isArray(scriptsArray)) scriptsArray = [scriptsArray];
+    } catch(e) {
+      addMsg('ai', 'Sorry, I had trouble generating the batch scripts. Please try again.');
+      return;
+    }
+
+    // Show batch preview card
+    const area = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = 'batchCard';
+    div.innerHTML = `<div class="msg-avatar ai">🎬</div>
+      <div class="progress-card" style="text-align:left">
+        <div style="font-weight:800;margin-bottom:10px">📦 ${scriptsArray.length} Scripts Ready</div>
+        ${scriptsArray.map((s,i) => `
+          <div style="padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem">
+            <strong>${i+1}. ${s.title||'Untitled'}</strong><br>
+            <span style="color:#888">${(s.hook||'').slice(0,60)}...</span>
+          </div>
+        `).join('')}
+        <button class="result-btn" onclick="createAllBatchVideos()" style="margin-top:14px">🚀 Create All ${scriptsArray.length} Videos</button>
+      </div>`;
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+    saveChatHistory();
+
+    window._batchScripts = scriptsArray;
+    window._batchParams = params;
+
+  } catch(err) {
+    addMsg('ai', 'Batch generation failed: ' + err.message);
+  }
+}
+
+async function createAllBatchVideos() {
+  const scripts = window._batchScripts || [];
+  const params = window._batchParams || {};
+  document.getElementById('batchCard')?.remove();
+
+  const area = document.getElementById('chatArea');
+  const resultsDiv = document.createElement('div');
+  resultsDiv.className = 'msg ai';
+  resultsDiv.id = 'batchResults';
+  resultsDiv.innerHTML = `<div class="msg-avatar ai">🎬</div>
+    <div class="progress-card" style="text-align:left">
+      <div style="font-weight:800;margin-bottom:10px">Creating ${scripts.length} videos...</div>
+      <div id="batchRows"></div>
+    </div>`;
+  area.appendChild(resultsDiv);
+  area.scrollTop = area.scrollHeight;
+
+  const rows = document.getElementById('batchRows');
+  scripts.forEach((s,i) => {
+    const row = document.createElement('div');
+    row.id = 'batchRow-'+i;
+    row.style.cssText = 'padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem;display:flex;justify-content:space-between;align-items:center';
+    row.innerHTML = `<span>${i+1}. ${(s.title||'Video '+(i+1)).slice(0,28)}</span><span id="batchStatus-${i}" style="color:#666">Waiting...</span>`;
+    rows.appendChild(row);
+  });
+
+  for (let i = 0; i < scripts.length; i++) {
+    const statusEl = document.getElementById('batchStatus-'+i);
+    try {
+      statusEl.textContent = 'Finding images...';
+      statusEl.style.color = '#ff5c00';
+      const sceneMedia = [];
+      for (let j = 0; j < Math.min(scripts[i].scenes.length, 5); j++) {
+        try {
+          const imgRes = await fetch(PROXY + '/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
+          const imgData = await imgRes.json();
+          if (imgData.hits && imgData.hits[0]) {
+            sceneMedia[j] = { url: imgData.hits[0].largeImageURL || imgData.hits[0].webformatURL, type:'image' };
+          }
+        } catch(e) {}
+      }
+
+      statusEl.textContent = 'Generating voice...';
+      let audioB = null, vDur = params.length || 60;
+      try {
+        const fullText = scripts[i].scenes.map(s=>s.narration).join(' ');
+        const vRes = await fetch(PROXY + '/tts-voicerss', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ text: fullText, voice: params.voice || 'en-us-m' })
+        });
+        if (vRes.ok) {
+          const blob = await vRes.blob();
+          if (blob.size > 500) {
+            audioB = blob;
+            const tmpA = new Audio(URL.createObjectURL(blob));
+            vDur = await new Promise(res => {
+              tmpA.onloadedmetadata = () => res(Math.ceil(tmpA.duration));
+              tmpA.onerror = () => res(params.length||60);
+              tmpA.load();
+              setTimeout(()=>res(params.length||60), 3000);
+            });
+          }
+        }
+      } catch(e) {}
+
+      statusEl.textContent = 'Creating video...';
+      const blob = await createVideoFromScenes(scripts[i].scenes, sceneMedia, audioB, vDur, params.musicUrl);
+
+      const url = URL.createObjectURL(blob);
+      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.webm" style="color:#22c55e;font-weight:700;text-decoration:none">✓ Download</a>`;
+
+      saveToHistory({
+        topic: scripts[i].title || params.topic, style: params.style||'educational', length: vDur,
+        scriptData: scripts[i],
+        scriptText: scripts[i].scenes.map(s=>s.narration).join(' ')
+      });
+
+    } catch(err) {
+      statusEl.textContent = '✗ Failed';
+      statusEl.style.color = '#f87171';
+      console.error('[Batch '+i+']', err);
+    }
+    saveChatHistory();
+  }
+
+  addMsg('ai', `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
 }
 
 </script>
@@ -520,9 +816,13 @@ Return ONLY valid JSON (no markdown, no explanation):
   "contentType": "image|video|textcard",
   "platform": "instagram|tiktok|youtube",
   "voice": "en-us-m|en-us-f|en-gb-m|en-gb-f|en-au-m|en-au-f|en-news-m|en-story-f",
-  "hasUserMedia": false
+  "hasUserMedia": false,
+  "quantity": 1,
+  "isSampleScript": false
 }
-Detect voice from phrases like "British female" -> en-gb-f, "American male" -> en-us-m, "Australian" -> en-au-m/f, "news anchor" -> en-news-m. Default en-us-m if not mentioned.`}],
+Detect voice from phrases like "British female" -> en-gb-f, "American male" -> en-us-m, "Australian" -> en-au-m/f, "news anchor" -> en-news-m. Default en-us-m if not mentioned.
+Detect quantity from phrases like "give me 10", "create 5 videos", "10 different videos" -> set that number. Default 1.
+Set isSampleScript true if the request CONTAINS an actual script with parts like Hook/Middle/End/CTA written out (not just a topic description).`}],
         model:'llama-3.3-70b-versatile',
         temperature:0.3
       })
@@ -535,6 +835,15 @@ Detect voice from phrases like "British female" -> en-gb-f, "American male" -> e
       params = JSON.parse(clean);
     } catch(e) {
       params = { topic: prompt, style:'educational', hook:'viral', length:60, contentType:'image', platform:'instagram' };
+    }
+
+    // Branch: batch mode if quantity > 1
+    if (params.quantity && params.quantity > 1) {
+      typingBubble.classList.remove('typing');
+      const qty = Math.min(params.quantity, 15);
+      typingBubble.innerHTML = `Got it! I'll create <strong>${qty} different videos</strong> about <strong>"${params.topic}"</strong>${params.isSampleScript ? ' following the style of your sample script' : ''}.<br><br>Generating scripts now...`;
+      await processBatchRequest(prompt, params, qty);
+      return;
     }
 
     // Update typing bubble with understanding
@@ -857,6 +1166,154 @@ function selectNoMusic() {
   document.getElementById('musicLabel').textContent = '🎵 No music — tap to choose';
   document.getElementById('musicLabel').style.color = '#888';
   document.getElementById('musicModal').style.display = 'none';
+}
+
+
+// ── Batch Video Generation ──────────────────────────────────
+async function processBatchRequest(originalPrompt, params, qty) {
+  try {
+    // Generate N script variations in one Groq call
+    const sampleNote = params.isSampleScript
+      ? `The user provided this SAMPLE SCRIPT to follow as a style template:\n"""${originalPrompt}"""\n\nGenerate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
+      : `Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
+
+    const batchRes = await fetch(PROXY + '/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages:[{role:'user', content:`${sampleNote}
+
+Each script should be ~${params.length||60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
+{"title":"...","hook":"...","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","duration_seconds":10}],"cta":"..."}`}],
+        model:'llama-3.3-70b-versatile',
+        temperature:0.8
+      })
+    });
+    const batchData = await batchRes.json();
+    let scriptsArray;
+    try {
+      const raw = batchData.content || batchData.choices?.[0]?.message?.content || '[]';
+      const clean = raw.replace(/```json|```/g,'').trim();
+      scriptsArray = JSON.parse(clean);
+      if (!Array.isArray(scriptsArray)) scriptsArray = [scriptsArray];
+    } catch(e) {
+      addMsg('ai', 'Sorry, I had trouble generating the batch scripts. Please try again.');
+      return;
+    }
+
+    // Show batch preview card
+    const area = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = 'batchCard';
+    div.innerHTML = `<div class="msg-avatar ai">🎬</div>
+      <div class="progress-card" style="text-align:left">
+        <div style="font-weight:800;margin-bottom:10px">📦 ${scriptsArray.length} Scripts Ready</div>
+        ${scriptsArray.map((s,i) => `
+          <div style="padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem">
+            <strong>${i+1}. ${s.title||'Untitled'}</strong><br>
+            <span style="color:#888">${(s.hook||'').slice(0,60)}...</span>
+          </div>
+        `).join('')}
+        <button class="result-btn" onclick="createAllBatchVideos()" style="margin-top:14px">🚀 Create All ${scriptsArray.length} Videos</button>
+      </div>`;
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+    saveChatHistory();
+
+    window._batchScripts = scriptsArray;
+    window._batchParams = params;
+
+  } catch(err) {
+    addMsg('ai', 'Batch generation failed: ' + err.message);
+  }
+}
+
+async function createAllBatchVideos() {
+  const scripts = window._batchScripts || [];
+  const params = window._batchParams || {};
+  document.getElementById('batchCard')?.remove();
+
+  const area = document.getElementById('chatArea');
+  const resultsDiv = document.createElement('div');
+  resultsDiv.className = 'msg ai';
+  resultsDiv.id = 'batchResults';
+  resultsDiv.innerHTML = `<div class="msg-avatar ai">🎬</div>
+    <div class="progress-card" style="text-align:left">
+      <div style="font-weight:800;margin-bottom:10px">Creating ${scripts.length} videos...</div>
+      <div id="batchRows"></div>
+    </div>`;
+  area.appendChild(resultsDiv);
+  area.scrollTop = area.scrollHeight;
+
+  const rows = document.getElementById('batchRows');
+  scripts.forEach((s,i) => {
+    const row = document.createElement('div');
+    row.id = 'batchRow-'+i;
+    row.style.cssText = 'padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem;display:flex;justify-content:space-between;align-items:center';
+    row.innerHTML = `<span>${i+1}. ${(s.title||'Video '+(i+1)).slice(0,28)}</span><span id="batchStatus-${i}" style="color:#666">Waiting...</span>`;
+    rows.appendChild(row);
+  });
+
+  for (let i = 0; i < scripts.length; i++) {
+    const statusEl = document.getElementById('batchStatus-'+i);
+    try {
+      statusEl.textContent = 'Finding images...';
+      statusEl.style.color = '#ff5c00';
+      const sceneMedia = [];
+      for (let j = 0; j < Math.min(scripts[i].scenes.length, 5); j++) {
+        try {
+          const imgRes = await fetch(PROXY + '/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
+          const imgData = await imgRes.json();
+          if (imgData.hits && imgData.hits[0]) {
+            sceneMedia[j] = { url: imgData.hits[0].largeImageURL || imgData.hits[0].webformatURL, type:'image' };
+          }
+        } catch(e) {}
+      }
+
+      statusEl.textContent = 'Generating voice...';
+      let audioB = null, vDur = params.length || 60;
+      try {
+        const fullText = scripts[i].scenes.map(s=>s.narration).join(' ');
+        const vRes = await fetch(PROXY + '/tts-voicerss', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ text: fullText, voice: params.voice || 'en-us-m' })
+        });
+        if (vRes.ok) {
+          const blob = await vRes.blob();
+          if (blob.size > 500) {
+            audioB = blob;
+            const tmpA = new Audio(URL.createObjectURL(blob));
+            vDur = await new Promise(res => {
+              tmpA.onloadedmetadata = () => res(Math.ceil(tmpA.duration));
+              tmpA.onerror = () => res(params.length||60);
+              tmpA.load();
+              setTimeout(()=>res(params.length||60), 3000);
+            });
+          }
+        }
+      } catch(e) {}
+
+      statusEl.textContent = 'Creating video...';
+      const blob = await createVideoFromScenes(scripts[i].scenes, sceneMedia, audioB, vDur, params.musicUrl);
+
+      const url = URL.createObjectURL(blob);
+      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.webm" style="color:#22c55e;font-weight:700;text-decoration:none">✓ Download</a>`;
+
+      saveToHistory({
+        topic: scripts[i].title || params.topic, style: params.style||'educational', length: vDur,
+        scriptData: scripts[i],
+        scriptText: scripts[i].scenes.map(s=>s.narration).join(' ')
+      });
+
+    } catch(err) {
+      statusEl.textContent = '✗ Failed';
+      statusEl.style.color = '#f87171';
+      console.error('[Batch '+i+']', err);
+    }
+    saveChatHistory();
+  }
+
+  addMsg('ai', `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
 }
 
 </script>
