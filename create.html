@@ -1530,5 +1530,24 @@ function waitFor(condition, timeout) {
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>Menu
   </a>
 </div>
+
+<script>
+(function() {
+  const restoreId = localStorage.getItem('vk_restore');
+  if (!restoreId) return;
+  localStorage.removeItem('vk_restore');
+  try {
+    const h = JSON.parse(localStorage.getItem('vk_history') || '[]');
+    const entry = h.find(s => s.id === restoreId);
+    if (!entry || !entry.scriptData) return;
+    window.addEventListener('DOMContentLoaded', function() {
+      scriptData = entry.scriptData;
+      const topicEl = document.getElementById('videoIdea');
+      if (topicEl && entry.topic) topicEl.value = entry.topic;
+      if (typeof renderScript === 'function') renderScript(scriptData);
+    });
+  } catch(e) { console.log('[Restore]', e.message); }
+})();
+</script>
 </body>
 </html>

@@ -477,7 +477,11 @@ Return ONLY valid JSON:
     `, true);
 
     // Save to history
-    saveToHistory({ topic: params.topic, style: params.style, length: params.length, scriptData: script });
+    saveToHistory({
+      topic: params.topic, style: params.style, length: params.length,
+      scriptData: script,
+      scriptText: script.scenes ? script.scenes.map(s=>s.narration).join(' ') : ''
+    });
 
   } catch(err) {
     console.error('[AI Studio]', err);
@@ -548,7 +552,17 @@ async function createVideoFromScenes(scenes, media, audioBlob2, totalLen) {
 }
 
 function openInCreate(data) {
-  localStorage.setItem('vk_ai_restore', JSON.stringify(data));
+  const entry = {
+    topic: (data.script && data.script.title) || 'AI Generated Video',
+    style: 'educational',
+    length: 60,
+    scriptData: data.script,
+    scriptText: (data.script && data.script.scenes) ? data.script.scenes.map(s=>s.narration).join(' ') : ''
+  };
+  const h = getHistory();
+  h.unshift({...entry, id: Date.now().toString(36), date: Date.now()});
+  localStorage.setItem('vk_history', JSON.stringify(h.slice(0,50)));
+  localStorage.setItem('vk_restore', h[0].id);
   window.location.href = 'create.html';
 }
 </script>
