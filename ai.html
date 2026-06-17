@@ -209,8 +209,104 @@
   </a>
 </div>
 
-<script src="js/shared.js"></script>
-<script>window.addEventListener("DOMContentLoaded", loadChatHistory);</script>
+<script src="js/shared.js">
+// ── Confirm & Customize Card ────────────────────────────────
+function showConfirmCard(params) {
+  return new Promise((resolve) => {
+    const area = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = 'confirmCard';
+    const detectedVoice = params.voice || 'en-us-m';
+    div.innerHTML = `<div class="msg-avatar ai">🎬</div>
+      <div class="progress-card" style="text-align:left">
+        <div style="font-weight:700;margin-bottom:12px;font-size:.92rem">⚙️ Quick Settings</div>
+        <label style="font-size:.74rem;color:#888;display:block;margin-bottom:5px">Voice</label>
+        <select id="confirmVoice" style="width:100%;padding:10px;margin-bottom:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-family:'Syne',sans-serif;font-size:.85rem">
+          <option value="en-us-m">🇺🇸 American Male</option>
+          <option value="en-us-f">🇺🇸 American Female</option>
+          <option value="en-gb-m">🇬🇧 British Male</option>
+          <option value="en-gb-f">🇬🇧 British Female</option>
+          <option value="en-au-m">🇦🇺 Australian Male</option>
+          <option value="en-au-f">🇦🇺 Australian Female</option>
+          <option value="en-news-m">📰 News Anchor</option>
+          <option value="en-story-f">📖 Storyteller Female</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;margin-bottom:10px;color:#ccc">
+          <input type="checkbox" id="confirmMusic" style="width:16px;height:16px">
+          🎵 Add background music
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;margin-bottom:16px;color:#666">
+          <input type="checkbox" id="confirmNoWatermark" disabled style="width:16px;height:16px">
+          ✨ Remove watermark <span style="color:#ff5c00;font-weight:700">(Pro)</span>
+        </label>
+        <button class="result-btn" onclick="confirmGenerate()" style="margin-top:0">🚀 Generate Video</button>
+      </div>`;
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+    document.getElementById('confirmVoice').value = detectedVoice;
+    window._confirmResolve = resolve;
+  });
+}
+
+function confirmGenerate() {
+  const voice = document.getElementById('confirmVoice').value;
+  const music = document.getElementById('confirmMusic').checked;
+  const card = document.getElementById('confirmCard');
+  if (card) card.remove();
+  if (window._confirmResolve) window._confirmResolve({ voice, music });
+}
+
+</script>
+<script>window.addEventListener("DOMContentLoaded", loadChatHistory);
+// ── Confirm & Customize Card ────────────────────────────────
+function showConfirmCard(params) {
+  return new Promise((resolve) => {
+    const area = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = 'confirmCard';
+    const detectedVoice = params.voice || 'en-us-m';
+    div.innerHTML = `<div class="msg-avatar ai">🎬</div>
+      <div class="progress-card" style="text-align:left">
+        <div style="font-weight:700;margin-bottom:12px;font-size:.92rem">⚙️ Quick Settings</div>
+        <label style="font-size:.74rem;color:#888;display:block;margin-bottom:5px">Voice</label>
+        <select id="confirmVoice" style="width:100%;padding:10px;margin-bottom:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-family:'Syne',sans-serif;font-size:.85rem">
+          <option value="en-us-m">🇺🇸 American Male</option>
+          <option value="en-us-f">🇺🇸 American Female</option>
+          <option value="en-gb-m">🇬🇧 British Male</option>
+          <option value="en-gb-f">🇬🇧 British Female</option>
+          <option value="en-au-m">🇦🇺 Australian Male</option>
+          <option value="en-au-f">🇦🇺 Australian Female</option>
+          <option value="en-news-m">📰 News Anchor</option>
+          <option value="en-story-f">📖 Storyteller Female</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;margin-bottom:10px;color:#ccc">
+          <input type="checkbox" id="confirmMusic" style="width:16px;height:16px">
+          🎵 Add background music
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;margin-bottom:16px;color:#666">
+          <input type="checkbox" id="confirmNoWatermark" disabled style="width:16px;height:16px">
+          ✨ Remove watermark <span style="color:#ff5c00;font-weight:700">(Pro)</span>
+        </label>
+        <button class="result-btn" onclick="confirmGenerate()" style="margin-top:0">🚀 Generate Video</button>
+      </div>`;
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+    document.getElementById('confirmVoice').value = detectedVoice;
+    window._confirmResolve = resolve;
+  });
+}
+
+function confirmGenerate() {
+  const voice = document.getElementById('confirmVoice').value;
+  const music = document.getElementById('confirmMusic').checked;
+  const card = document.getElementById('confirmCard');
+  if (card) card.remove();
+  if (window._confirmResolve) window._confirmResolve({ voice, music });
+}
+
+</script>
 <script>
 const PROXY = 'https://groq-proxy-7f82.onrender.com';
 let uploadedFiles = [];
@@ -329,8 +425,10 @@ Return ONLY valid JSON (no markdown, no explanation):
   "length": 60,
   "contentType": "image|video|textcard",
   "platform": "instagram|tiktok|youtube",
+  "voice": "en-us-m|en-us-f|en-gb-m|en-gb-f|en-au-m|en-au-f|en-news-m|en-story-f",
   "hasUserMedia": false
-}`}],
+}
+Detect voice from phrases like "British female" -> en-gb-f, "American male" -> en-us-m, "Australian" -> en-au-m/f, "news anchor" -> en-news-m. Default en-us-m if not mentioned.`}],
         model:'llama-3.3-70b-versatile',
         temperature:0.3
       })
@@ -348,6 +446,11 @@ Return ONLY valid JSON (no markdown, no explanation):
     // Update typing bubble with understanding
     typingBubble.classList.remove('typing');
     typingBubble.innerHTML = `Got it! I'll create a <strong>${params.length}s ${params.style}</strong> video about <strong>"${params.topic}"</strong> for ${params.platform}.${uploadedFiles.length ? ' Using your ' + uploadedFiles.length + ' uploaded file(s).' : ' Using stock images.'}<br><br>Starting now...`;
+
+    // Show confirm card and wait for user input
+    const settings = await showConfirmCard(params);
+    params.voice = settings.voice;
+    params.music = settings.music;
 
     // Show progress card
     const steps = ['Writing script', 'Finding visuals', 'Generating voice', 'Creating video'];
@@ -396,7 +499,7 @@ Return ONLY valid JSON:
       const fullScript2 = scenes.map(s => s.narration).join(' ');
       const voiceRes = await fetch(PROXY + '/tts-voicerss', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ text: fullScript2, voice: 'american_male_deep' })
+        body: JSON.stringify({ text: fullScript2, voice: params.voice || 'en-us-m' })
       });
       if (voiceRes.ok) {
         const blob = await voiceRes.blob();
@@ -565,6 +668,54 @@ function openInCreate(data) {
   localStorage.setItem('vk_restore', h[0].id);
   window.location.href = 'create.html';
 }
+
+// ── Confirm & Customize Card ────────────────────────────────
+function showConfirmCard(params) {
+  return new Promise((resolve) => {
+    const area = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = 'confirmCard';
+    const detectedVoice = params.voice || 'en-us-m';
+    div.innerHTML = `<div class="msg-avatar ai">🎬</div>
+      <div class="progress-card" style="text-align:left">
+        <div style="font-weight:700;margin-bottom:12px;font-size:.92rem">⚙️ Quick Settings</div>
+        <label style="font-size:.74rem;color:#888;display:block;margin-bottom:5px">Voice</label>
+        <select id="confirmVoice" style="width:100%;padding:10px;margin-bottom:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-family:'Syne',sans-serif;font-size:.85rem">
+          <option value="en-us-m">🇺🇸 American Male</option>
+          <option value="en-us-f">🇺🇸 American Female</option>
+          <option value="en-gb-m">🇬🇧 British Male</option>
+          <option value="en-gb-f">🇬🇧 British Female</option>
+          <option value="en-au-m">🇦🇺 Australian Male</option>
+          <option value="en-au-f">🇦🇺 Australian Female</option>
+          <option value="en-news-m">📰 News Anchor</option>
+          <option value="en-story-f">📖 Storyteller Female</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;margin-bottom:10px;color:#ccc">
+          <input type="checkbox" id="confirmMusic" style="width:16px;height:16px">
+          🎵 Add background music
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;margin-bottom:16px;color:#666">
+          <input type="checkbox" id="confirmNoWatermark" disabled style="width:16px;height:16px">
+          ✨ Remove watermark <span style="color:#ff5c00;font-weight:700">(Pro)</span>
+        </label>
+        <button class="result-btn" onclick="confirmGenerate()" style="margin-top:0">🚀 Generate Video</button>
+      </div>`;
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+    document.getElementById('confirmVoice').value = detectedVoice;
+    window._confirmResolve = resolve;
+  });
+}
+
+function confirmGenerate() {
+  const voice = document.getElementById('confirmVoice').value;
+  const music = document.getElementById('confirmMusic').checked;
+  const card = document.getElementById('confirmCard');
+  if (card) card.remove();
+  if (window._confirmResolve) window._confirmResolve({ voice, music });
+}
+
 </script>
 </body>
 </html>
