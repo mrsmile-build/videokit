@@ -656,7 +656,7 @@ Return ONLY valid JSON:
     updateStep(1, 'step-done');
 // Step 4: Create video
     updateStep(3, 'step-active');
-    const videoBlob = await createVideoFromScenes(scenes, sceneMedia, audioBlob2, voiceDuration);
+    const videoBlob = await createVideoFromScenes(scenes, sceneMedia, audioBlob2, voiceDuration, params.musicUrl);
     updateStep(3, 'step-done');
 
     // Remove progress card
@@ -687,7 +687,7 @@ Return ONLY valid JSON:
   }
 }
 
-async function createVideoFromScenes(scenes, media, audioBlob2, totalLen) {
+async function createVideoFromScenes(scenes, media, audioBlob2, totalLen, musicUrl) {
   // Try backend merge first (faster than canvas)
   const sceneDur = Math.round((totalLen || 60) / Math.max(1, scenes.length));
 
@@ -700,6 +700,8 @@ async function createVideoFromScenes(scenes, media, audioBlob2, totalLen) {
       duration: sceneDur
     }))
   };
+
+  if (musicUrl) payload.musicUrl = musicUrl;
 
   // Add audio as base64 if available
   if (audioBlob2) {
