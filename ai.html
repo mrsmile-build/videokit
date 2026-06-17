@@ -232,10 +232,12 @@ function showConfirmCard(params) {
           <option value="en-news-m">📰 News Anchor</option>
           <option value="en-story-f">📖 Storyteller Female</option>
         </select>
-        <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;margin-bottom:10px;color:#ccc">
-          <input type="checkbox" id="confirmMusic" style="width:16px;height:16px">
-          🎵 Add background music
-        </label>
+        <label style="font-size:.74rem;color:#888;display:block;margin-bottom:5px">Background Music</label>
+        <div id="musicPicker" onclick="openMusicPicker()" style="width:100%;padding:10px;margin-bottom:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#888;font-size:.85rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+          <span id="musicLabel">🎵 No music — tap to choose</span>
+          <span style="color:#444">›</span>
+        </div>
+        <input type="hidden" id="confirmMusicUrl" value="">
         <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;margin-bottom:16px;color:#666">
           <input type="checkbox" id="confirmNoWatermark" disabled style="width:16px;height:16px">
           ✨ Remove watermark <span style="color:#ff5c00;font-weight:700">(Pro)</span>
@@ -251,10 +253,55 @@ function showConfirmCard(params) {
 
 function confirmGenerate() {
   const voice = document.getElementById('confirmVoice').value;
-  const music = document.getElementById('confirmMusic').checked;
+  const musicUrl = document.getElementById('confirmMusicUrl').value;
   const card = document.getElementById('confirmCard');
   if (card) card.remove();
-  if (window._confirmResolve) window._confirmResolve({ voice, music });
+  if (window._confirmResolve) window._confirmResolve({ voice, musicUrl });
+}
+
+
+// ── Music Picker ─────────────────────────────────────────────
+function openMusicPicker() {
+  document.getElementById('musicModal').style.display = 'flex';
+  searchMusic('motivational');
+}
+
+async function searchMusic(mood) {
+  const results = document.getElementById('musicResults');
+  results.innerHTML = '<div style="text-align:center;padding:20px;color:#555;font-size:.82rem">Loading...</div>';
+  try {
+    const res = await fetch(PROXY + '/music?mood=' + encodeURIComponent(mood));
+    const data = await res.json();
+    const hits = data.hits || [];
+    if (!hits.length) {
+      results.innerHTML = '<div style="text-align:center;padding:20px;color:#555;font-size:.82rem">No results. Try another search.</div>';
+      return;
+    }
+    results.innerHTML = hits.slice(0, 8).map((h, i) => `
+      <div onclick='selectMusic(${JSON.stringify(h.audio || h.previewURL || "").replace(/'/g,"&#39;")}, ${JSON.stringify((h.tags||"Track").split(",")[0]).replace(/'/g,"&#39;")})'
+        style="display:flex;align-items:center;gap:10px;padding:10px;background:#1a1a1a;border-radius:10px;margin-bottom:8px;cursor:pointer">
+        <div style="width:36px;height:36px;background:#ff5c00;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">🎵</div>
+        <div style="flex:1;font-size:.82rem;color:#ddd;text-transform:capitalize">${(h.tags||'Background track').split(',')[0]}</div>
+        <div style="color:#444">▶</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    results.innerHTML = '<div style="text-align:center;padding:20px;color:#f87171;font-size:.82rem">Search failed: ' + e.message + '</div>';
+  }
+}
+
+function selectMusic(url, name) {
+  document.getElementById('confirmMusicUrl').value = url;
+  document.getElementById('musicLabel').textContent = '🎵 ' + name;
+  document.getElementById('musicLabel').style.color = '#fff';
+  document.getElementById('musicModal').style.display = 'none';
+}
+
+function selectNoMusic() {
+  document.getElementById('confirmMusicUrl').value = '';
+  document.getElementById('musicLabel').textContent = '🎵 No music — tap to choose';
+  document.getElementById('musicLabel').style.color = '#888';
+  document.getElementById('musicModal').style.display = 'none';
 }
 
 </script>
@@ -281,10 +328,12 @@ function showConfirmCard(params) {
           <option value="en-news-m">📰 News Anchor</option>
           <option value="en-story-f">📖 Storyteller Female</option>
         </select>
-        <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;margin-bottom:10px;color:#ccc">
-          <input type="checkbox" id="confirmMusic" style="width:16px;height:16px">
-          🎵 Add background music
-        </label>
+        <label style="font-size:.74rem;color:#888;display:block;margin-bottom:5px">Background Music</label>
+        <div id="musicPicker" onclick="openMusicPicker()" style="width:100%;padding:10px;margin-bottom:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#888;font-size:.85rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+          <span id="musicLabel">🎵 No music — tap to choose</span>
+          <span style="color:#444">›</span>
+        </div>
+        <input type="hidden" id="confirmMusicUrl" value="">
         <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;margin-bottom:16px;color:#666">
           <input type="checkbox" id="confirmNoWatermark" disabled style="width:16px;height:16px">
           ✨ Remove watermark <span style="color:#ff5c00;font-weight:700">(Pro)</span>
@@ -300,10 +349,55 @@ function showConfirmCard(params) {
 
 function confirmGenerate() {
   const voice = document.getElementById('confirmVoice').value;
-  const music = document.getElementById('confirmMusic').checked;
+  const musicUrl = document.getElementById('confirmMusicUrl').value;
   const card = document.getElementById('confirmCard');
   if (card) card.remove();
-  if (window._confirmResolve) window._confirmResolve({ voice, music });
+  if (window._confirmResolve) window._confirmResolve({ voice, musicUrl });
+}
+
+
+// ── Music Picker ─────────────────────────────────────────────
+function openMusicPicker() {
+  document.getElementById('musicModal').style.display = 'flex';
+  searchMusic('motivational');
+}
+
+async function searchMusic(mood) {
+  const results = document.getElementById('musicResults');
+  results.innerHTML = '<div style="text-align:center;padding:20px;color:#555;font-size:.82rem">Loading...</div>';
+  try {
+    const res = await fetch(PROXY + '/music?mood=' + encodeURIComponent(mood));
+    const data = await res.json();
+    const hits = data.hits || [];
+    if (!hits.length) {
+      results.innerHTML = '<div style="text-align:center;padding:20px;color:#555;font-size:.82rem">No results. Try another search.</div>';
+      return;
+    }
+    results.innerHTML = hits.slice(0, 8).map((h, i) => `
+      <div onclick='selectMusic(${JSON.stringify(h.audio || h.previewURL || "").replace(/'/g,"&#39;")}, ${JSON.stringify((h.tags||"Track").split(",")[0]).replace(/'/g,"&#39;")})'
+        style="display:flex;align-items:center;gap:10px;padding:10px;background:#1a1a1a;border-radius:10px;margin-bottom:8px;cursor:pointer">
+        <div style="width:36px;height:36px;background:#ff5c00;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">🎵</div>
+        <div style="flex:1;font-size:.82rem;color:#ddd;text-transform:capitalize">${(h.tags||'Background track').split(',')[0]}</div>
+        <div style="color:#444">▶</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    results.innerHTML = '<div style="text-align:center;padding:20px;color:#f87171;font-size:.82rem">Search failed: ' + e.message + '</div>';
+  }
+}
+
+function selectMusic(url, name) {
+  document.getElementById('confirmMusicUrl').value = url;
+  document.getElementById('musicLabel').textContent = '🎵 ' + name;
+  document.getElementById('musicLabel').style.color = '#fff';
+  document.getElementById('musicModal').style.display = 'none';
+}
+
+function selectNoMusic() {
+  document.getElementById('confirmMusicUrl').value = '';
+  document.getElementById('musicLabel').textContent = '🎵 No music — tap to choose';
+  document.getElementById('musicLabel').style.color = '#888';
+  document.getElementById('musicModal').style.display = 'none';
 }
 
 </script>
@@ -450,7 +544,7 @@ Detect voice from phrases like "British female" -> en-gb-f, "American male" -> e
     // Show confirm card and wait for user input
     const settings = await showConfirmCard(params);
     params.voice = settings.voice;
-    params.music = settings.music;
+    params.musicUrl = settings.musicUrl;
 
     // Show progress card
     const steps = ['Writing script', 'Finding visuals', 'Generating voice', 'Creating video'];
@@ -691,10 +785,12 @@ function showConfirmCard(params) {
           <option value="en-news-m">📰 News Anchor</option>
           <option value="en-story-f">📖 Storyteller Female</option>
         </select>
-        <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;margin-bottom:10px;color:#ccc">
-          <input type="checkbox" id="confirmMusic" style="width:16px;height:16px">
-          🎵 Add background music
-        </label>
+        <label style="font-size:.74rem;color:#888;display:block;margin-bottom:5px">Background Music</label>
+        <div id="musicPicker" onclick="openMusicPicker()" style="width:100%;padding:10px;margin-bottom:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#888;font-size:.85rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+          <span id="musicLabel">🎵 No music — tap to choose</span>
+          <span style="color:#444">›</span>
+        </div>
+        <input type="hidden" id="confirmMusicUrl" value="">
         <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;margin-bottom:16px;color:#666">
           <input type="checkbox" id="confirmNoWatermark" disabled style="width:16px;height:16px">
           ✨ Remove watermark <span style="color:#ff5c00;font-weight:700">(Pro)</span>
@@ -710,12 +806,75 @@ function showConfirmCard(params) {
 
 function confirmGenerate() {
   const voice = document.getElementById('confirmVoice').value;
-  const music = document.getElementById('confirmMusic').checked;
+  const musicUrl = document.getElementById('confirmMusicUrl').value;
   const card = document.getElementById('confirmCard');
   if (card) card.remove();
-  if (window._confirmResolve) window._confirmResolve({ voice, music });
+  if (window._confirmResolve) window._confirmResolve({ voice, musicUrl });
+}
+
+
+// ── Music Picker ─────────────────────────────────────────────
+function openMusicPicker() {
+  document.getElementById('musicModal').style.display = 'flex';
+  searchMusic('motivational');
+}
+
+async function searchMusic(mood) {
+  const results = document.getElementById('musicResults');
+  results.innerHTML = '<div style="text-align:center;padding:20px;color:#555;font-size:.82rem">Loading...</div>';
+  try {
+    const res = await fetch(PROXY + '/music?mood=' + encodeURIComponent(mood));
+    const data = await res.json();
+    const hits = data.hits || [];
+    if (!hits.length) {
+      results.innerHTML = '<div style="text-align:center;padding:20px;color:#555;font-size:.82rem">No results. Try another search.</div>';
+      return;
+    }
+    results.innerHTML = hits.slice(0, 8).map((h, i) => `
+      <div onclick='selectMusic(${JSON.stringify(h.audio || h.previewURL || "").replace(/'/g,"&#39;")}, ${JSON.stringify((h.tags||"Track").split(",")[0]).replace(/'/g,"&#39;")})'
+        style="display:flex;align-items:center;gap:10px;padding:10px;background:#1a1a1a;border-radius:10px;margin-bottom:8px;cursor:pointer">
+        <div style="width:36px;height:36px;background:#ff5c00;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">🎵</div>
+        <div style="flex:1;font-size:.82rem;color:#ddd;text-transform:capitalize">${(h.tags||'Background track').split(',')[0]}</div>
+        <div style="color:#444">▶</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    results.innerHTML = '<div style="text-align:center;padding:20px;color:#f87171;font-size:.82rem">Search failed: ' + e.message + '</div>';
+  }
+}
+
+function selectMusic(url, name) {
+  document.getElementById('confirmMusicUrl').value = url;
+  document.getElementById('musicLabel').textContent = '🎵 ' + name;
+  document.getElementById('musicLabel').style.color = '#fff';
+  document.getElementById('musicModal').style.display = 'none';
+}
+
+function selectNoMusic() {
+  document.getElementById('confirmMusicUrl').value = '';
+  document.getElementById('musicLabel').textContent = '🎵 No music — tap to choose';
+  document.getElementById('musicLabel').style.color = '#888';
+  document.getElementById('musicModal').style.display = 'none';
 }
 
 </script>
+
+<div id="musicModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:99998;align-items:flex-end;justify-content:center">
+  <div style="background:#111;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:75vh;overflow-y:auto">
+    <div style="width:40px;height:4px;background:#333;border-radius:2px;margin:0 auto 16px"></div>
+    <div style="font-weight:800;font-size:1rem;margin-bottom:14px">🎵 Choose Music</div>
+    <input id="musicSearch" placeholder="Search any music style..." style="width:100%;padding:12px;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:#fff;font-family:'Syne',sans-serif;font-size:.88rem;margin-bottom:12px;box-sizing:border-box"
+      onkeydown="if(event.key==='Enter')searchMusic(document.getElementById('musicSearch').value)">
+    <div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;padding-bottom:4px">
+      <div onclick="searchMusic('motivational')" style="white-space:nowrap;padding:6px 12px;background:#1a0900;border:1px solid #ff5c00;border-radius:20px;font-size:.72rem;color:#ff5c00;font-weight:700;cursor:pointer">🔥 Motivational</div>
+      <div onclick="searchMusic('chill lofi')" style="white-space:nowrap;padding:6px 12px;background:#1a1a1a;border:1px solid #333;border-radius:20px;font-size:.72rem;color:#ccc;cursor:pointer">😌 Chill</div>
+      <div onclick="searchMusic('upbeat energetic')" style="white-space:nowrap;padding:6px 12px;background:#1a1a1a;border:1px solid #333;border-radius:20px;font-size:.72rem;color:#ccc;cursor:pointer">⚡ Upbeat</div>
+      <div onclick="searchMusic('dramatic cinematic')" style="white-space:nowrap;padding:6px 12px;background:#1a1a1a;border:1px solid #333;border-radius:20px;font-size:.72rem;color:#ccc;cursor:pointer">🎬 Cinematic</div>
+      <div onclick="searchMusic('afrobeat')" style="white-space:nowrap;padding:6px 12px;background:#1a1a1a;border:1px solid #333;border-radius:20px;font-size:.72rem;color:#ccc;cursor:pointer">🇳🇬 Afrobeat</div>
+    </div>
+    <div id="musicResults"></div>
+    <div onclick="selectNoMusic()" style="text-align:center;padding:12px;color:#666;font-size:.82rem;cursor:pointer;margin-top:8px">No music — voice only</div>
+  </div>
+</div>
 </body>
 </html>
