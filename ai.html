@@ -433,22 +433,9 @@ Return ONLY valid JSON:
       }
     }
     updateStep(1, 'step-done');
-// Step 3: Generate voice
-    updateStep(2, 'step-active');
-    let audioBlob2 = null;
-    try {
-      const fullScript = scenes.map(s => s.narration).join(' ');
-      const voiceRes = await fetch(PROXY + '/tts-voicerss', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ text: fullScript, voice: 'american_male_deep' })
-      });
-      if (voiceRes.ok) audioBlob2 = await voiceRes.blob();
-    } catch(e) { console.log('[Voice]', e); }
-    updateStep(2, 'step-done');
-
-    // Step 4: Create video via canvas
+// Step 4: Create video
     updateStep(3, 'step-active');
-    const videoBlob = await createVideoFromScenes(scenes, sceneMedia, audioBlob2, params.length);
+    const videoBlob = await createVideoFromScenes(scenes, sceneMedia, audioBlob2, voiceDuration);
     updateStep(3, 'step-done');
 
     // Remove progress card
