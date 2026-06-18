@@ -1043,7 +1043,24 @@ Return ONLY valid JSON:
 
 async function createVideoFromScenes(scenes, media, audioBlob2, totalLen, musicUrl) {
   // Try backend merge first (faster than canvas)
-  const sceneDur = Math.round((totalLen || 60) / Math.max(1, scenes.length));
+  // Give each scene a duration PROPORTIONAL to how much it speaks,
+  // not an equal split - so short hooks and long explanations both
+  // match what the voice is actually saying at that moment.
+  const target = totalLen || 60;
+  const minDur = 2;
+  const charCounts = scenes.map(s => Math.max((s.narration||'').length, 10));
+  const totalChars = charCounts.reduce((a,b) => a+b, 0) || 1;
+
+  let runningTotal = 0;
+  const durations = charCounts.map((cnt, i) => {
+    if (i === charCounts.length - 1) {
+      // Last scene absorbs whatever time is left so total always matches voice exactly
+      return Math.max(minDur, Math.round((target - runningTotal) * 10) / 10);
+    }
+    const dur = Math.max(minDur, Math.round((cnt / totalChars) * target));
+    runningTotal += dur;
+    return dur;
+  });
 
   const payload = {
     scenes: scenes.map((s, i) => ({
@@ -1051,7 +1068,7 @@ async function createVideoFromScenes(scenes, media, audioBlob2, totalLen, musicU
       isImage: media[i] ? media[i].type === 'image' : false,
       isTextCard: !media[i],
       text: s.narration ? s.narration.slice(0, 100) : '',
-      duration: sceneDur
+      duration: durations[i]
     }))
   };
 
