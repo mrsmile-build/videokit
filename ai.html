@@ -1048,7 +1048,7 @@ async function createVideoFromScenes(scenes, media, audioBlob2, totalLen, musicU
   // Give each scene a duration PROPORTIONAL to how much it speaks,
   // not an equal split - so short hooks and long explanations both
   // match what the voice is actually saying at that moment.
-  const target = totalLen || 60;
+  const target = (totalLen || 60) + 1.2;  // small buffer so video never falls short of voice
   const minDur = 2;
   const charCounts = scenes.map(s => Math.max((s.narration||'').length, 10));
   const totalChars = charCounts.reduce((a,b) => a+b, 0) || 1;
