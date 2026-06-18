@@ -1021,8 +1021,11 @@ async function sendMessage() {
   input.style.height = 'auto';
 
   isProcessing = true;
-  await processVideoRequest(text);
-  isProcessing = false;
+  try {
+    await processVideoRequest(text);
+  } finally {
+    isProcessing = false;
+  }
 }
 
 async function processVideoRequest(prompt) {
