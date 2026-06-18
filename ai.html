@@ -315,13 +315,15 @@ async function processBatchRequest(originalPrompt, params, qty) {
 
     // Generate N script variations in one Groq call
     const sampleNote = params.isSampleScript
-      ? `The user provided this SAMPLE SCRIPT to follow as a style template:\n"""${originalPrompt}"""\n\nGenerate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
-      : `Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
+      ? `The user provided this SAMPLE SCRIPT to follow as a style template:\n"""${originalPrompt}"""\n\nYou are a professional social media marketer and viral content creator. Generate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
+      : `You are a professional social media marketer and viral content creator. Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
 
     const batchRes = await fetch(PROXY + '/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         messages:[{role:'user', content:`${sampleNote}
+
+Write scroll-stopping, curiosity-driven hooks - the kind that stop someone mid-scroll in 2 seconds. Every single script MUST end with a clear, complete "cta" field that mentions the call to action clearly (e.g. mentions the link, or says "Link in bio", "Follow for more" depending on platform: ${params.platform}). Never leave cta empty or generic - it is the most important line.
 
 Each script should be ~${params.length||60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
 {"title":"...","hook":"...","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","duration_seconds":10}],"cta":"..."}`}],
@@ -574,13 +576,15 @@ async function processBatchRequest(originalPrompt, params, qty) {
 
     // Generate N script variations in one Groq call
     const sampleNote = params.isSampleScript
-      ? `The user provided this SAMPLE SCRIPT to follow as a style template:\n"""${originalPrompt}"""\n\nGenerate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
-      : `Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
+      ? `The user provided this SAMPLE SCRIPT to follow as a style template:\n"""${originalPrompt}"""\n\nYou are a professional social media marketer and viral content creator. Generate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
+      : `You are a professional social media marketer and viral content creator. Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
 
     const batchRes = await fetch(PROXY + '/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         messages:[{role:'user', content:`${sampleNote}
+
+Write scroll-stopping, curiosity-driven hooks - the kind that stop someone mid-scroll in 2 seconds. Every single script MUST end with a clear, complete "cta" field that mentions the call to action clearly (e.g. mentions the link, or says "Link in bio", "Follow for more" depending on platform: ${params.platform}). Never leave cta empty or generic - it is the most important line.
 
 Each script should be ~${params.length||60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
 {"title":"...","hook":"...","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","duration_seconds":10}],"cta":"..."}`}],
@@ -844,7 +848,7 @@ Return ONLY valid JSON (no markdown, no explanation):
   "hook": "viral|controversial|emotional|nigerian-style|storytelling|curiosity|luxury|fomo",
   "length": 60,
   "contentType": "image|video|textcard",
-  "platform": "instagram|tiktok|youtube",
+  "platform": "the specific platform(s) mentioned, e.g. instagram, tiktok, youtube, facebook, linkedin, twitter, snapchat, pinterest, threads, whatsapp status, or general if none mentioned",
   "voice": "en-us-m|en-us-f|en-gb-m|en-gb-f|en-au-m|en-au-f|en-news-m|en-story-f",
   "hasUserMedia": false,
   "quantity": 1,
@@ -852,7 +856,8 @@ Return ONLY valid JSON (no markdown, no explanation):
 }
 Detect voice from phrases like "British female" -> en-gb-f, "American male" -> en-us-m, "Australian" -> en-au-m/f, "news anchor" -> en-news-m. Default en-us-m if not mentioned.
 Detect quantity from phrases like "give me 10", "create 5 videos", "10 different videos" -> set that number. Default 1.
-Set isSampleScript true if the request CONTAINS an actual script with parts like Hook/Middle/End/CTA written out (not just a topic description).`}],
+Set isSampleScript true if the request CONTAINS an actual script with parts like Hook/Middle/End/CTA written out (not just a topic description).
+Extract platform exactly as the user names it (could be one platform or several, or none mentioned).`}],
         model:'llama-3.3-70b-versatile',
         temperature:0.3
       })
@@ -900,10 +905,7 @@ Set isSampleScript true if the request CONTAINS an actual script with parts like
 
 Write a scroll-stopping, curiosity-driven HOOK as the first line - the kind that makes someone stop scrolling in the first 2 seconds. Use pattern interrupts, bold claims, or relatable pain points.
 
-For the CTA, choose what a real ${params.platform} creator would actually say:
-- Instagram/TikTok: "Link in bio" or "Follow for more" or "Comment [word] below" (raw URLs aren't clickable there)
-- YouTube: "Link in the description" or "Click the link below" (description links work)
-- If no specific link: use "Follow for more tips", "Save this for later", or "Share with someone who needs this".
+For the CTA, write what a real ${params.platform || 'social media'} creator would actually say, following this principle: on platforms where captions/posts don't support clickable links (like Instagram, TikTok, Threads, Snapchat), say "Link in bio" or "Follow for more". On platforms where the description or post itself CAN hold a clickable link (like YouTube, Facebook, LinkedIn, Twitter/X, Pinterest), say "Link in the description" or "Click the link below". If platform is unclear, general, or multiple platforms at once, default to "Link in bio" since it works everywhere. If there's no specific link to share, use "Follow for more tips", "Save this for later", or "Share with someone who needs this".
         
 Return ONLY valid JSON:
 {
@@ -1241,13 +1243,15 @@ async function processBatchRequest(originalPrompt, params, qty) {
 
     // Generate N script variations in one Groq call
     const sampleNote = params.isSampleScript
-      ? `The user provided this SAMPLE SCRIPT to follow as a style template:\n"""${originalPrompt}"""\n\nGenerate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
-      : `Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
+      ? `The user provided this SAMPLE SCRIPT to follow as a style template:\n"""${originalPrompt}"""\n\nYou are a professional social media marketer and viral content creator. Generate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
+      : `You are a professional social media marketer and viral content creator. Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
 
     const batchRes = await fetch(PROXY + '/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         messages:[{role:'user', content:`${sampleNote}
+
+Write scroll-stopping, curiosity-driven hooks - the kind that stop someone mid-scroll in 2 seconds. Every single script MUST end with a clear, complete "cta" field that mentions the call to action clearly (e.g. mentions the link, or says "Link in bio", "Follow for more" depending on platform: ${params.platform}). Never leave cta empty or generic - it is the most important line.
 
 Each script should be ~${params.length||60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
 {"title":"...","hook":"...","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","duration_seconds":10}],"cta":"..."}`}],
