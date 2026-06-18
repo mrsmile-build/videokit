@@ -308,6 +308,11 @@ function selectNoMusic() {
 // ── Batch Video Generation ──────────────────────────────────
 async function processBatchRequest(originalPrompt, params, qty) {
   try {
+    // Let user pick voice/music ONCE for the whole batch
+    const batchSettings = await showConfirmCard(params);
+    params.voice = batchSettings.voice;
+    params.musicUrl = batchSettings.musicUrl;
+
     // Generate N script variations in one Groq call
     const sampleNote = params.isSampleScript
       ? `The user provided this SAMPLE SCRIPT to follow as a style template:\n"""${originalPrompt}"""\n\nGenerate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
@@ -331,6 +336,16 @@ Each script should be ~${params.length||60} seconds. Return ONLY a valid JSON ar
       const clean = raw.replace(/```json|```/g,'').trim();
       scriptsArray = JSON.parse(clean);
       if (!Array.isArray(scriptsArray)) scriptsArray = [scriptsArray];
+      scriptsArray.forEach(s => {
+        if (s.cta && s.scenes) {
+          s.scenes.push({
+            scene_number: s.scenes.length + 1,
+            narration: s.cta,
+            visual_keyword: 'click here follow subscribe button',
+            duration_seconds: 6
+          });
+        }
+      });
     } catch(e) {
       addMsg('ai', 'Sorry, I had trouble generating the batch scripts. Please try again.');
       return;
@@ -552,6 +567,11 @@ function selectNoMusic() {
 // ── Batch Video Generation ──────────────────────────────────
 async function processBatchRequest(originalPrompt, params, qty) {
   try {
+    // Let user pick voice/music ONCE for the whole batch
+    const batchSettings = await showConfirmCard(params);
+    params.voice = batchSettings.voice;
+    params.musicUrl = batchSettings.musicUrl;
+
     // Generate N script variations in one Groq call
     const sampleNote = params.isSampleScript
       ? `The user provided this SAMPLE SCRIPT to follow as a style template:\n"""${originalPrompt}"""\n\nGenerate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
@@ -575,6 +595,16 @@ Each script should be ~${params.length||60} seconds. Return ONLY a valid JSON ar
       const clean = raw.replace(/```json|```/g,'').trim();
       scriptsArray = JSON.parse(clean);
       if (!Array.isArray(scriptsArray)) scriptsArray = [scriptsArray];
+      scriptsArray.forEach(s => {
+        if (s.cta && s.scenes) {
+          s.scenes.push({
+            scene_number: s.scenes.length + 1,
+            narration: s.cta,
+            visual_keyword: 'click here follow subscribe button',
+            duration_seconds: 6
+          });
+        }
+      });
     } catch(e) {
       addMsg('ai', 'Sorry, I had trouble generating the batch scripts. Please try again.');
       return;
@@ -866,7 +896,14 @@ Set isSampleScript true if the request CONTAINS an actual script with parts like
     const scriptRes = await fetch(PROXY + '/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        messages:[{role:'user', content:`Create a ${params.length}-second ${params.style} faceless video script about: ${params.topic}.
+        messages:[{role:'user', content:`You are a professional social media marketer, influencer, and viral content creator. Create a ${params.length}-second ${params.style} faceless video script about: ${params.topic}.
+
+Write a scroll-stopping, curiosity-driven HOOK as the first line - the kind that makes someone stop scrolling in the first 2 seconds. Use pattern interrupts, bold claims, or relatable pain points.
+
+For the CTA, choose what a real ${params.platform} creator would actually say:
+- Instagram/TikTok: "Link in bio" or "Follow for more" or "Comment [word] below" (raw URLs aren't clickable there)
+- YouTube: "Link in the description" or "Click the link below" (description links work)
+- If no specific link: use "Follow for more tips", "Save this for later", or "Share with someone who needs this".
         
 Return ONLY valid JSON:
 {
@@ -889,6 +926,14 @@ Return ONLY valid JSON:
       script = JSON.parse(raw2.replace(/```json|```/g,'').trim());
     } catch(e) {
       throw new Error('Script generation failed');
+    }
+    if (script.cta && script.scenes) {
+      script.scenes.push({
+        scene_number: script.scenes.length + 1,
+        narration: script.cta,
+        visual_keyword: 'click here follow subscribe button',
+        duration_seconds: 6
+      });
     }
     updateStep(0, 'step-done');
     const scenes = script.scenes || [];
@@ -1172,6 +1217,11 @@ function selectNoMusic() {
 // ── Batch Video Generation ──────────────────────────────────
 async function processBatchRequest(originalPrompt, params, qty) {
   try {
+    // Let user pick voice/music ONCE for the whole batch
+    const batchSettings = await showConfirmCard(params);
+    params.voice = batchSettings.voice;
+    params.musicUrl = batchSettings.musicUrl;
+
     // Generate N script variations in one Groq call
     const sampleNote = params.isSampleScript
       ? `The user provided this SAMPLE SCRIPT to follow as a style template:\n"""${originalPrompt}"""\n\nGenerate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
@@ -1195,6 +1245,16 @@ Each script should be ~${params.length||60} seconds. Return ONLY a valid JSON ar
       const clean = raw.replace(/```json|```/g,'').trim();
       scriptsArray = JSON.parse(clean);
       if (!Array.isArray(scriptsArray)) scriptsArray = [scriptsArray];
+      scriptsArray.forEach(s => {
+        if (s.cta && s.scenes) {
+          s.scenes.push({
+            scene_number: s.scenes.length + 1,
+            narration: s.cta,
+            visual_keyword: 'click here follow subscribe button',
+            duration_seconds: 6
+          });
+        }
+      });
     } catch(e) {
       addMsg('ai', 'Sorry, I had trouble generating the batch scripts. Please try again.');
       return;
