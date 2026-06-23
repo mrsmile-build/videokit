@@ -450,7 +450,10 @@ async function createAllBatchVideos() {
       const blob = await createVideoFromScenes(scripts[i].scenes, sceneMedia, audioB, vDur, params.musicUrl);
 
       const url = URL.createObjectURL(blob);
-      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.webm" style="color:#22c55e;font-weight:700;text-decoration:none">✓ Download</a>`;
+      window._scriptStore = window._scriptStore || {};
+      const batchSId = 'batchscript_' + i + '_' + Date.now();
+      window._scriptStore[batchSId] = scripts[i];
+      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a><button onclick="showCaptionPicker(&#39;${batchSId}&#39;)" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>`;
 
       saveToHistory({
         topic: scripts[i].title || params.topic, style: params.style||'educational', length: vDur,
@@ -1246,7 +1249,10 @@ async function createAllBatchVideos() {
       const blob = await createVideoFromScenes(scripts[i].scenes, sceneMedia, audioB, vDur, params.musicUrl);
 
       const url = URL.createObjectURL(blob);
-      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.webm" style="color:#22c55e;font-weight:700;text-decoration:none">✓ Download</a>`;
+      window._scriptStore = window._scriptStore || {};
+      const batchSId = 'batchscript_' + i + '_' + Date.now();
+      window._scriptStore[batchSId] = scripts[i];
+      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a><button onclick="showCaptionPicker(&#39;${batchSId}&#39;)" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>`;
 
       saveToHistory({
         topic: scripts[i].title || params.topic, style: params.style||'educational', length: vDur,
