@@ -270,7 +270,7 @@ async function searchMusic(mood) {
   const results = document.getElementById('musicResults');
   results.innerHTML = '<div style="text-align:center;padding:20px;color:#555;font-size:.82rem">Loading...</div>';
   try {
-    const res = await fetch(PROXY + '/music?mood=' + encodeURIComponent(mood));
+    const res = await smartFetch('/music?mood=' + encodeURIComponent(mood));
     const data = await res.json();
     const hits = data.hits || [];
     if (!hits.length) {
@@ -318,7 +318,7 @@ async function processBatchRequest(originalPrompt, params, qty) {
       ? `The user provided this SAMPLE SCRIPT to follow as a style template:\n"""${originalPrompt}"""\n\nYou are a professional social media marketer and viral content creator. Generate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
       : `You are a professional social media marketer and viral content creator. Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
 
-    const batchRes = await fetch(PROXY + '/generate', {
+    const batchRes = await smartFetch('/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         messages:[{role:'user', content:`${sampleNote}
@@ -415,7 +415,7 @@ async function createAllBatchVideos() {
       const sceneMedia = [];
       for (let j = 0; j < Math.min(scripts[i].scenes.length, 5); j++) {
         try {
-          const imgRes = await fetch(PROXY + '/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
+          const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
           const imgData = await imgRes.json();
           if (imgData.hits && imgData.hits[0]) {
             sceneMedia[j] = { url: imgData.hits[0].largeImageURL || imgData.hits[0].webformatURL, type:'image' };
@@ -427,7 +427,7 @@ async function createAllBatchVideos() {
       let audioB = null, vDur = params.length || 60;
       try {
         const fullText = scripts[i].scenes.map(s=>s.narration).join(' ');
-        const vRes = await fetch(PROXY + '/tts-voicerss', {
+        const vRes = await smartFetch('/tts-voicerss', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ text: fullText, voice: params.voice || 'en-us-m' })
         });
@@ -513,7 +513,7 @@ async function generateCaptionFor(sId, platform, btnEl) {
       return `${s.label}: max ${s.limit} characters, ideal ${s.ideal}, hashtags: ${s.hashtags}${s.hasTitle ? ', ALSO include a separate "title" field under 100 chars' : ''}.`;
     }).join('\n');
 
-    const res = await fetch(PROXY + '/generate', {
+    const res = await smartFetch('/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         messages:[{role:'user', content:`Write social media caption(s) for this video:
@@ -570,7 +570,30 @@ function copyCaptionText(id) {
 </script>
 <script>window.addEventListener("DOMContentLoaded", loadChatHistory);</script>
 <script>
-const PROXY = 'https://videokit-proxy.mrsmile4569.workers.dev';
+const BACKENDS = [
+  'https://groq-proxy-0bfy.onrender.com',
+  'https://groq-proxy-production-cd12.up.railway.app',
+  'https://groq-proxy-7f82.onrender.com'
+];
+
+async function smartFetch(path, options) {
+  let lastError = null;
+  for (let i = 0; i < BACKENDS.length; i++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(function() { controller.abort(); }, 30000);
+      const opts = Object.assign({}, options, { signal: controller.signal });
+      const resp = await fetch(BACKENDS[i] + path, opts);
+      clearTimeout(timeoutId);
+      if (resp.status < 500) return resp;
+      lastError = new Error('Backend returned status ' + resp.status);
+    } catch (err) {
+      lastError = err;
+      continue;
+    }
+  }
+  throw lastError || new Error('All backends failed');
+}
 let uploadedFiles = [];
 let isProcessing = false;
 
@@ -677,7 +700,7 @@ async function processVideoRequest(prompt) {
 
   try {
     // Step 1: AI extracts video parameters from prompt
-    const analysisRes = await fetch(PROXY + '/generate', {
+    const analysisRes = await smartFetch('/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         messages:[{role:'user', content:`Extract video parameters from this request: "${prompt}"
@@ -739,7 +762,7 @@ Extract platform exactly as the user names it (could be one platform or several,
     updateStep(0, 'step-active');
     await new Promise(r => setTimeout(r, 500));
 
-    const scriptRes = await fetch(PROXY + '/generate', {
+    const scriptRes = await smartFetch('/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         messages:[{role:'user', content:`You are a professional social media marketer, influencer, and viral content creator. Create a ${params.length}-second ${params.style} faceless video script about: ${params.topic}.
@@ -788,7 +811,7 @@ Return ONLY valid JSON:
     let voiceError = null;
     try {
       const fullScript2 = scenes.map(s => s.narration).join(' ');
-      const voiceRes = await fetch(PROXY + '/tts-voicerss', {
+      const voiceRes = await smartFetch('/tts-voicerss', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ text: fullScript2, voice: params.voice || 'en-us-m' })
       });
@@ -831,7 +854,7 @@ Return ONLY valid JSON:
       // Fill remaining scenes with stock
       for (let i = uploadedFiles.length; i < scenes.length; i++) {
         try {
-          const imgRes = await fetch(PROXY + '/images?q=' + encodeURIComponent(scenes[i].visual_keyword));
+          const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scenes[i].visual_keyword));
           const imgData = await imgRes.json();
           if (imgData.hits && imgData.hits[0]) {
             sceneMedia[i] = { url: imgData.hits[0].largeImageURL || imgData.hits[0].webformatURL, type:'image' };
@@ -842,7 +865,7 @@ Return ONLY valid JSON:
       // All stock images
       for (let i = 0; i < Math.min(scenes.length, 5); i++) {
         try {
-          const imgRes = await fetch(PROXY + '/images?q=' + encodeURIComponent(scenes[i].visual_keyword));
+          const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scenes[i].visual_keyword));
           const imgData = await imgRes.json();
           if (imgData.hits && imgData.hits[0]) {
             sceneMedia[i] = { url: imgData.hits[0].largeImageURL || imgData.hits[0].webformatURL, type:'image' };
@@ -934,7 +957,7 @@ async function createVideoFromScenes(scenes, media, audioBlob2, totalLen, musicU
   }
 
   // Start async job on backend
-  const startRes = await fetch(PROXY + '/merge-start', {
+  const startRes = await smartFetch('/merge-start', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -950,7 +973,7 @@ async function createVideoFromScenes(scenes, media, audioBlob2, totalLen, musicU
   // Poll for completion
   for (let attempt = 0; attempt < 60; attempt++) {
     await new Promise(r => setTimeout(r, 5000));
-    const statusRes = await fetch(PROXY + '/merge-status/' + jobId);
+    const statusRes = await smartFetch('/merge-status/' + jobId);
     const ct = statusRes.headers.get('content-type') || '';
 
     if (ct.includes('video')) {
@@ -960,7 +983,7 @@ async function createVideoFromScenes(scenes, media, audioBlob2, totalLen, musicU
     const status = await statusRes.json();
     if (status.status === 'error') throw new Error(status.error || 'Merge failed');
     if (status.status === 'done') {
-      const fileRes = await fetch(PROXY + '/merge-status/' + jobId);
+      const fileRes = await smartFetch('/merge-status/' + jobId);
       return await fileRes.blob();
     }
     if (bar) bar.style.width = Math.min(95, 80 + status.progress/20) + '%';
@@ -1043,7 +1066,7 @@ async function searchMusic(mood) {
   const results = document.getElementById('musicResults');
   results.innerHTML = '<div style="text-align:center;padding:20px;color:#555;font-size:.82rem">Loading...</div>';
   try {
-    const res = await fetch(PROXY + '/music?mood=' + encodeURIComponent(mood));
+    const res = await smartFetch('/music?mood=' + encodeURIComponent(mood));
     const data = await res.json();
     const hits = data.hits || [];
     if (!hits.length) {
@@ -1091,7 +1114,7 @@ async function processBatchRequest(originalPrompt, params, qty) {
       ? `The user provided this SAMPLE SCRIPT to follow as a style template:\n"""${originalPrompt}"""\n\nYou are a professional social media marketer and viral content creator. Generate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
       : `You are a professional social media marketer and viral content creator. Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
 
-    const batchRes = await fetch(PROXY + '/generate', {
+    const batchRes = await smartFetch('/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         messages:[{role:'user', content:`${sampleNote}
@@ -1188,7 +1211,7 @@ async function createAllBatchVideos() {
       const sceneMedia = [];
       for (let j = 0; j < Math.min(scripts[i].scenes.length, 5); j++) {
         try {
-          const imgRes = await fetch(PROXY + '/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
+          const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
           const imgData = await imgRes.json();
           if (imgData.hits && imgData.hits[0]) {
             sceneMedia[j] = { url: imgData.hits[0].largeImageURL || imgData.hits[0].webformatURL, type:'image' };
@@ -1200,7 +1223,7 @@ async function createAllBatchVideos() {
       let audioB = null, vDur = params.length || 60;
       try {
         const fullText = scripts[i].scenes.map(s=>s.narration).join(' ');
-        const vRes = await fetch(PROXY + '/tts-voicerss', {
+        const vRes = await smartFetch('/tts-voicerss', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ text: fullText, voice: params.voice || 'en-us-m' })
         });
@@ -1286,7 +1309,7 @@ async function generateCaptionFor(sId, platform, btnEl) {
       return `${s.label}: max ${s.limit} characters, ideal ${s.ideal}, hashtags: ${s.hashtags}${s.hasTitle ? ', ALSO include a separate "title" field under 100 chars' : ''}.`;
     }).join('\n');
 
-    const res = await fetch(PROXY + '/generate', {
+    const res = await smartFetch('/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         messages:[{role:'user', content:`Write social media caption(s) for this video:
