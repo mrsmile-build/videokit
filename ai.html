@@ -426,7 +426,7 @@ async function createAllBatchVideos() {
       statusEl.textContent = 'Generating voice...';
       let audioB = null, vDur = params.length || 60;
       try {
-        const fullText = scripts[i].scenes.map(s=>s.narration).join(' ');
+        const fullText = stripUrlsForSpeech(scripts[i].scenes.map(s=>s.narration).join(' '));
         const vRes = await smartFetch('/tts-voicerss', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ text: fullText, voice: params.voice || 'en-us-m' })
@@ -573,6 +573,11 @@ function copyCaptionText(id) {
 </script>
 <script>window.addEventListener("DOMContentLoaded", loadChatHistory);</script>
 <script>
+
+function stripUrlsForSpeech(text) {
+  return (text||'').replace(/https?:\/\/[^\s]+/g, '').replace(/\s+/g, ' ').trim();
+}
+
 const BACKENDS = [
   'https://groq-proxy-0bfy.onrender.com',
   'https://groq-proxy-production-cd12.up.railway.app',
@@ -813,7 +818,7 @@ Return ONLY valid JSON:
     let voiceDuration = params.length || 60;
     let voiceError = null;
     try {
-      const fullScript2 = scenes.map(s => s.narration).join(' ');
+      const fullScript2 = stripUrlsForSpeech(scenes.map(s => s.narration).join(' '));
       const voiceRes = await smartFetch('/tts-voicerss', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ text: fullScript2, voice: params.voice || 'en-us-m' })
@@ -919,7 +924,7 @@ async function createVideoFromScenes(scenes, media, audioBlob2, totalLen, musicU
   // Give each scene a duration PROPORTIONAL to how much it speaks,
   // not an equal split - so short hooks and long explanations both
   // match what the voice is actually saying at that moment.
-  const target = (totalLen || 60) + 1.2;  // small buffer so video never falls short of voice
+  const target = (totalLen || 60) + 0.4;  // small buffer so video never falls short of voice
   const minDur = 2;
   const charCounts = scenes.map(s => Math.max((s.narration||'').length, 10));
   const totalChars = charCounts.reduce((a,b) => a+b, 0) || 1;
@@ -1225,7 +1230,7 @@ async function createAllBatchVideos() {
       statusEl.textContent = 'Generating voice...';
       let audioB = null, vDur = params.length || 60;
       try {
-        const fullText = scripts[i].scenes.map(s=>s.narration).join(' ');
+        const fullText = stripUrlsForSpeech(scripts[i].scenes.map(s=>s.narration).join(' '));
         const vRes = await smartFetch('/tts-voicerss', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ text: fullText, voice: params.voice || 'en-us-m' })
