@@ -182,7 +182,7 @@
   <div id="uploadsPreview" class="uploads-preview"></div>
   <div class="input-row">
     <button class="attach-btn" onclick="document.getElementById('aiFileInput').click()">📎</button>
-    <input type="file" id="aiFileInput" accept="image/*,video/*" multiple style="display:none" onchange="handleAiUpload(this)">
+    <input type="file" id="aiFileInput" accept="image/*,video/*,audio/*" multiple style="display:none" onchange="handleAiUpload(this)">
     <textarea class="chat-input" id="chatInput" placeholder="Describe your video..." rows="1"
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
       oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
@@ -347,6 +347,10 @@ Each script should be ~${params.length||60} seconds. Return ONLY a valid JSON ar
             duration_seconds: 6
           });
         }
+        if (s.hook && s.scenes && s.scenes[0]) {
+          s.scenes[0].isHookFrame = true;
+          s.scenes[0].hookText = s.hook;
+        }
       });
     } catch(e) {
       addMsg('ai', 'Sorry, I had trouble generating the batch scripts. Please try again.');
@@ -413,12 +417,16 @@ async function createAllBatchVideos() {
       statusEl.textContent = 'Finding images...';
       statusEl.style.color = '#ff5c00';
       const sceneMedia = [];
+      const usedImageUrls = new Set();
       for (let j = 0; j < Math.min(scripts[i].scenes.length, 5); j++) {
         try {
           const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
           const imgData = await imgRes.json();
-          if (imgData.hits && imgData.hits[0]) {
-            sceneMedia[j] = { url: imgData.hits[0].largeImageURL || imgData.hits[0].webformatURL, type:'image' };
+          if (imgData.hits && imgData.hits.length) {
+            const pick = imgData.hits.find(h => !usedImageUrls.has(h.largeImageURL || h.webformatURL)) || imgData.hits[0];
+            const picUrl = pick.largeImageURL || pick.webformatURL;
+            usedImageUrls.add(picUrl);
+            sceneMedia[j] = { url: picUrl, type:'image' };
           }
         } catch(e) {}
       }
@@ -782,7 +790,7 @@ For the CTA, write what a real ${params.platform || 'social media'} creator woul
 Return ONLY valid JSON:
 {
   "title": "video title",
-  "hook": "opening hook line",
+  "hook": "a SHORT scroll-stopping ALL-CAPS phrase, 3-8 words max, using power words like SECRET/MISTAKE/STOP/WHY/NEVER/TRUTH/FINALLY - this is NOT a sentence, it is a bold thumbnail-style headline, e.g. THE BIGGEST MONEY MISTAKE NIGERIANS MAKE",
   "scenes": [
     {"scene_number":1,"narration":"text","visual_keyword":"search term","duration_seconds":10},
     ...
@@ -808,6 +816,10 @@ Return ONLY valid JSON:
         visual_keyword: 'click here follow subscribe button',
         duration_seconds: 6
       });
+    }
+    if (script.hook && script.scenes && script.scenes[0]) {
+      script.scenes[0].isHookFrame = true;
+      script.scenes[0].hookText = script.hook;
     }
     updateStep(0, 'step-done');
     const scenes = script.scenes || [];
@@ -852,6 +864,7 @@ Return ONLY valid JSON:
     // Step 3: Find visuals (or use uploaded)
     updateStep(1, 'step-active');
     const sceneMedia = [];
+      const usedImageUrls = new Set();
 
     if (uploadedFiles.length) {
       // Use uploaded files
@@ -864,8 +877,11 @@ Return ONLY valid JSON:
         try {
           const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scenes[i].visual_keyword));
           const imgData = await imgRes.json();
-          if (imgData.hits && imgData.hits[0]) {
-            sceneMedia[i] = { url: imgData.hits[0].largeImageURL || imgData.hits[0].webformatURL, type:'image' };
+          if (imgData.hits && imgData.hits.length) {
+            const pick = imgData.hits.find(h => !usedImageUrls.has(h.largeImageURL || h.webformatURL)) || imgData.hits[0];
+            const picUrl = pick.largeImageURL || pick.webformatURL;
+            usedImageUrls.add(picUrl);
+            sceneMedia[i] = { url: picUrl, type:'image' };
           }
         } catch(e) {}
       }
@@ -875,8 +891,11 @@ Return ONLY valid JSON:
         try {
           const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scenes[i].visual_keyword));
           const imgData = await imgRes.json();
-          if (imgData.hits && imgData.hits[0]) {
-            sceneMedia[i] = { url: imgData.hits[0].largeImageURL || imgData.hits[0].webformatURL, type:'image' };
+          if (imgData.hits && imgData.hits.length) {
+            const pick = imgData.hits.find(h => !usedImageUrls.has(h.largeImageURL || h.webformatURL)) || imgData.hits[0];
+            const picUrl = pick.largeImageURL || pick.webformatURL;
+            usedImageUrls.add(picUrl);
+            sceneMedia[i] = { url: picUrl, type:'image' };
           }
         } catch(e) {}
       }
@@ -946,7 +965,9 @@ async function createVideoFromScenes(scenes, media, audioBlob2, totalLen, musicU
       isImage: media[i] ? media[i].type === 'image' : false,
       isTextCard: !media[i],
       text: s.narration ? s.narration.slice(0, 100) : '',
-      duration: durations[i]
+      duration: durations[i],
+      isHookFrame: !!s.isHookFrame,
+      hookText: s.hookText || ''
     }))
   };
 
@@ -1151,6 +1172,10 @@ Each script should be ~${params.length||60} seconds. Return ONLY a valid JSON ar
             duration_seconds: 6
           });
         }
+        if (s.hook && s.scenes && s.scenes[0]) {
+          s.scenes[0].isHookFrame = true;
+          s.scenes[0].hookText = s.hook;
+        }
       });
     } catch(e) {
       addMsg('ai', 'Sorry, I had trouble generating the batch scripts. Please try again.');
@@ -1217,12 +1242,16 @@ async function createAllBatchVideos() {
       statusEl.textContent = 'Finding images...';
       statusEl.style.color = '#ff5c00';
       const sceneMedia = [];
+      const usedImageUrls = new Set();
       for (let j = 0; j < Math.min(scripts[i].scenes.length, 5); j++) {
         try {
           const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
           const imgData = await imgRes.json();
-          if (imgData.hits && imgData.hits[0]) {
-            sceneMedia[j] = { url: imgData.hits[0].largeImageURL || imgData.hits[0].webformatURL, type:'image' };
+          if (imgData.hits && imgData.hits.length) {
+            const pick = imgData.hits.find(h => !usedImageUrls.has(h.largeImageURL || h.webformatURL)) || imgData.hits[0];
+            const picUrl = pick.largeImageURL || pick.webformatURL;
+            usedImageUrls.add(picUrl);
+            sceneMedia[j] = { url: picUrl, type:'image' };
           }
         } catch(e) {}
       }
