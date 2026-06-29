@@ -418,7 +418,7 @@ async function createAllBatchVideos() {
       statusEl.style.color = '#ff5c00';
       const sceneMedia = [];
       const usedImageUrls = new Set();
-      for (let j = 0; j < Math.min(scripts[i].scenes.length, 5); j++) {
+      for (let j = 0; j < scripts[i].scenes.length; j++) {
         try {
           const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
           const imgData = await imgRes.json();
@@ -887,7 +887,7 @@ Return ONLY valid JSON:
       }
     } else {
       // All stock images
-      for (let i = 0; i < Math.min(scenes.length, 5); i++) {
+      for (let i = 0; i < scenes.length; i++) {
         try {
           const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scenes[i].visual_keyword));
           const imgData = await imgRes.json();
@@ -1243,7 +1243,7 @@ async function createAllBatchVideos() {
       statusEl.style.color = '#ff5c00';
       const sceneMedia = [];
       const usedImageUrls = new Set();
-      for (let j = 0; j < Math.min(scripts[i].scenes.length, 5); j++) {
+      for (let j = 0; j < scripts[i].scenes.length; j++) {
         try {
           const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
           const imgData = await imgRes.json();
