@@ -604,7 +604,7 @@ async function smartFetch(path, options) {
   for (let i = 0; i < BACKENDS.length; i++) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(function() { controller.abort(); }, 30000);
+      const timeoutId = setTimeout(function() { controller.abort(); }, 90000);
       const opts = Object.assign({}, options, { signal: controller.signal });
       const resp = await fetch(BACKENDS[i] + path, opts);
       clearTimeout(timeoutId);
