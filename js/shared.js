@@ -122,3 +122,16 @@ window.addEventListener('DOMContentLoaded', () => {
   renderNav();
   checkOnboard();
 });
+
+function saveSessionToHistory(prompt, scriptsArray) {
+  try {
+    const h = getHistory();
+    h.unshift({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+      date: Date.now(),
+      prompt: prompt,
+      scripts: scriptsArray
+    });
+    localStorage.setItem('vk_history', JSON.stringify(h.slice(0, 50)));
+  } catch(e) {}
+}
