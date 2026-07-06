@@ -139,7 +139,26 @@
         </div>`;
         return;
       }
-      el.innerHTML = history.map(s => `
+      el.innerHTML = history.map(s => {
+        if (s.scripts && Array.isArray(s.scripts)) {
+          // NEW session-based entry: one prompt, multiple scripts
+          return `
+          <div class="history-card" id="card-${s.id}">
+            <div class="history-card-top">
+              <div class="history-topic">${(s.prompt || 'Untitled session').slice(0,70)}</div>
+              <button class="history-del" onclick="deleteScript('${s.id}')">×</button>
+            </div>
+            <div class="history-meta">
+              <span class="date">${new Date(s.date).toLocaleDateString()}</span>
+              <span class="tag">${s.scripts.length} script${s.scripts.length===1?'':'s'}</span>
+            </div>
+            <div class="history-actions">
+              <a href="ai.html" class="history-btn btn-use" onclick="localStorage.setItem('vk_resume_session','${s.id}')">▶ Resume Session</a>
+            </div>
+          </div>`;
+        }
+        // OLD single-video entry - unchanged, still works
+        return `
         <div class="history-card" id="card-${s.id}">
           <div class="history-card-top">
             <div class="history-topic">${s.topic || 'Untitled script'}</div>
@@ -155,7 +174,8 @@
             <button class="history-btn btn-del" onclick="copyScript('${s.id}')">📋 Copy</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
 
     function deleteScript(id) {
