@@ -277,7 +277,18 @@
     if (!history.length) {
       el.innerHTML = '<div class="empty-state"><div class="emoji">📭</div><div>No scripts yet</div><div style="font-size:.8rem;margin-top:6px;color:#555">Go to Create to get started</div></div>';
     } else {
-      el.innerHTML = history.map(s => `
+      el.innerHTML = history.map(s => {
+        if (s.scripts && Array.isArray(s.scripts)) {
+          return `
+          <a href="ai.html" class="history-card" onclick="localStorage.setItem('vk_resume_session','${s.id}')">
+            <div class="history-topic">${(s.prompt || 'Untitled session').slice(0,60)}</div>
+            <div class="history-meta">
+              <span class="history-date">${new Date(s.date).toLocaleDateString()}</span>
+              <span class="history-tag">${s.scripts.length} script${s.scripts.length===1?'':'s'}</span>
+            </div>
+          </a>`;
+        }
+        return `
         <a href="create.html" class="history-card">
           <div class="history-topic">${s.topic || 'Untitled script'}</div>
           <div class="history-meta">
@@ -285,8 +296,8 @@
             <span class="history-tag">${s.style || 'Educational'}</span>
             <span class="history-tag">${s.length || 60}s</span>
           </div>
-        </a>
-      `).join('');
+        </a>`;
+      }).join('');
     }
   }
 
