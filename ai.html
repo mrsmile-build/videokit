@@ -588,7 +588,7 @@ function copyCaptionText(id) {
 }
 
 </script>
-<script>window.addEventListener("DOMContentLoaded", loadChatHistory);</script>
+<script>window.addEventListener("DOMContentLoaded", function(){ loadChatHistory(); checkResumeSession(); });</script>
 <script>
 
 function stripUrlsForSpeech(text) {
@@ -625,6 +625,39 @@ let isProcessing = false;
 function saveChatHistory() {
   const area = document.getElementById('chatArea');
   localStorage.setItem('vk_ai_chat', area.innerHTML);
+}
+
+function checkResumeSession() {
+  const sessionId = localStorage.getItem('vk_resume_session');
+  if (!sessionId) return;
+  localStorage.removeItem('vk_resume_session');
+  try {
+    const h = getHistory();
+    const session = h.find(s => s.id === sessionId);
+    if (!session || !session.scripts) return;
+
+    window._batchScripts = session.scripts;
+    window._batchParams = { topic: session.prompt, style: 'educational', length: 60, voice: 'en-us-m' };
+    window._batchOriginalPrompt = session.prompt;
+
+    addMsg('ai', 'Resuming session: "' + (session.prompt||'').slice(0,80) + '"');
+
+    const area = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = 'batchCard';
+    div.innerHTML = '<div class="msg-avatar ai">🎬</div>' +
+      '<div class="progress-card" style="text-align:left">' +
+      '<div style="font-weight:800;margin-bottom:10px">📦 ' + session.scripts.length + ' Scripts from this session</div>' +
+      session.scripts.map(function(s, i) {
+        return '<div style="padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem">' +
+          '<strong>' + (i+1) + '. ' + (s.title||'Untitled') + '</strong><br>' +
+          '<span style="color:#888">' + (s.hook||'').slice(0,60) + '...</span></div>';
+      }).join('') +
+      '<button class="result-btn" onclick="createAllBatchVideos()" style="margin-top:14px">🚀 Create All ' + session.scripts.length + ' Videos</button>';
+    area.appendChild(div);
+    setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
+  } catch(e) { console.log('[Resume]', e.message); }
 }
 
 function loadChatHistory() {
