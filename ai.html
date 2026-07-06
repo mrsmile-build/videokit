@@ -380,6 +380,7 @@ Each script should be ~${params.length||60} seconds. Return ONLY a valid JSON ar
 
     window._batchScripts = scriptsArray;
     window._batchParams = params;
+    window._batchOriginalPrompt = originalPrompt;
 
   } catch(err) {
     addMsg('ai', 'Batch generation failed: ' + err.message);
@@ -484,6 +485,7 @@ async function createAllBatchVideos() {
     saveChatHistory();
   }
 
+  saveSessionToHistory(window._batchOriginalPrompt || '', scripts);
   addMsg('ai', `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
 }
 
@@ -1230,6 +1232,7 @@ Each script should be ~${params.length||60} seconds. Return ONLY a valid JSON ar
 
     window._batchScripts = scriptsArray;
     window._batchParams = params;
+    window._batchOriginalPrompt = originalPrompt;
 
   } catch(err) {
     addMsg('ai', 'Batch generation failed: ' + err.message);
@@ -1334,6 +1337,7 @@ async function createAllBatchVideos() {
     saveChatHistory();
   }
 
+  saveSessionToHistory(window._batchOriginalPrompt || '', scripts);
   addMsg('ai', `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
 }
 
