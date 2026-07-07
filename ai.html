@@ -402,6 +402,11 @@ Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON 
 }
 
 async function createAllBatchVideos() {
+  if (isProcessing) {
+    addMsg('ai', '⏳ Still working on the previous batch — please wait for it to finish first.');
+    return;
+  }
+  isProcessing = true;
   const scripts = window._batchScripts || [];
   const params = window._batchParams || {};
   document.getElementById('batchCard')?.remove();
@@ -501,6 +506,7 @@ async function createAllBatchVideos() {
 
   saveSessionToHistory(window._batchOriginalPrompt || '', scripts);
   addMsg('ai', `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
+  isProcessing = false;
 }
 
 
@@ -1301,6 +1307,11 @@ Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON 
 }
 
 async function createAllBatchVideos() {
+  if (isProcessing) {
+    addMsg('ai', '⏳ Still working on the previous batch — please wait for it to finish first.');
+    return;
+  }
+  isProcessing = true;
   const scripts = window._batchScripts || [];
   const params = window._batchParams || {};
   document.getElementById('batchCard')?.remove();
@@ -1400,6 +1411,7 @@ async function createAllBatchVideos() {
 
   saveSessionToHistory(window._batchOriginalPrompt || '', scripts);
   addMsg('ai', `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
+  isProcessing = false;
 }
 
 
