@@ -407,6 +407,7 @@ async function createAllBatchVideos() {
     return;
   }
   isProcessing = true;
+  try {
   const scripts = window._batchScripts || [];
   const params = window._batchParams || {};
   document.getElementById('batchCard')?.remove();
@@ -506,7 +507,11 @@ async function createAllBatchVideos() {
 
   saveSessionToHistory(window._batchOriginalPrompt || '', scripts);
   addMsg('ai', `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
-  isProcessing = false;
+  } catch (outerErr) {
+    addMsg('ai', '⚠️ Unexpected batch error: ' + outerErr.message + ' — you can try again now.');
+  } finally {
+    isProcessing = false;
+  }
 }
 
 
@@ -1312,6 +1317,7 @@ async function createAllBatchVideos() {
     return;
   }
   isProcessing = true;
+  try {
   const scripts = window._batchScripts || [];
   const params = window._batchParams || {};
   document.getElementById('batchCard')?.remove();
@@ -1411,7 +1417,11 @@ async function createAllBatchVideos() {
 
   saveSessionToHistory(window._batchOriginalPrompt || '', scripts);
   addMsg('ai', `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
-  isProcessing = false;
+  } catch (outerErr) {
+    addMsg('ai', '⚠️ Unexpected batch error: ' + outerErr.message + ' — you can try again now.');
+  } finally {
+    isProcessing = false;
+  }
 }
 
 
