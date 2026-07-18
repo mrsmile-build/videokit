@@ -410,6 +410,7 @@ async function createAllBatchVideos() {
   try {
   const scripts = window._batchScripts || [];
   const params = window._batchParams || {};
+  addMsg('ai', '🔧 Debug: starting createAllBatchVideos with ' + scripts.length + ' scripts');
   document.getElementById('batchCard')?.remove();
 
   const area = document.getElementById('chatArea');
@@ -1320,6 +1321,7 @@ async function createAllBatchVideos() {
   try {
   const scripts = window._batchScripts || [];
   const params = window._batchParams || {};
+  addMsg('ai', '🔧 Debug: starting createAllBatchVideos with ' + scripts.length + ' scripts');
   document.getElementById('batchCard')?.remove();
 
   const area = document.getElementById('chatArea');
