@@ -210,6 +210,30 @@
   </a>
 </div>
 
+<script>
+window.addEventListener('error', function(e) {
+  var area = document.getElementById('chatArea');
+  if (area) {
+    var div = document.createElement('div');
+    div.className = 'msg ai';
+    div.innerHTML = '<div class="msg-avatar ai">🚨</div><div class="msg-bubble" style="background:#3a0000;border-color:#ff4444">REAL ERROR CAUGHT: ' + e.message + ' (line ' + e.lineno + ')</div>';
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight + 300;
+  }
+});
+</script>
+<script>
+window.addEventListener('error', function(e) {
+  var area = document.getElementById('chatArea');
+  if (area) {
+    var div = document.createElement('div');
+    div.className = 'msg ai';
+    div.innerHTML = '<div class="msg-avatar ai">🚨</div><div class="msg-bubble" style="background:#3a0000;border-color:#ff4444">REAL ERROR CAUGHT: ' + e.message + ' (line ' + e.lineno + ')</div>';
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight + 300;
+  }
+});
+</script>
 <script src="js/shared.js">
 // ── Confirm & Customize Card ────────────────────────────────
 function showConfirmCard(params) {
