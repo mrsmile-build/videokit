@@ -1370,6 +1370,8 @@ async function createAllBatchVideos() {
   for (let i = 0; i < scripts.length; i++) {
     const statusEl = document.getElementById('batchStatus-'+i);
     try {
+      const videoTimeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Video took too long (2 min limit) - skipped')), 120000));
+      await Promise.race([videoTimeoutPromise, (async () => {
       statusEl.textContent = 'Finding images...';
       statusEl.style.color = '#ff5c00';
       const sceneMedia = [];
@@ -1430,6 +1432,7 @@ async function createAllBatchVideos() {
         scriptData: scripts[i],
         scriptText: scripts[i].scenes.map(s=>s.narration).join(' ')
       });
+      })()]);
 
     } catch(err) {
       statusEl.textContent = '✗ Failed';
