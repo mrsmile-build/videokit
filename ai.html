@@ -507,11 +507,13 @@ async function createAllBatchVideos() {
         scriptData: scripts[i],
         scriptText: scripts[i].scenes.map(s=>s.narration).join(' ')
       });
+      })()]);
 
     } catch(err) {
       statusEl.textContent = '✗ Failed';
       statusEl.style.color = '#f87171';
-      console.error('[Batch '+i+']', err);
+      console.error('[Batch '+i+']', err.message);
+      addMsg('ai', '⚠️ Video ' + (i+1) + ' failed: ' + err.message);
     }
     saveChatHistory();
   }
@@ -1432,7 +1434,8 @@ async function createAllBatchVideos() {
     } catch(err) {
       statusEl.textContent = '✗ Failed';
       statusEl.style.color = '#f87171';
-      console.error('[Batch '+i+']', err);
+      console.error('[Batch '+i+']', err.message);
+      addMsg('ai', '⚠️ Video ' + (i+1) + ' failed: ' + err.message);
     }
     saveChatHistory();
   }
