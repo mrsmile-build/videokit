@@ -434,7 +434,6 @@ async function createAllBatchVideos() {
   try {
   const scripts = window._batchScripts || [];
   const params = window._batchParams || {};
-  addMsg('ai', '🔧 Debug: starting createAllBatchVideos with ' + scripts.length + ' scripts');
   document.getElementById('batchCard')?.remove();
 
   const area = document.getElementById('chatArea');
@@ -450,11 +449,6 @@ async function createAllBatchVideos() {
   setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
 
   const rows = document.getElementById('batchRows');
-  if (!rows) {
-    addMsg('ai', '⚠️ Debug: batchRows element not found in DOM - cannot show progress rows');
-  } else {
-    addMsg('ai', '🔧 Debug: batchRows found, building ' + scripts.length + ' rows');
-  }
   scripts.forEach((s,i) => {
     try {
       const row = document.createElement('div');
@@ -466,7 +460,6 @@ async function createAllBatchVideos() {
       addMsg('ai', '⚠️ Debug: row ' + i + ' creation failed: ' + rowErr.message);
     }
   });
-  addMsg('ai', '🔧 Debug: rows loop complete, entering video processing loop now');
 
   for (let i = 0; i < scripts.length; i++) {
     const statusEl = document.getElementById('batchStatus-'+i);
@@ -1357,7 +1350,6 @@ async function createAllBatchVideos() {
   try {
   const scripts = window._batchScripts || [];
   const params = window._batchParams || {};
-  addMsg('ai', '🔧 Debug: starting createAllBatchVideos with ' + scripts.length + ' scripts');
   document.getElementById('batchCard')?.remove();
 
   const area = document.getElementById('chatArea');
@@ -1373,11 +1365,6 @@ async function createAllBatchVideos() {
   setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
 
   const rows = document.getElementById('batchRows');
-  if (!rows) {
-    addMsg('ai', '⚠️ Debug: batchRows element not found in DOM - cannot show progress rows');
-  } else {
-    addMsg('ai', '🔧 Debug: batchRows found, building ' + scripts.length + ' rows');
-  }
   scripts.forEach((s,i) => {
     try {
       const row = document.createElement('div');
@@ -1389,7 +1376,6 @@ async function createAllBatchVideos() {
       addMsg('ai', '⚠️ Debug: row ' + i + ' creation failed: ' + rowErr.message);
     }
   });
-  addMsg('ai', '🔧 Debug: rows loop complete, entering video processing loop now');
 
   for (let i = 0; i < scripts.length; i++) {
     const statusEl = document.getElementById('batchStatus-'+i);
