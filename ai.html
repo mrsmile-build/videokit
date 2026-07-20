@@ -663,7 +663,7 @@ function copyCaptionText(id) {
 }
 
 </script>
-<script>window.addEventListener("DOMContentLoaded", function(){ loadChatHistory(); checkResumeSession(); });</script>
+<script>window.addEventListener("DOMContentLoaded", function(){ initScriptStore(); loadChatHistory(); checkResumeSession(); });</script>
 <script>
 
 function stripUrlsForSpeech(text) {
@@ -811,6 +811,22 @@ function checkResumeSession() {
     area.appendChild(div);
     setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
   } catch(e) { console.log('[Resume]', e.message); }
+}
+
+function initScriptStore() {
+  try {
+    const saved = localStorage.getItem('vk_script_store');
+    window._scriptStore = saved ? JSON.parse(saved) : {};
+  } catch(e) { window._scriptStore = {}; }
+
+  // Wrap the store in a Proxy so any write auto-persists to localStorage
+  window._scriptStore = new Proxy(window._scriptStore, {
+    set(target, key, value) {
+      target[key] = value;
+      try { localStorage.setItem('vk_script_store', JSON.stringify(target)); } catch(e) {}
+      return true;
+    }
+  });
 }
 
 function loadChatHistory() {
