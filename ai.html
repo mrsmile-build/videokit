@@ -547,7 +547,7 @@ async function createAllBatchVideos() {
       statusEl.textContent = '✗ Failed';
       statusEl.style.color = '#f87171';
       console.error('[Batch '+i+']', err.message);
-      addMsg('ai', '⚠️ Video ' + (i+1) + ' failed: ' + err.message);
+      statusEl.title = err.message;
     }
     saveChatHistory();
   }
@@ -1476,7 +1476,7 @@ async function createAllBatchVideos() {
   for (let i = 0; i < scripts.length; i++) {
     const statusEl = document.getElementById('batchStatus-'+i);
     try {
-      const videoTimeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Video took too long (2 min limit) - skipped')), 120000));
+      const videoTimeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Video took too long - skipped')), 210000));
       await Promise.race([videoTimeoutPromise, (async () => {
       statusEl.textContent = 'Finding images...';
       statusEl.style.color = '#ff5c00';
@@ -1544,7 +1544,7 @@ async function createAllBatchVideos() {
       statusEl.textContent = '✗ Failed';
       statusEl.style.color = '#f87171';
       console.error('[Batch '+i+']', err.message);
-      addMsg('ai', '⚠️ Video ' + (i+1) + ' failed: ' + err.message);
+      statusEl.title = err.message;
     }
     saveChatHistory();
   }
