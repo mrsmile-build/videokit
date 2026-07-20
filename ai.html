@@ -150,9 +150,26 @@
 </head>
 <body>
 
-<div class="ai-header">
-  <div class="ai-title">🤖 AI Studio</div>
-  <div class="ai-sub">Just describe your video — AI creates everything</div>
+<div class="ai-header" style="display:flex;justify-content:space-between;align-items:center">
+  <div>
+    <div class="ai-title">🤖 AI Studio</div>
+    <div class="ai-sub">Just describe your video — AI creates everything</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="renderThreadList();document.getElementById('threadListModal').style.display='flex'" style="width:38px;height:38px;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:#ccc;font-size:1.1rem;cursor:pointer">📋</button>
+    <button onclick="startNewThread()" style="width:38px;height:38px;background:#ff5c00;border:none;border-radius:10px;color:white;font-size:1.1rem;cursor:pointer">＋</button>
+  </div>
+</div>
+
+<div id="threadListModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:99998;align-items:flex-end;justify-content:center">
+  <div style="background:#111;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:75vh;overflow-y:auto">
+    <div style="width:40px;height:4px;background:#333;border-radius:2px;margin:0 auto 16px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-weight:800;font-size:1rem">Past Conversations</div>
+      <button onclick="document.getElementById('threadListModal').style.display='none'" style="background:none;border:none;color:#999;font-size:1.5rem;cursor:pointer">×</button>
+    </div>
+    <div id="threadListItems"></div>
+  </div>
 </div>
 
 <div class="chat-area" id="chatArea">
@@ -677,9 +694,87 @@ async function smartFetch(path, options) {
 let uploadedFiles = [];
 let isProcessing = false;
 
+function getActiveThreadId() {
+  let id = localStorage.getItem('vk_active_thread');
+  if (!id) {
+    id = 'thread_' + Date.now().toString(36);
+    localStorage.setItem('vk_active_thread', id);
+  }
+  return id;
+}
+
+function getThreadsList() {
+  try { return JSON.parse(localStorage.getItem('vk_threads_list')) || []; }
+  catch(e) { return []; }
+}
+
+function saveThreadsList(list) {
+  localStorage.setItem('vk_threads_list', JSON.stringify(list.slice(0, 50)));
+}
+
 function saveChatHistory() {
   const area = document.getElementById('chatArea');
-  localStorage.setItem('vk_ai_chat', area.innerHTML);
+  const threadId = getActiveThreadId();
+  localStorage.setItem('vk_thread_' + threadId, area.innerHTML);
+
+  // Update the thread list entry (title = first user message, or 'New chat')
+  let list = getThreadsList();
+  let entry = list.find(t => t.id === threadId);
+  if (!entry) {
+    entry = { id: threadId, title: 'New chat', date: Date.now() };
+    list.unshift(entry);
+  }
+  if (entry.title === 'New chat') {
+    const firstUserMsg = area.querySelector('.msg.user .msg-bubble');
+    if (firstUserMsg) entry.title = firstUserMsg.textContent.slice(0, 60);
+  }
+  entry.date = Date.now();
+  saveThreadsList(list);
+}
+
+function renderThreadList() {
+  const list = getThreadsList();
+  const el = document.getElementById('threadListItems');
+  if (!list.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:#555">No past conversations yet</div>';
+    return;
+  }
+  const activeId = getActiveThreadId();
+  el.innerHTML = list.map(function(t) {
+    const isActive = t.id === activeId;
+    return '<div onclick="openThread(&#39;' + t.id + '&#39;)" style="padding:14px;background:' + (isActive ? '#1a0900' : '#1a1a1a') + ';border:1px solid ' + (isActive ? '#ff5c00' : '#222') + ';border-radius:12px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">' +
+      '<div style="flex:1;overflow:hidden">' +
+        '<div style="font-size:.85rem;color:#ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (t.title||'New chat') + '</div>' +
+        '<div style="font-size:.7rem;color:#666;margin-top:3px">' + new Date(t.date).toLocaleDateString() + '</div>' +
+      '</div>' +
+      '<button onclick="deleteThread(&#39;' + t.id + '&#39;, event)" style="background:none;border:none;color:#555;font-size:1.1rem;padding:0 6px;cursor:pointer">×</button>' +
+    '</div>';
+  }).join('');
+}
+
+function startNewThread() {
+  const newId = 'thread_' + Date.now().toString(36);
+  localStorage.setItem('vk_active_thread', newId);
+  document.getElementById('chatArea').innerHTML = '';
+  location.reload();
+}
+
+function openThread(threadId) {
+  localStorage.setItem('vk_active_thread', threadId);
+  location.reload();
+}
+
+function deleteThread(threadId, event) {
+  if (event) event.stopPropagation();
+  if (!confirm('Delete this conversation?')) return;
+  localStorage.removeItem('vk_thread_' + threadId);
+  let list = getThreadsList().filter(t => t.id !== threadId);
+  saveThreadsList(list);
+  if (getActiveThreadId() === threadId) {
+    startNewThread();
+  } else {
+    renderThreadList();
+  }
 }
 
 function checkResumeSession() {
@@ -716,7 +811,8 @@ function checkResumeSession() {
 }
 
 function loadChatHistory() {
-  const saved = localStorage.getItem('vk_ai_chat');
+  const threadId = getActiveThreadId();
+  const saved = localStorage.getItem('vk_thread_' + threadId);
   if (saved) document.getElementById('chatArea').innerHTML = saved;
 }
 
