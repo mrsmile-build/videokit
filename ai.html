@@ -161,10 +161,9 @@
   </div>
 </div>
 
-<div id="threadListModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:99998;align-items:flex-end;justify-content:center">
-  <div style="background:#111;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:75vh;overflow-y:auto">
-    <div style="width:40px;height:4px;background:#333;border-radius:2px;margin:0 auto 16px"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+<div id="threadListModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99998;justify-content:flex-end" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#111;height:100vh;padding:20px;width:82%;max-width:340px;overflow-y:auto;border-left:1px solid #222">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-top:6px">
       <div style="font-weight:800;font-size:1rem">Past Conversations</div>
       <button onclick="document.getElementById('threadListModal').style.display='none'" style="background:none;border:none;color:#999;font-size:1.5rem;cursor:pointer">×</button>
     </div>
