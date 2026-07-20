@@ -625,7 +625,11 @@ Only include keys for: ${targets.join(', ')}`}],
     });
     const data = await res.json();
     const raw = data.content || data.choices?.[0]?.message?.content || '{}';
-    const captions = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const cleanedRaw = raw.replace(/```json|```/g,'').trim();
+    const jsonStart = cleanedRaw.indexOf('{');
+    const jsonEnd = cleanedRaw.lastIndexOf('}');
+    const jsonOnly = (jsonStart !== -1 && jsonEnd !== -1) ? cleanedRaw.slice(jsonStart, jsonEnd + 1) : cleanedRaw;
+    const captions = JSON.parse(jsonOnly);
 
     typingBubble.classList.remove('typing');
     typingBubble.parentElement.remove();
@@ -1622,7 +1626,11 @@ Only include keys for: ${targets.join(', ')}`}],
     });
     const data = await res.json();
     const raw = data.content || data.choices?.[0]?.message?.content || '{}';
-    const captions = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const cleanedRaw = raw.replace(/```json|```/g,'').trim();
+    const jsonStart = cleanedRaw.indexOf('{');
+    const jsonEnd = cleanedRaw.lastIndexOf('}');
+    const jsonOnly = (jsonStart !== -1 && jsonEnd !== -1) ? cleanedRaw.slice(jsonStart, jsonEnd + 1) : cleanedRaw;
+    const captions = JSON.parse(jsonOnly);
 
     typingBubble.classList.remove('typing');
     typingBubble.parentElement.remove();
