@@ -533,7 +533,8 @@ async function createAllBatchVideos() {
   resultsDiv.id = 'batchResults';
   resultsDiv.innerHTML = `<div class="msg-avatar ai">🎬</div>
     <div class="progress-card" style="text-align:left">
-      <div style="font-weight:800;margin-bottom:10px">Creating ${scripts.length} videos...</div>
+      <div style="font-weight:800;margin-bottom:6px">Creating ${scripts.length} videos...</div>
+      <div style="background:#2a1500;border:1px solid #ff5c00;border-radius:8px;padding:8px 10px;font-size:.74rem;color:#ffb366;margin-bottom:10px">⚠️ Keep this tab open. Closing it or your phone sleeping will stop the batch — anything already downloaded stays saved.</div>
       <div id="batchRows"></div>
     </div>`;
   area.appendChild(resultsDiv);
@@ -776,6 +777,13 @@ async function smartFetch(path, options) {
 }
 let uploadedFiles = [];
 let isProcessing = false;
+window.addEventListener('beforeunload', function(e) {
+  if (isProcessing) {
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+  }
+});
 
 function getActiveThreadId() {
   let id = localStorage.getItem('vk_active_thread');
@@ -1642,7 +1650,8 @@ async function createAllBatchVideos() {
   resultsDiv.id = 'batchResults';
   resultsDiv.innerHTML = `<div class="msg-avatar ai">🎬</div>
     <div class="progress-card" style="text-align:left">
-      <div style="font-weight:800;margin-bottom:10px">Creating ${scripts.length} videos...</div>
+      <div style="font-weight:800;margin-bottom:6px">Creating ${scripts.length} videos...</div>
+      <div style="background:#2a1500;border:1px solid #ff5c00;border-radius:8px;padding:8px 10px;font-size:.74rem;color:#ffb366;margin-bottom:10px">⚠️ Keep this tab open. Closing it or your phone sleeping will stop the batch — anything already downloaded stays saved.</div>
       <div id="batchRows"></div>
     </div>`;
   area.appendChild(resultsDiv);
