@@ -830,9 +830,23 @@ function renderThreadList() {
         '<div style="font-size:.85rem;color:#ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (t.title||'New chat') + '</div>' +
         '<div style="font-size:.7rem;color:#666;margin-top:3px">' + new Date(t.date).toLocaleDateString() + '</div>' +
       '</div>' +
+      '<button onclick="renameThread(&#39;' + t.id + '&#39;, event)" style="background:none;border:none;color:#555;font-size:.95rem;padding:0 6px;cursor:pointer">✏️</button>' +
       '<button onclick="deleteThread(&#39;' + t.id + '&#39;, event)" style="background:none;border:none;color:#555;font-size:1.1rem;padding:0 6px;cursor:pointer">×</button>' +
     '</div>';
   }).join('');
+}
+
+function renameThread(threadId, event) {
+  if (event) event.stopPropagation();
+  const list = getThreadsList();
+  const entry = list.find(function(t) { return t.id === threadId; });
+  if (!entry) return;
+  const newName = prompt('Rename this conversation:', entry.title || 'New chat');
+  if (newName === null || !newName.trim()) return;
+  entry.title = newName.trim().slice(0, 60);
+  entry.manuallyRenamed = true;
+  saveThreadsList(list);
+  renderThreadList();
 }
 
 function startNewThread() {
