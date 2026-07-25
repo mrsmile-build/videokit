@@ -347,6 +347,81 @@ function selectNoMusic() {
 
 
 // ── Batch Video Generation ──────────────────────────────────
+async function retryOneBatchVideo(i) {
+  const scripts = window._batchScripts || [];
+  const params = window._batchParams || {};
+  const statusEl = document.getElementById('batchStatus-'+i);
+  if (!statusEl || !scripts[i]) return;
+
+  statusEl.textContent = 'Retrying...';
+  statusEl.style.color = '#ff5c00';
+
+  try {
+    const sceneMedia = [];
+    const usedImageUrls = new Set();
+    for (let j = 0; j < scripts[i].scenes.length; j++) {
+      try {
+        const estDur = scripts[i].scenes[j].duration_seconds || 8;
+        const numNeeded = Math.max(1, Math.min(4, Math.ceil(estDur / 6)));
+        const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
+        const imgData = await imgRes.json();
+        const allHits = imgData.hits || [];
+        const freshHits = allHits.filter(h => !usedImageUrls.has(h.largeImageURL || h.webformatURL));
+        const picks = (freshHits.length ? freshHits : allHits).slice(0, numNeeded);
+        if (picks.length) {
+          sceneMedia[j] = picks.map(p => {
+            const url = p.largeImageURL || p.webformatURL;
+            usedImageUrls.add(url);
+            return { url, type: 'image' };
+          });
+        }
+      } catch(e) {}
+    }
+
+    statusEl.textContent = 'Generating voice...';
+    let audioB = null, vDur = params.length || 60;
+    try {
+      const fullText = stripUrlsForSpeech(scripts[i].scenes.map(s=>s.narration).join(' '));
+      const vRes = await smartFetch('/tts-voicerss', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: fullText, voice: params.voice || 'en-us-m' })
+      });
+      if (vRes.ok) {
+        const blob = await vRes.blob();
+        if (blob.size > 500) {
+          audioB = blob;
+          const tmpA = new Audio(URL.createObjectURL(blob));
+          vDur = await new Promise(res => {
+            tmpA.onloadedmetadata = () => res(Math.ceil(tmpA.duration));
+            tmpA.onerror = () => res(params.length||60);
+            tmpA.load();
+            setTimeout(()=>res(params.length||60), 3000);
+          });
+        }
+      }
+    } catch(e) {}
+
+    statusEl.textContent = 'Creating video...';
+    const blob = await createVideoFromScenes(scripts[i].scenes, sceneMedia, audioB, vDur, params.musicUrl);
+
+    const url = URL.createObjectURL(blob);
+    window._scriptStore = window._scriptStore || {};
+    const batchSId = 'batchscript_' + i + '_' + Date.now();
+    window._scriptStore[batchSId] = scripts[i];
+    statusEl.innerHTML = '<a href="' + url + '" download="videokit-retry-' + (i+1) + '-' + Date.now() + '.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a><button onclick="showCaptionPicker(\'' + batchSId + '\')" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>';
+
+    saveToHistory({
+      topic: scripts[i].title || params.topic, style: params.style||'educational', length: vDur,
+      scriptData: scripts[i],
+      scriptText: scripts[i].scenes.map(s=>s.narration).join(' ')
+    });
+    saveChatHistory();
+  } catch(err) {
+    statusEl.innerHTML = '<span style="color:#f87171">✗ Failed again</span> <button onclick="retryOneBatchVideo(' + i + ')" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0;margin-left:6px">↻ Retry</button>';
+    statusEl.title = err.message;
+  }
+}
+
 async function processBatchRequest(originalPrompt, params, qty) {
   try {
     const batchSettings = await showConfirmCard(params);
@@ -543,16 +618,21 @@ async function createAllBatchVideos() {
       })()]);
 
     } catch(err) {
-      statusEl.textContent = '✗ Failed';
-      statusEl.style.color = '#f87171';
-      console.error('[Batch '+i+']', err.message);
+      statusEl.innerHTML = '<span style="color:#f87171">✗ Failed</span> <button onclick="retryOneBatchVideo(' + i + ')" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0;margin-left:6px">↻ Retry</button>';
       statusEl.title = err.message;
+      console.error('[Batch '+i+']', err.message);
     }
     saveChatHistory();
   }
 
   saveSessionToHistory(window._batchOriginalPrompt || '', scripts);
-  addMsg('ai', `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
+  const anyFailed = scripts.some((s, idx) => {
+    const el = document.getElementById('batchStatus-'+idx);
+    return el && el.textContent.indexOf('Failed') !== -1;
+  });
+  addMsg('ai', anyFailed
+    ? '⚠️ Some videos finished, some failed. Tap ↻ Retry next to any failed video to try again.'
+    : `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
   } catch (outerErr) {
     addMsg('ai', '⚠️ Unexpected batch error: ' + outerErr.message + ' — you can try again now.');
   } finally {
@@ -1362,6 +1442,81 @@ function selectNoMusic() {
 
 
 // ── Batch Video Generation ──────────────────────────────────
+async function retryOneBatchVideo(i) {
+  const scripts = window._batchScripts || [];
+  const params = window._batchParams || {};
+  const statusEl = document.getElementById('batchStatus-'+i);
+  if (!statusEl || !scripts[i]) return;
+
+  statusEl.textContent = 'Retrying...';
+  statusEl.style.color = '#ff5c00';
+
+  try {
+    const sceneMedia = [];
+    const usedImageUrls = new Set();
+    for (let j = 0; j < scripts[i].scenes.length; j++) {
+      try {
+        const estDur = scripts[i].scenes[j].duration_seconds || 8;
+        const numNeeded = Math.max(1, Math.min(4, Math.ceil(estDur / 6)));
+        const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
+        const imgData = await imgRes.json();
+        const allHits = imgData.hits || [];
+        const freshHits = allHits.filter(h => !usedImageUrls.has(h.largeImageURL || h.webformatURL));
+        const picks = (freshHits.length ? freshHits : allHits).slice(0, numNeeded);
+        if (picks.length) {
+          sceneMedia[j] = picks.map(p => {
+            const url = p.largeImageURL || p.webformatURL;
+            usedImageUrls.add(url);
+            return { url, type: 'image' };
+          });
+        }
+      } catch(e) {}
+    }
+
+    statusEl.textContent = 'Generating voice...';
+    let audioB = null, vDur = params.length || 60;
+    try {
+      const fullText = stripUrlsForSpeech(scripts[i].scenes.map(s=>s.narration).join(' '));
+      const vRes = await smartFetch('/tts-voicerss', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: fullText, voice: params.voice || 'en-us-m' })
+      });
+      if (vRes.ok) {
+        const blob = await vRes.blob();
+        if (blob.size > 500) {
+          audioB = blob;
+          const tmpA = new Audio(URL.createObjectURL(blob));
+          vDur = await new Promise(res => {
+            tmpA.onloadedmetadata = () => res(Math.ceil(tmpA.duration));
+            tmpA.onerror = () => res(params.length||60);
+            tmpA.load();
+            setTimeout(()=>res(params.length||60), 3000);
+          });
+        }
+      }
+    } catch(e) {}
+
+    statusEl.textContent = 'Creating video...';
+    const blob = await createVideoFromScenes(scripts[i].scenes, sceneMedia, audioB, vDur, params.musicUrl);
+
+    const url = URL.createObjectURL(blob);
+    window._scriptStore = window._scriptStore || {};
+    const batchSId = 'batchscript_' + i + '_' + Date.now();
+    window._scriptStore[batchSId] = scripts[i];
+    statusEl.innerHTML = '<a href="' + url + '" download="videokit-retry-' + (i+1) + '-' + Date.now() + '.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a><button onclick="showCaptionPicker(\'' + batchSId + '\')" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>';
+
+    saveToHistory({
+      topic: scripts[i].title || params.topic, style: params.style||'educational', length: vDur,
+      scriptData: scripts[i],
+      scriptText: scripts[i].scenes.map(s=>s.narration).join(' ')
+    });
+    saveChatHistory();
+  } catch(err) {
+    statusEl.innerHTML = '<span style="color:#f87171">✗ Failed again</span> <button onclick="retryOneBatchVideo(' + i + ')" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0;margin-left:6px">↻ Retry</button>';
+    statusEl.title = err.message;
+  }
+}
+
 async function processBatchRequest(originalPrompt, params, qty) {
   try {
     const batchSettings = await showConfirmCard(params);
@@ -1560,16 +1715,21 @@ async function createAllBatchVideos() {
       })()]);
 
     } catch(err) {
-      statusEl.textContent = '✗ Failed';
-      statusEl.style.color = '#f87171';
-      console.error('[Batch '+i+']', err.message);
+      statusEl.innerHTML = '<span style="color:#f87171">✗ Failed</span> <button onclick="retryOneBatchVideo(' + i + ')" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0;margin-left:6px">↻ Retry</button>';
       statusEl.title = err.message;
+      console.error('[Batch '+i+']', err.message);
     }
     saveChatHistory();
   }
 
   saveSessionToHistory(window._batchOriginalPrompt || '', scripts);
-  addMsg('ai', `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
+  const anyFailed = scripts.some((s, idx) => {
+    const el = document.getElementById('batchStatus-'+idx);
+    return el && el.textContent.indexOf('Failed') !== -1;
+  });
+  addMsg('ai', anyFailed
+    ? '⚠️ Some videos finished, some failed. Tap ↻ Retry next to any failed video to try again.'
+    : `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
   } catch (outerErr) {
     addMsg('ai', '⚠️ Unexpected batch error: ' + outerErr.message + ' — you can try again now.');
   } finally {
