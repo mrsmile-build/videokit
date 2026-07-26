@@ -990,6 +990,27 @@ function loadChatHistory() {
   const threadId = getActiveThreadId();
   const saved = localStorage.getItem('vk_thread_' + threadId);
   if (saved) document.getElementById('chatArea').innerHTML = saved;
+  restorePersistedVideos(threadId);
+}
+
+async function restorePersistedVideos(threadId) {
+  // Old download links point to dead blob: URLs from a previous page load.
+  // Find every status slot and, if we have a saved video for it in
+  // IndexedDB, rebuild a fresh working download link.
+  const statusEls = document.querySelectorAll('[id^="batchStatus-"]');
+  for (const el of statusEls) {
+    const idx = el.id.replace('batchStatus-', '');
+    const persistId = threadId + '_v' + idx;
+    try {
+      const record = await loadVideoBlob(persistId);
+      if (record && record.blob) {
+        const freshUrl = URL.createObjectURL(record.blob);
+        const captionBtn = el.querySelector('button[onclick*="showCaptionPicker"]');
+        const captionHtml = captionBtn ? captionBtn.outerHTML : '';
+        el.innerHTML = '<a href="' + freshUrl + '" download="videokit-' + (record.meta.title||'video').replace(/[^a-z0-9]/gi,'-').slice(0,30) + '.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a>' + captionHtml;
+      }
+    } catch(e) {}
+  }
 }
 
 function addMsg(role, content, isHTML=false) {
