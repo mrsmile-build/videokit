@@ -677,6 +677,84 @@ function showCaptionPicker(sId) {
   saveChatHistory();
 }
 
+function toggleCaptionPanel(i, sId) {
+  const panel = document.getElementById('captionPanel-' + i);
+  if (!panel) return;
+  if (panel.style.display === 'block') {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = 'block';
+  if (!panel.dataset.built) {
+    panel.dataset.built = 'true';
+    panel.dataset.sId = sId;
+    const tabs = Object.keys(PLATFORM_SPECS);
+    panel.innerHTML = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' +
+      tabs.map(function(p) {
+        return '<button onclick="loadCaptionTab(' + i + ', &#39;' + p + '&#39;)" id="capTab-' + i + '-' + p + '" style="padding:5px 10px;background:#1a1a1a;border:1px solid #333;border-radius:16px;color:#999;font-size:.7rem;font-weight:700;cursor:pointer">' + PLATFORM_SPECS[p].label + '</button>';
+      }).join('') +
+      '</div><div id="capResult-' + i + '"></div>';
+  }
+}
+
+async function loadCaptionTab(i, platform) {
+  const panel = document.getElementById('captionPanel-' + i);
+  const sId = panel.dataset.sId;
+  const script = (window._scriptStore || {})[sId];
+  const resultEl = document.getElementById('capResult-' + i);
+
+  document.querySelectorAll('[id^="capTab-' + i + '-"]').forEach(function(b) {
+    b.style.background = '#1a1a1a'; b.style.color = '#999'; b.style.borderColor = '#333';
+  });
+  const activeTab = document.getElementById('capTab-' + i + '-' + platform);
+  if (activeTab) { activeTab.style.background = '#1a0900'; activeTab.style.color = '#ff5c00'; activeTab.style.borderColor = '#ff5c00'; }
+
+  const cacheKey = platform;
+  panel.dataset[cacheKey] = panel.dataset[cacheKey] || '';
+  if (panel.dataset[cacheKey]) {
+    resultEl.innerHTML = panel.dataset[cacheKey];
+    return;
+  }
+
+  if (!script) { resultEl.innerHTML = '<div style="color:#f87171;font-size:.78rem">Script data not found</div>'; return; }
+  resultEl.innerHTML = '<div style="color:#666;font-size:.78rem;font-style:italic">Writing caption...</div>';
+
+  try {
+    const s = PLATFORM_SPECS[platform];
+    const specsText = s.label + ': max ' + s.limit + ' characters, ideal ' + s.ideal + ', hashtags: ' + s.hashtags + (s.hasTitle ? ', ALSO include a separate "title" field under 100 chars' : '') + '.';
+
+    const res = await smartFetch('/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages:[{role:'user', content:'Write a social media caption for this video:\nTitle: ' + (script.title||'') + '\nHook: ' + (script.hook||'') + '\nSummary: ' + (script.scenes||[]).map(function(sc){return sc.narration;}).join(' ').slice(0,300) + '\nCTA: ' + (script.cta||'') + '\n\nPlatform rule (follow strictly): ' + specsText + '\n\nReturn ONLY valid JSON (no markdown): {"caption":"..."' + (s.hasTitle ? ',"title":"..."' : '') + '}'}],
+        model:'llama-3.3-70b-versatile',
+        temperature:0.7
+      })
+    });
+    const data = await res.json();
+    const raw = data.content || (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '{}';
+    const cleaned = raw.replace(/```json|```/g,'').trim();
+    const jStart = cleaned.indexOf('{');
+    const jEnd = cleaned.lastIndexOf('}');
+    const cap = JSON.parse(jStart !== -1 ? cleaned.slice(jStart, jEnd+1) : cleaned);
+
+    const safeId = 'cap_' + platform + '_' + i + '_' + Date.now();
+    const fullText = (cap.title ? cap.title + '\n\n' : '') + (cap.caption || '');
+    window._scriptStore = window._scriptStore || {};
+    window._scriptStore[safeId] = fullText;
+
+    const html = (cap.title ? '<div style="font-size:.76rem;color:#888;margin-bottom:4px">Title: <span style="color:#ddd">' + cap.title + '</span></div>' : '') +
+      '<div style="background:#1a1a1a;border:1px solid #222;border-radius:10px;padding:12px;font-size:.8rem;color:#ddd;white-space:pre-wrap;margin-bottom:6px">' + (cap.caption||'') + '</div>' +
+      '<button onclick="copyCaptionText(&#39;' + safeId + '&#39;)" style="padding:6px 12px;background:#1a0900;border:1px solid #ff5c00;border-radius:8px;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer">📋 Copy</button>';
+
+    panel.dataset[cacheKey] = html;
+    resultEl.innerHTML = html;
+
+  } catch(err) {
+    resultEl.innerHTML = '<div style="color:#f87171;font-size:.78rem">Failed: ' + err.message + '</div>';
+  }
+}
+
 async function generateCaptionFor(sId, platform, btnEl) {
   const script = (window._scriptStore || {})[sId];
   if (!script) { alert('Script data not found'); return; }
@@ -1871,6 +1949,84 @@ function showCaptionPicker(sId) {
   area.appendChild(div);
   setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
   saveChatHistory();
+}
+
+function toggleCaptionPanel(i, sId) {
+  const panel = document.getElementById('captionPanel-' + i);
+  if (!panel) return;
+  if (panel.style.display === 'block') {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = 'block';
+  if (!panel.dataset.built) {
+    panel.dataset.built = 'true';
+    panel.dataset.sId = sId;
+    const tabs = Object.keys(PLATFORM_SPECS);
+    panel.innerHTML = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' +
+      tabs.map(function(p) {
+        return '<button onclick="loadCaptionTab(' + i + ', &#39;' + p + '&#39;)" id="capTab-' + i + '-' + p + '" style="padding:5px 10px;background:#1a1a1a;border:1px solid #333;border-radius:16px;color:#999;font-size:.7rem;font-weight:700;cursor:pointer">' + PLATFORM_SPECS[p].label + '</button>';
+      }).join('') +
+      '</div><div id="capResult-' + i + '"></div>';
+  }
+}
+
+async function loadCaptionTab(i, platform) {
+  const panel = document.getElementById('captionPanel-' + i);
+  const sId = panel.dataset.sId;
+  const script = (window._scriptStore || {})[sId];
+  const resultEl = document.getElementById('capResult-' + i);
+
+  document.querySelectorAll('[id^="capTab-' + i + '-"]').forEach(function(b) {
+    b.style.background = '#1a1a1a'; b.style.color = '#999'; b.style.borderColor = '#333';
+  });
+  const activeTab = document.getElementById('capTab-' + i + '-' + platform);
+  if (activeTab) { activeTab.style.background = '#1a0900'; activeTab.style.color = '#ff5c00'; activeTab.style.borderColor = '#ff5c00'; }
+
+  const cacheKey = platform;
+  panel.dataset[cacheKey] = panel.dataset[cacheKey] || '';
+  if (panel.dataset[cacheKey]) {
+    resultEl.innerHTML = panel.dataset[cacheKey];
+    return;
+  }
+
+  if (!script) { resultEl.innerHTML = '<div style="color:#f87171;font-size:.78rem">Script data not found</div>'; return; }
+  resultEl.innerHTML = '<div style="color:#666;font-size:.78rem;font-style:italic">Writing caption...</div>';
+
+  try {
+    const s = PLATFORM_SPECS[platform];
+    const specsText = s.label + ': max ' + s.limit + ' characters, ideal ' + s.ideal + ', hashtags: ' + s.hashtags + (s.hasTitle ? ', ALSO include a separate "title" field under 100 chars' : '') + '.';
+
+    const res = await smartFetch('/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages:[{role:'user', content:'Write a social media caption for this video:\nTitle: ' + (script.title||'') + '\nHook: ' + (script.hook||'') + '\nSummary: ' + (script.scenes||[]).map(function(sc){return sc.narration;}).join(' ').slice(0,300) + '\nCTA: ' + (script.cta||'') + '\n\nPlatform rule (follow strictly): ' + specsText + '\n\nReturn ONLY valid JSON (no markdown): {"caption":"..."' + (s.hasTitle ? ',"title":"..."' : '') + '}'}],
+        model:'llama-3.3-70b-versatile',
+        temperature:0.7
+      })
+    });
+    const data = await res.json();
+    const raw = data.content || (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '{}';
+    const cleaned = raw.replace(/```json|```/g,'').trim();
+    const jStart = cleaned.indexOf('{');
+    const jEnd = cleaned.lastIndexOf('}');
+    const cap = JSON.parse(jStart !== -1 ? cleaned.slice(jStart, jEnd+1) : cleaned);
+
+    const safeId = 'cap_' + platform + '_' + i + '_' + Date.now();
+    const fullText = (cap.title ? cap.title + '\n\n' : '') + (cap.caption || '');
+    window._scriptStore = window._scriptStore || {};
+    window._scriptStore[safeId] = fullText;
+
+    const html = (cap.title ? '<div style="font-size:.76rem;color:#888;margin-bottom:4px">Title: <span style="color:#ddd">' + cap.title + '</span></div>' : '') +
+      '<div style="background:#1a1a1a;border:1px solid #222;border-radius:10px;padding:12px;font-size:.8rem;color:#ddd;white-space:pre-wrap;margin-bottom:6px">' + (cap.caption||'') + '</div>' +
+      '<button onclick="copyCaptionText(&#39;' + safeId + '&#39;)" style="padding:6px 12px;background:#1a0900;border:1px solid #ff5c00;border-radius:8px;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer">📋 Copy</button>';
+
+    panel.dataset[cacheKey] = html;
+    resultEl.innerHTML = html;
+
+  } catch(err) {
+    resultEl.innerHTML = '<div style="color:#f87171;font-size:.78rem">Failed: ' + err.message + '</div>';
+  }
 }
 
 async function generateCaptionFor(sId, platform, btnEl) {
