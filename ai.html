@@ -549,7 +549,8 @@ async function createAllBatchVideos() {
       const row = document.createElement('div');
       row.id = 'batchRow-'+i;
       row.style.cssText = 'padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem;display:flex;justify-content:space-between;align-items:center';
-      row.innerHTML = `<span>${i+1}. ${(s.title||'Video '+(i+1)).slice(0,28)}</span><span id="batchStatus-${i}" style="color:#666">Waiting...</span>`;
+      row.innerHTML = `<div style="display:flex;justify-content:space-between;width:100%"><span>${i+1}. ${(s.title||'Video '+(i+1)).slice(0,28)}</span><span id="batchStatus-${i}" style="color:#666">Waiting...</span></div><div id="captionPanel-${i}" style="display:none;width:100%;margin-top:10px"></div>`;
+      row.style.cssText = 'padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem;flex-direction:column;align-items:stretch';
       if (rows) rows.appendChild(row);
     } catch(rowErr) {
       addMsg('ai', '⚠️ Debug: row ' + i + ' creation failed: ' + rowErr.message);
@@ -614,7 +615,7 @@ async function createAllBatchVideos() {
       window._scriptStore[batchSId] = scripts[i];
       const persistId = getActiveThreadId() + '_v' + i;
       await saveVideoBlob(persistId, blob, { title: scripts[i].title || params.topic, index: i });
-      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a><button onclick="showCaptionPicker(&#39;${batchSId}&#39;)" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>`;
+      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a><button onclick="toggleCaptionPanel(${i}, &#39;${batchSId}&#39;)" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>`;
       statusEl.dataset.persistId = persistId;
 
       saveToHistory({
@@ -1742,7 +1743,8 @@ async function createAllBatchVideos() {
       const row = document.createElement('div');
       row.id = 'batchRow-'+i;
       row.style.cssText = 'padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem;display:flex;justify-content:space-between;align-items:center';
-      row.innerHTML = `<span>${i+1}. ${(s.title||'Video '+(i+1)).slice(0,28)}</span><span id="batchStatus-${i}" style="color:#666">Waiting...</span>`;
+      row.innerHTML = `<div style="display:flex;justify-content:space-between;width:100%"><span>${i+1}. ${(s.title||'Video '+(i+1)).slice(0,28)}</span><span id="batchStatus-${i}" style="color:#666">Waiting...</span></div><div id="captionPanel-${i}" style="display:none;width:100%;margin-top:10px"></div>`;
+      row.style.cssText = 'padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem;flex-direction:column;align-items:stretch';
       if (rows) rows.appendChild(row);
     } catch(rowErr) {
       addMsg('ai', '⚠️ Debug: row ' + i + ' creation failed: ' + rowErr.message);
@@ -1809,7 +1811,7 @@ async function createAllBatchVideos() {
       window._scriptStore[batchSId] = scripts[i];
       const persistId = getActiveThreadId() + '_v' + i;
       await saveVideoBlob(persistId, blob, { title: scripts[i].title || params.topic, index: i });
-      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a><button onclick="showCaptionPicker(&#39;${batchSId}&#39;)" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>`;
+      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a><button onclick="toggleCaptionPanel(${i}, &#39;${batchSId}&#39;)" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>`;
       statusEl.dataset.persistId = persistId;
 
       saveToHistory({
