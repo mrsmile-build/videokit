@@ -1104,8 +1104,8 @@ async function restorePersistedVideos(threadId) {
       const record = await loadVideoBlob(persistId);
       if (record && record.blob) {
         const freshUrl = URL.createObjectURL(record.blob);
-        const captionBtn = el.querySelector('button[onclick*="showCaptionPicker"]');
-        const captionHtml = captionBtn ? captionBtn.outerHTML : '';
+        const captionBtn = el.querySelector('button[onclick*="toggleCaptionPanel"]');
+        const captionHtml = captionBtn ? captionBtn.outerHTML : '<button onclick="toggleCaptionPanel(' + idx + ', &#39;batchscript_' + idx + '_' + Date.now() + '&#39;)" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>';
         el.innerHTML = '<a href="' + freshUrl + '" download="videokit-' + (record.meta.title||'video').replace(/[^a-z0-9]/gi,'-').slice(0,30) + '.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a>' + captionHtml;
       }
     } catch(e) {}
