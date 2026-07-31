@@ -1,0 +1,1967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Studio — VideoKit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/shared.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { padding-bottom: 260px; background: #0a0a0a; }
+    #chatArea { padding-bottom: 40px; }
+
+    .ai-header {
+      padding: 52px 20px 16px;
+      background: linear-gradient(160deg,#0f0f0f 60%,#1a0900);
+      border-bottom: 1px solid #1e1e1e;
+    }
+    .ai-title { font-size:1.3rem; font-weight:800; }
+    .ai-sub { color:#666; font-size:.82rem; margin-top:4px; }
+
+    /* Chat Messages */
+    .chat-area {
+      padding: 16px 20px;
+      min-height: calc(100vh - 280px);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .msg { display:flex; gap:10px; align-items:flex-start; }
+    .msg.user { flex-direction:row-reverse; }
+    .msg-avatar {
+      width:32px; height:32px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:.9rem; flex-shrink:0;
+    }
+    .msg-avatar.ai { background: linear-gradient(135deg,#ff5c00,#ff9500); }
+    .msg-avatar.user { background:#1a1a1a; border:1px solid #333; }
+    .msg-bubble {
+      max-width: 80%; padding:12px 14px;
+      border-radius:14px; font-size:.875rem; line-height:1.6;
+    }
+    .msg.ai .msg-bubble {
+      background:#111; border:1px solid #1e1e1e;
+      border-top-left-radius:4px;
+    }
+    .msg.user .msg-bubble {
+      background:#ff5c00; color:white;
+      border-top-right-radius:4px;
+    }
+    .msg-bubble.typing { color:#555; font-style:italic; }
+
+    /* Progress Card */
+    .progress-card {
+      background:#111; border:1px solid #1e1e1e;
+      border-radius:14px; padding:16px; margin:4px 0;
+    }
+    .progress-step {
+      display:flex; align-items:center; gap:10px;
+      padding:6px 0; font-size:.82rem;
+    }
+    .step-icon { width:22px; text-align:center; }
+    .step-done { color:#22c55e; }
+    .step-active { color:#ff5c00; }
+    .step-pending { color:#333; }
+    .mini-bar {
+      height:3px; background:#1e1e1e; border-radius:2px;
+      margin-top:10px;
+    }
+    .mini-bar-fill {
+      height:100%; background:#ff5c00; border-radius:2px;
+      transition: width .5s ease;
+    }
+
+    /* Input Area */
+    .input-area {
+      position:fixed; bottom:72px; left:0; right:0;
+      background:#0a0a0a; border-top:1px solid #1e1e1e;
+      padding:12px 16px;
+    }
+    .input-row {
+      display:flex; gap:8px; align-items:flex-end;
+    }
+    .chat-input {
+      flex:1; padding:12px 14px; background:#111;
+      border:1px solid #222; border-radius:12px;
+      color:white; font-family:'Syne',sans-serif;
+      font-size:.88rem; resize:none; max-height:100px;
+      overflow-y:auto;
+    }
+    .chat-input:focus { border-color:#ff5c00; outline:none; }
+    .send-btn {
+      width:44px; height:44px; background:#ff5c00;
+      border:none; border-radius:12px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; font-size:1.1rem;
+    }
+    .attach-btn {
+      width:44px; height:44px; background:#1a1a1a;
+      border:1px solid #222; border-radius:12px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; font-size:1.1rem;
+    }
+    .quick-prompts {
+      display:flex; gap:8px; overflow-x:auto;
+      padding-bottom:8px; margin-bottom:10px;
+      scrollbar-width:none;
+    }
+    .quick-prompt {
+      white-space:nowrap; padding:6px 12px;
+      background:#111; border:1px solid #222;
+      border-radius:20px; font-size:.72rem;
+      font-weight:600; cursor:pointer; color:#ccc;
+      font-family:'Syne',sans-serif; flex-shrink:0;
+    }
+    .quick-prompt:active { background:#1a0900; border-color:#ff5c00; color:#ff5c00; }
+
+    /* Uploaded files preview */
+    .uploads-preview {
+      display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;
+    }
+    .upload-chip {
+      display:flex; align-items:center; gap:6px;
+      background:#1a1a1a; border:1px solid #333;
+      border-radius:8px; padding:4px 8px 4px 4px;
+      font-size:.72rem;
+    }
+    .upload-thumb {
+      width:28px; height:28px; border-radius:4px;
+      object-fit:cover;
+    }
+
+    /* Result card */
+    .result-card {
+      background: linear-gradient(135deg,#1a0900,#111);
+      border:1px solid #ff5c00; border-radius:14px;
+      padding:16px; margin:4px 0;
+    }
+    .result-title { font-weight:800; font-size:.95rem; margin-bottom:10px; color:#ff5c00; }
+    .result-btn {
+      display:block; width:100%; padding:12px;
+      background:#ff5c00; border:none; border-radius:10px;
+      color:white; font-family:'Syne',sans-serif;
+      font-weight:700; font-size:.88rem; cursor:pointer;
+      text-align:center; margin-top:10px; text-decoration:none;
+    }
+    .result-btn.secondary {
+      background:#1a1a1a; color:#ccc;
+      border:1px solid #333; margin-top:6px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="ai-header" style="display:flex;justify-content:space-between;align-items:center">
+  <div>
+    <div class="ai-title">🤖 AI Studio</div>
+    <div class="ai-sub">Just describe your video — AI creates everything</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="renderThreadList();document.getElementById('threadListModal').style.display='flex'" style="width:38px;height:38px;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:#ccc;font-size:1.1rem;cursor:pointer">📋</button>
+    <button onclick="startNewThread()" style="width:38px;height:38px;background:#ff5c00;border:none;border-radius:10px;color:white;font-size:1.1rem;cursor:pointer">＋</button>
+  </div>
+</div>
+
+<div id="threadListModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99998;justify-content:flex-start" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:#111;height:100vh;padding:20px;width:82%;max-width:340px;overflow-y:auto;border-right:1px solid #222">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-top:6px">
+      <div style="font-weight:800;font-size:1rem">Past Conversations</div>
+      <button onclick="document.getElementById('threadListModal').style.display='none'" style="background:none;border:none;color:#999;font-size:1.5rem;cursor:pointer">×</button>
+    </div>
+    <div id="threadListItems"></div>
+  </div>
+</div>
+
+<div class="chat-area" id="chatArea">
+  <!-- Initial AI message -->
+  <div class="msg ai">
+    <div class="msg-avatar ai">🎬</div>
+    <div class="msg-bubble">
+      <strong>Hey! I'm VideoKit AI.</strong><br><br>
+      Tell me what video you want and I'll create it automatically. You can also upload your own images or videos to use.<br><br>
+      <em style="color:#666">Examples:<br>
+      "40 second motivational video about making money in Nigeria"<br>
+      "Create a professional intro for my salon business"<br>
+      "Funny video about Nigerian hustle culture, 60 seconds"</em>
+    </div>
+  </div>
+</div>
+
+<!-- Input Area -->
+<div class="input-area">
+  <div class="quick-prompts">
+    <div class="quick-prompt" onclick="usePrompt('40 second video about making money in Nigeria')">💰 Money Nigeria</div>
+    <div class="quick-prompt" onclick="usePrompt('Motivational video for entrepreneurs, 60 seconds')">🔥 Motivation</div>
+    <div class="quick-prompt" onclick="usePrompt('Professional business intro video, 30 seconds')">💼 Business</div>
+    <div class="quick-prompt" onclick="usePrompt('Viral crypto video for TikTok, 30 seconds')">₿ Crypto</div>
+    <div class="quick-prompt" onclick="usePrompt('Nigerian gist style entertainment video, 60 seconds')">🇳🇬 Nigerian Gist</div>
+    <div class="quick-prompt" onclick="usePrompt('Luxury lifestyle video, 45 seconds')">💎 Luxury</div>
+  </div>
+  <div id="uploadsPreview" class="uploads-preview"></div>
+  <div class="input-row">
+    <button class="attach-btn" onclick="document.getElementById('aiFileInput').click()">📎</button>
+    <input type="file" id="aiFileInput" accept="image/*,video/*,audio/*" multiple style="display:none" onchange="handleAiUpload(this)">
+    <textarea class="chat-input" id="chatInput" placeholder="Describe your video..." rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
+      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+    <button class="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<div style="position:fixed;bottom:0;left:0;right:0;background:#0d0d0d;border-top:1px solid #1e1e1e;display:flex;z-index:99999">
+  <a href="index.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#555;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
+  </a>
+  <a href="create.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#555;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Create
+  </a>
+  <a href="ai.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#ff5c00;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>AI
+  </a>
+  <a href="history.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#555;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>History
+  </a>
+  <a href="menu.html" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;color:#555;text-decoration:none;font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;gap:5px">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>Menu
+  </a>
+</div>
+
+<script>
+window.addEventListener('error', function(e) {
+  var area = document.getElementById('chatArea');
+  if (area) {
+    var div = document.createElement('div');
+    div.className = 'msg ai';
+    div.innerHTML = '<div class="msg-avatar ai">🚨</div><div class="msg-bubble" style="background:#3a0000;border-color:#ff4444">REAL ERROR CAUGHT: ' + e.message + ' (line ' + e.lineno + ')</div>';
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight + 300;
+  }
+});
+</script>
+<script>
+window.addEventListener('error', function(e) {
+  var area = document.getElementById('chatArea');
+  if (area) {
+    var div = document.createElement('div');
+    div.className = 'msg ai';
+    div.innerHTML = '<div class="msg-avatar ai">🚨</div><div class="msg-bubble" style="background:#3a0000;border-color:#ff4444">REAL ERROR CAUGHT: ' + e.message + ' (line ' + e.lineno + ')</div>';
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight + 300;
+  }
+});
+</script>
+<script src="js/shared.js">
+// ── Confirm & Customize Card ────────────────────────────────
+function showConfirmCard(params) {
+  return new Promise((resolve) => {
+    const area = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = 'confirmCard';
+    const detectedVoice = params.voice || 'en-us-m';
+    div.innerHTML = `<div class="msg-avatar ai">🎬</div>
+      <div class="progress-card" style="text-align:left">
+        <div style="font-weight:700;margin-bottom:12px;font-size:.92rem">⚙️ Quick Settings</div>
+        <label style="font-size:.74rem;color:#888;display:block;margin-bottom:5px">Voice</label>
+        <select id="confirmVoice" style="width:100%;padding:10px;margin-bottom:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-family:'Syne',sans-serif;font-size:.85rem">
+          <option value="en-us-m">🇺🇸 American Male</option>
+          <option value="en-us-f">🇺🇸 American Female</option>
+          <option value="en-gb-m">🇬🇧 British Male</option>
+          <option value="en-gb-f">🇬🇧 British Female</option>
+          <option value="en-au-m">🇦🇺 Australian Male</option>
+          <option value="en-au-f">🇦🇺 Australian Female</option>
+          <option value="en-news-m">📰 News Anchor</option>
+          <option value="en-story-f">📖 Storyteller Female</option>
+        </select>
+        <label style="font-size:.74rem;color:#888;display:block;margin-bottom:5px">Background Music</label>
+        <div id="musicPicker" onclick="openMusicPicker()" style="width:100%;padding:10px;margin-bottom:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#888;font-size:.85rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+          <span id="musicLabel">🎵 No music — tap to choose</span>
+          <span style="color:#444">›</span>
+        </div>
+        <input type="hidden" id="confirmMusicUrl" value="">
+        <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;margin-bottom:16px;color:#666">
+          <input type="checkbox" id="confirmNoWatermark" disabled style="width:16px;height:16px">
+          ✨ Remove watermark <span style="color:#ff5c00;font-weight:700">(Pro)</span>
+        </label>
+        <button class="result-btn" onclick="confirmGenerate()" style="margin-top:0">🚀 Generate Video</button>
+      </div>`;
+    area.appendChild(div);
+    setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
+    document.getElementById('confirmVoice').value = detectedVoice;
+    window._confirmResolve = resolve;
+  });
+}
+
+function confirmGenerate() {
+  const voice = document.getElementById('confirmVoice').value;
+  const musicUrl = document.getElementById('confirmMusicUrl').value;
+  const card = document.getElementById('confirmCard');
+  if (card) card.remove();
+  if (window._confirmResolve) window._confirmResolve({ voice, musicUrl });
+}
+
+
+// ── Music Picker ─────────────────────────────────────────────
+function openMusicPicker() {
+  document.getElementById('musicModal').style.display = 'flex';
+  searchMusic('motivational');
+}
+
+async function searchMusic(mood) {
+  const results = document.getElementById('musicResults');
+  results.innerHTML = '<div style="text-align:center;padding:20px;color:#555;font-size:.82rem">Loading...</div>';
+  try {
+    const res = await smartFetch('/music?mood=' + encodeURIComponent(mood));
+    const data = await res.json();
+    const hits = data.hits || [];
+    if (!hits.length) {
+      results.innerHTML = '<div style="text-align:center;padding:20px;color:#555;font-size:.82rem">No results. Try another search.</div>';
+      return;
+    }
+    results.innerHTML = hits.slice(0, 8).map((h, i) => `
+      <div onclick='selectMusic(${JSON.stringify(h.audio || h.previewURL || "").replace(/'/g,"&#39;")}, ${JSON.stringify((h.tags||"Track").split(",")[0]).replace(/'/g,"&#39;")})'
+        style="display:flex;align-items:center;gap:10px;padding:10px;background:#1a1a1a;border-radius:10px;margin-bottom:8px;cursor:pointer">
+        <div style="width:36px;height:36px;background:#ff5c00;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">🎵</div>
+        <div style="flex:1;font-size:.82rem;color:#ddd;text-transform:capitalize">${(h.tags||'Background track').split(',')[0]}</div>
+        <div style="color:#444">▶</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    results.innerHTML = '<div style="text-align:center;padding:20px;color:#f87171;font-size:.82rem">Search failed: ' + e.message + '</div>';
+  }
+}
+
+function selectMusic(url, name) {
+  document.getElementById('confirmMusicUrl').value = url;
+  document.getElementById('musicLabel').textContent = '🎵 ' + name;
+  document.getElementById('musicLabel').style.color = '#fff';
+  document.getElementById('musicModal').style.display = 'none';
+}
+
+function selectNoMusic() {
+  document.getElementById('confirmMusicUrl').value = '';
+  document.getElementById('musicLabel').textContent = '🎵 No music — tap to choose';
+  document.getElementById('musicLabel').style.color = '#888';
+  document.getElementById('musicModal').style.display = 'none';
+}
+
+
+// ── Batch Video Generation ──────────────────────────────────
+async function retryOneBatchVideo(i) {
+  const scripts = window._batchScripts || [];
+  const params = window._batchParams || {};
+  const statusEl = document.getElementById('batchStatus-'+i);
+  if (!statusEl || !scripts[i]) return;
+
+  statusEl.textContent = 'Retrying...';
+  statusEl.style.color = '#ff5c00';
+
+  try {
+    const sceneMedia = [];
+    const usedImageUrls = new Set();
+    for (let j = 0; j < scripts[i].scenes.length; j++) {
+      try {
+        const estDur = scripts[i].scenes[j].duration_seconds || 8;
+        const numNeeded = Math.max(1, Math.min(4, Math.ceil(estDur / 6)));
+        const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
+        const imgData = await imgRes.json();
+        const allHits = imgData.hits || [];
+        const freshHits = allHits.filter(h => !usedImageUrls.has(h.largeImageURL || h.webformatURL));
+        const picks = (freshHits.length ? freshHits : allHits).slice(0, numNeeded);
+        if (picks.length) {
+          sceneMedia[j] = picks.map(p => {
+            const url = p.largeImageURL || p.webformatURL;
+            usedImageUrls.add(url);
+            return { url, type: 'image' };
+          });
+        }
+      } catch(e) {}
+    }
+
+    statusEl.textContent = 'Generating voice...';
+    let audioB = null, vDur = params.length || 60;
+    try {
+      const fullText = stripUrlsForSpeech(scripts[i].scenes.map(s=>s.narration).join(' '));
+      const vRes = await smartFetch('/tts-voicerss', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: fullText, voice: params.voice || 'en-us-m' })
+      });
+      if (vRes.ok) {
+        const blob = await vRes.blob();
+        if (blob.size > 500) {
+          audioB = blob;
+          const tmpA = new Audio(URL.createObjectURL(blob));
+          vDur = await new Promise(res => {
+            tmpA.onloadedmetadata = () => res(Math.ceil(tmpA.duration));
+            tmpA.onerror = () => res(params.length||60);
+            tmpA.load();
+            setTimeout(()=>res(params.length||60), 3000);
+          });
+        }
+      }
+    } catch(e) {}
+
+    statusEl.textContent = 'Creating video...';
+    const blob = await createVideoFromScenes(scripts[i].scenes, sceneMedia, audioB, vDur, params.musicUrl);
+
+    const url = URL.createObjectURL(blob);
+    window._scriptStore = window._scriptStore || {};
+    const batchSId = 'batchscript_' + i + '_' + Date.now();
+    window._scriptStore[batchSId] = scripts[i];
+    const persistId = getActiveThreadId() + '_v' + i;
+    await saveVideoBlob(persistId, blob, { title: scripts[i].title || params.topic, index: i });
+    statusEl.innerHTML = '<a href="' + url + '" download="videokit-retry-' + (i+1) + '-' + Date.now() + '.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a><button onclick="showCaptionPicker(\'' + batchSId + '\')" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>';
+    statusEl.dataset.persistId = persistId;
+
+    saveToHistory({
+      topic: scripts[i].title || params.topic, style: params.style||'educational', length: vDur,
+      scriptData: scripts[i],
+      scriptText: scripts[i].scenes.map(s=>s.narration).join(' ')
+    });
+    saveChatHistory();
+  } catch(err) {
+    statusEl.innerHTML = '<span style="color:#f87171">✗ Failed again</span> <button onclick="retryOneBatchVideo(' + i + ')" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0;margin-left:6px">↻ Retry</button>';
+    statusEl.title = err.message;
+  }
+}
+
+async function processBatchRequest(originalPrompt, params, qty) {
+  try {
+    const batchSettings = await showConfirmCard(params);
+    params.voice = batchSettings.voice;
+    params.musicUrl = batchSettings.musicUrl;
+
+    addMsg('ai', 'Writing ' + qty + ' scripts...');
+
+    const sampleNote = params.isSampleScript
+      ? `The user provided this SAMPLE SCRIPT to follow as a style template:
+"""${originalPrompt}"""
+
+You are a professional social media marketer and viral content creator. Generate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
+      : `You are a professional social media marketer and viral content creator. Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
+
+    const batchRes = await smartFetch('/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: `${sampleNote}
+
+Write scroll-stopping, curiosity-driven hooks - the kind that stop someone mid-scroll in 2 seconds. Every single script MUST end with a clear, complete "cta" field that mentions the call to action clearly (e.g. mentions the link, or says "Link in bio", "Follow for more" depending on platform: ${params.platform}). Never leave cta empty or generic - it is the most important line.
+
+Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
+{"title":"...","hook":"...","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","duration_seconds":10}],"cta":"..."}` }],
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.8
+      })
+    });
+
+    if (!batchRes.ok) {
+      addMsg('ai', '⚠️ Script generation request failed with status ' + batchRes.status + '. Please try again.');
+      return;
+    }
+
+    const batchData = await batchRes.json();
+    const raw = batchData.content || (batchData.choices && batchData.choices[0] && batchData.choices[0].message && batchData.choices[0].message.content) || '[]';
+    const clean = raw.replace(/```json|```/g, '').trim();
+
+    let scriptsArray;
+    try {
+      scriptsArray = JSON.parse(clean);
+      if (!Array.isArray(scriptsArray)) scriptsArray = [scriptsArray];
+    } catch (parseErr) {
+      addMsg('ai', '⚠️ Could not parse the scripts the AI returned (' + parseErr.message + '). Raw response started with: ' + clean.slice(0, 150));
+      return;
+    }
+
+    if (!scriptsArray.length) {
+      addMsg('ai', '⚠️ The AI returned zero scripts. Please try again with a simpler prompt.');
+      return;
+    }
+
+    scriptsArray.forEach(s => {
+      if (s.cta && s.scenes) {
+        s.scenes.push({
+          scene_number: s.scenes.length + 1,
+          narration: s.cta,
+          visual_keyword: 'click here follow subscribe button',
+          duration_seconds: 6
+        });
+      }
+      if (s.hook && s.scenes && s.scenes[0]) {
+        s.scenes[0].isHookFrame = true;
+        s.scenes[0].hookText = s.hook;
+      }
+    });
+
+    const area = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = 'batchCard';
+    div.innerHTML = '<div class="msg-avatar ai">🎬</div>' +
+      '<div class="progress-card" style="text-align:left">' +
+      '<div style="font-weight:800;margin-bottom:10px">📦 ' + scriptsArray.length + ' Scripts Ready</div>' +
+      scriptsArray.map(function(s, i) {
+        return '<div style="padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem">' +
+          '<strong>' + (i + 1) + '. ' + (s.title || 'Untitled') + '</strong><br>' +
+          '<span style="color:#888">' + (s.hook || '').slice(0, 60) + '...</span></div>';
+      }).join('') +
+      '<button class="result-btn" onclick="createAllBatchVideos()" style="margin-top:14px">🚀 Create All ' + scriptsArray.length + ' Videos</button>' +
+      '</div>';
+    area.appendChild(div);
+    setTimeout(function() { area.scrollTop = area.scrollHeight + 300; }, 50);
+
+    window._batchScripts = scriptsArray;
+    window._batchParams = params;
+    window._batchOriginalPrompt = originalPrompt;
+
+  } catch (err) {
+    addMsg('ai', '⚠️ Batch generation failed: ' + err.message);
+  }
+}
+
+async function createAllBatchVideos() {
+  if (isProcessing) {
+    addMsg('ai', '⏳ Still working on the previous batch — please wait for it to finish first.');
+    return;
+  }
+  isProcessing = true;
+  try {
+  const scripts = window._batchScripts || [];
+  const params = window._batchParams || {};
+  document.getElementById('batchCard')?.remove();
+
+  const area = document.getElementById('chatArea');
+  const resultsDiv = document.createElement('div');
+  resultsDiv.className = 'msg ai';
+  resultsDiv.id = 'batchResults';
+  resultsDiv.innerHTML = `<div class="msg-avatar ai">🎬</div>
+    <div class="progress-card" style="text-align:left">
+      <div style="font-weight:800;margin-bottom:6px">Creating ${scripts.length} videos...</div>
+      <div style="background:#2a1500;border:1px solid #ff5c00;border-radius:8px;padding:8px 10px;font-size:.74rem;color:#ffb366;margin-bottom:10px">⚠️ Keep this tab open. Closing it or your phone sleeping will stop the batch — anything already downloaded stays saved.</div>
+      <div id="batchRows"></div>
+    </div>`;
+  area.appendChild(resultsDiv);
+  setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
+
+  const rows = document.getElementById('batchRows');
+  scripts.forEach((s,i) => {
+    try {
+      const row = document.createElement('div');
+      row.id = 'batchRow-'+i;
+      row.style.cssText = 'padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem;display:flex;justify-content:space-between;align-items:center';
+      row.innerHTML = `<span>${i+1}. ${(s.title||'Video '+(i+1)).slice(0,28)}</span><span id="batchStatus-${i}" style="color:#666">Waiting...</span>`;
+      if (rows) rows.appendChild(row);
+    } catch(rowErr) {
+      addMsg('ai', '⚠️ Debug: row ' + i + ' creation failed: ' + rowErr.message);
+    }
+  });
+
+  for (let i = 0; i < scripts.length; i++) {
+    const statusEl = document.getElementById('batchStatus-'+i);
+    try {
+      statusEl.textContent = 'Finding images...';
+      statusEl.style.color = '#ff5c00';
+      const sceneMedia = [];
+      const usedImageUrls = new Set();
+      for (let j = 0; j < scripts[i].scenes.length; j++) {
+        try {
+          const estDur = scripts[i].scenes[j].duration_seconds || 8;
+          const numNeeded = Math.max(1, Math.min(4, Math.ceil(estDur / 6)));
+          const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
+          const imgData = await imgRes.json();
+          const allHits = imgData.hits || [];
+          const freshHits = allHits.filter(h => !usedImageUrls.has(h.largeImageURL || h.webformatURL));
+          const picks = (freshHits.length ? freshHits : allHits).slice(0, numNeeded);
+          if (picks.length) {
+            sceneMedia[j] = picks.map(p => {
+              const url = p.largeImageURL || p.webformatURL;
+              usedImageUrls.add(url);
+              return { url, type: 'image' };
+            });
+          }
+        } catch(e) {}
+      }
+
+      statusEl.textContent = 'Generating voice...';
+      let audioB = null, vDur = params.length || 60;
+      try {
+        const fullText = stripUrlsForSpeech(scripts[i].scenes.map(s=>s.narration).join(' '));
+        const vRes = await smartFetch('/tts-voicerss', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ text: fullText, voice: params.voice || 'en-us-m' })
+        });
+        if (vRes.ok) {
+          const blob = await vRes.blob();
+          if (blob.size > 500) {
+            audioB = blob;
+            const tmpA = new Audio(URL.createObjectURL(blob));
+            vDur = await new Promise(res => {
+              tmpA.onloadedmetadata = () => res(Math.ceil(tmpA.duration));
+              tmpA.onerror = () => res(params.length||60);
+              tmpA.load();
+              setTimeout(()=>res(params.length||60), 3000);
+            });
+          }
+        }
+      } catch(e) {}
+
+      statusEl.textContent = 'Creating video...';
+      const blob = await createVideoFromScenes(scripts[i].scenes, sceneMedia, audioB, vDur, params.musicUrl);
+
+      const url = URL.createObjectURL(blob);
+      window._scriptStore = window._scriptStore || {};
+      const batchSId = 'batchscript_' + i + '_' + Date.now();
+      window._scriptStore[batchSId] = scripts[i];
+      const persistId = getActiveThreadId() + '_v' + i;
+      await saveVideoBlob(persistId, blob, { title: scripts[i].title || params.topic, index: i });
+      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a><button onclick="showCaptionPicker(&#39;${batchSId}&#39;)" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>`;
+      statusEl.dataset.persistId = persistId;
+
+      saveToHistory({
+        topic: scripts[i].title || params.topic, style: params.style||'educational', length: vDur,
+        scriptData: scripts[i],
+        scriptText: scripts[i].scenes.map(s=>s.narration).join(' ')
+      });
+      })()]);
+
+    } catch(err) {
+      statusEl.innerHTML = '<span style="color:#f87171">✗ Failed</span> <button onclick="retryOneBatchVideo(' + i + ')" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0;margin-left:6px">↻ Retry</button>';
+      statusEl.title = err.message;
+      console.error('[Batch '+i+']', err.message);
+    }
+    saveChatHistory();
+  }
+
+  saveSessionToHistory(window._batchOriginalPrompt || '', scripts);
+  const anyFailed = scripts.some((s, idx) => {
+    const el = document.getElementById('batchStatus-'+idx);
+    return el && el.textContent.indexOf('Failed') !== -1;
+  });
+  addMsg('ai', anyFailed
+    ? '⚠️ Some videos finished, some failed. Tap ↻ Retry next to any failed video to try again.'
+    : `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
+  } catch (outerErr) {
+    addMsg('ai', '⚠️ Unexpected batch error: ' + outerErr.message + ' — you can try again now.');
+  } finally {
+    isProcessing = false;
+  }
+}
+
+
+// ── Caption Generator ───────────────────────────────────────
+const PLATFORM_SPECS = {
+  instagram: { label: 'Instagram', limit: 2200, ideal: '125-150 characters, hook in first line', hashtags: '5-8 relevant hashtags at the end' },
+  tiktok:    { label: 'TikTok', limit: 4000, ideal: '150-300 characters, only first ~90 chars show before cutoff', hashtags: '3-5 hashtags woven naturally' },
+  youtube:   { label: 'YouTube', limit: 5000, ideal: 'separate Title (under 60 chars, written like a real clickable YouTube title using curiosity, numbers, or power words like Secret/Mistake/Truth/Never - NOT a flat restatement of the topic - e.g. "The Follow-Up Mistake Costing You Sales" not "Importance of Follow-Up") and Description (hook line first, then 2-3 sentences, then the link)', hashtags: '3-5 hashtags at the end of description', hasTitle: true },
+  facebook:  { label: 'Facebook', limit: 477, ideal: '125-250 characters, gets truncated on mobile around 125', hashtags: '1-3 hashtags max, not heavily used on Facebook' }
+};
+
+function showCaptionPicker(sId) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.innerHTML = `<div class="msg-avatar ai">🎬</div>
+    <div class="progress-card" style="text-align:left">
+      <div style="font-weight:700;margin-bottom:10px;font-size:.88rem">Which platform is this for?</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <button onclick="generateCaptionFor('${sId}','instagram',this)" style="padding:8px 14px;background:#1a0900;border:1px solid #ff5c00;border-radius:20px;color:#ff5c00;font-size:.78rem;font-weight:700;cursor:pointer">Instagram</button>
+        <button onclick="generateCaptionFor('${sId}','tiktok',this)" style="padding:8px 14px;background:#1a0900;border:1px solid #ff5c00;border-radius:20px;color:#ff5c00;font-size:.78rem;font-weight:700;cursor:pointer">TikTok</button>
+        <button onclick="generateCaptionFor('${sId}','youtube',this)" style="padding:8px 14px;background:#1a0900;border:1px solid #ff5c00;border-radius:20px;color:#ff5c00;font-size:.78rem;font-weight:700;cursor:pointer">YouTube</button>
+        <button onclick="generateCaptionFor('${sId}','facebook',this)" style="padding:8px 14px;background:#1a0900;border:1px solid #ff5c00;border-radius:20px;color:#ff5c00;font-size:.78rem;font-weight:700;cursor:pointer">Facebook</button>
+        <button onclick="generateCaptionFor('${sId}','all',this)" style="padding:8px 14px;background:#ff5c00;border:none;border-radius:20px;color:white;font-size:.78rem;font-weight:700;cursor:pointer">All Platforms</button>
+      </div>
+    </div>`;
+  area.appendChild(div);
+  setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
+  saveChatHistory();
+}
+
+async function generateCaptionFor(sId, platform, btnEl) {
+  const script = (window._scriptStore || {})[sId];
+  if (!script) { alert('Script data not found'); return; }
+  btnEl.closest('.progress-card').parentElement.remove();
+
+  const targets = platform === 'all' ? Object.keys(PLATFORM_SPECS) : [platform];
+  const typingBubble = addMsg('ai', 'Writing caption' + (targets.length>1?'s':'') + '...');
+  typingBubble.classList.add('typing');
+
+  try {
+    const specsText = targets.map(p => {
+      const s = PLATFORM_SPECS[p];
+      return `${s.label}: max ${s.limit} characters, ideal ${s.ideal}, hashtags: ${s.hashtags}${s.hasTitle ? ', ALSO include a separate "title" field under 100 chars' : ''}.`;
+    }).join('\n');
+
+    const res = await smartFetch('/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages:[{role:'user', content:`Write social media caption(s) for this video:
+Title: ${script.title||''}
+Hook: ${script.hook||''}
+Summary: ${(script.scenes||[]).map(s=>s.narration).join(' ').slice(0,300)}
+CTA: ${script.cta||''}
+
+Platform rules (follow character limits strictly, never exceed them):
+${specsText}
+
+Return ONLY valid JSON (no markdown), shaped as an object keyed by platform name, e.g.:
+{"instagram":{"caption":"..."},"youtube":{"title":"...","caption":"..."}}
+Only include keys for: ${targets.join(', ')}`}],
+        model:'llama-3.3-70b-versatile',
+        temperature:0.7
+      })
+    });
+    const data = await res.json();
+    const raw = data.content || data.choices?.[0]?.message?.content || '{}';
+    const cleanedRaw = raw.replace(/```json|```/g,'').trim();
+    const jsonStart = cleanedRaw.indexOf('{');
+    const jsonEnd = cleanedRaw.lastIndexOf('}');
+    const jsonOnly = (jsonStart !== -1 && jsonEnd !== -1) ? cleanedRaw.slice(jsonStart, jsonEnd + 1) : cleanedRaw;
+    const captions = JSON.parse(jsonOnly);
+
+    typingBubble.classList.remove('typing');
+    typingBubble.parentElement.remove();
+
+    const blocksHtml = targets.map(p => {
+      const cap = captions[p] || {};
+      const safeId = 'cap_' + p + '_' + Date.now();
+      const fullText = (cap.title ? cap.title + '\n\n' : '') + (cap.caption || '');
+      window._scriptStore[safeId] = fullText;
+      return `
+        <div style="margin-bottom:14px">
+          <div style="font-weight:700;font-size:.82rem;color:#ff5c00;margin-bottom:6px">${PLATFORM_SPECS[p].label}</div>
+          ${cap.title ? `<div style="font-size:.78rem;color:#888;margin-bottom:4px">Title: <span style="color:#ddd">${cap.title}</span></div>` : ''}
+          <div style="background:#1a1a1a;border:1px solid #222;border-radius:10px;padding:12px;font-size:.82rem;color:#ddd;white-space:pre-wrap;margin-bottom:6px">${cap.caption||''}</div>
+          <button onclick="copyCaptionText('${safeId}')" style="padding:6px 12px;background:#1a0900;border:1px solid #ff5c00;border-radius:8px;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer">📋 Copy</button>
+        </div>`;
+    }).join('');
+
+    addMsg('ai', `<div class="result-card">${blocksHtml}</div>`, true);
+
+  } catch(err) {
+    typingBubble.classList.remove('typing');
+    typingBubble.textContent = 'Caption generation failed: ' + err.message;
+  }
+}
+
+function copyCaptionText(id) {
+  const text = (window._scriptStore || {})[id];
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => alert('Copied!'));
+}
+
+</script>
+<script>window.addEventListener("DOMContentLoaded", function(){ initScriptStore(); loadChatHistory(); checkResumeSession(); });</script>
+<script>
+
+function stripUrlsForSpeech(text) {
+  return (text||'').replace(/https?:\/\/[^\s]+/g, '').replace(/\s+/g, ' ').trim();
+}
+
+const BACKENDS = [
+  'https://groq-proxy-0bfy.onrender.com',
+  'https://groq-proxy-production-cd12.up.railway.app',
+  'https://groq-proxy-7f82.onrender.com'
+];
+
+async function smartFetch(path, options) {
+  let lastError = null;
+  for (let i = 0; i < BACKENDS.length; i++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(function() { controller.abort(); }, 90000);
+      const opts = Object.assign({}, options, { signal: controller.signal });
+      const resp = await fetch(BACKENDS[i] + path, opts);
+      clearTimeout(timeoutId);
+      if (resp.status < 500) return resp;
+      lastError = new Error('Backend returned status ' + resp.status);
+    } catch (err) {
+      lastError = err;
+      continue;
+    }
+  }
+  throw lastError || new Error('All backends failed');
+}
+let uploadedFiles = [];
+let isProcessing = false;
+window.addEventListener('beforeunload', function(e) {
+  if (isProcessing) {
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+  }
+});
+
+// ── Persistent Video Storage (IndexedDB) ──────────────────
+let _vkDB = null;
+function openVideoDB() {
+  return new Promise((resolve, reject) => {
+    if (_vkDB) return resolve(_vkDB);
+    const req = indexedDB.open('videokit_videos', 1);
+    req.onupgradeneeded = function(e) {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('videos')) {
+        db.createObjectStore('videos', { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = function(e) { _vkDB = e.target.result; resolve(_vkDB); };
+    req.onerror = function(e) { reject(e.target.error); };
+  });
+}
+
+async function saveVideoBlob(id, blob, meta) {
+  try {
+    const db = await openVideoDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('videos', 'readwrite');
+      tx.objectStore('videos').put({ id: id, blob: blob, meta: meta || {}, savedAt: Date.now() });
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch(e) { console.warn('[VideoDB save]', e.message); return false; }
+}
+
+async function loadVideoBlob(id) {
+  try {
+    const db = await openVideoDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction('videos', 'readonly');
+      const req = tx.objectStore('videos').get(id);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch(e) { return null; }
+}
+
+async function deleteVideoBlob(id) {
+  try {
+    const db = await openVideoDB();
+    const tx = db.transaction('videos', 'readwrite');
+    tx.objectStore('videos').delete(id);
+  } catch(e) {}
+}
+
+function getActiveThreadId() {
+  let id = localStorage.getItem('vk_active_thread');
+  if (!id) {
+    id = 'thread_' + Date.now().toString(36);
+    localStorage.setItem('vk_active_thread', id);
+  }
+  return id;
+}
+
+function getThreadsList() {
+  try { return JSON.parse(localStorage.getItem('vk_threads_list')) || []; }
+  catch(e) { return []; }
+}
+
+function saveThreadsList(list) {
+  localStorage.setItem('vk_threads_list', JSON.stringify(list.slice(0, 50)));
+}
+
+function saveChatHistory() {
+  const area = document.getElementById('chatArea');
+  const threadId = getActiveThreadId();
+  localStorage.setItem('vk_thread_' + threadId, area.innerHTML);
+
+  // Update the thread list entry (title = first user message, or 'New chat')
+  let list = getThreadsList();
+  let entry = list.find(t => t.id === threadId);
+  if (!entry) {
+    entry = { id: threadId, title: 'New chat', date: Date.now() };
+    list.unshift(entry);
+  }
+  if (entry.title === 'New chat') {
+    const firstUserMsg = area.querySelector('.msg.user .msg-bubble');
+    if (firstUserMsg) entry.title = firstUserMsg.textContent.slice(0, 60);
+  }
+  entry.date = Date.now();
+  saveThreadsList(list);
+}
+
+function renderThreadList() {
+  const list = getThreadsList();
+  const el = document.getElementById('threadListItems');
+  if (!list.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:#555">No past conversations yet</div>';
+    return;
+  }
+  const activeId = getActiveThreadId();
+  el.innerHTML = list.map(function(t) {
+    const isActive = t.id === activeId;
+    return '<div onclick="openThread(&#39;' + t.id + '&#39;)" style="padding:14px;background:' + (isActive ? '#1a0900' : '#1a1a1a') + ';border:1px solid ' + (isActive ? '#ff5c00' : '#222') + ';border-radius:12px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center">' +
+      '<div style="flex:1;overflow:hidden">' +
+        '<div style="font-size:.85rem;color:#ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (t.title||'New chat') + '</div>' +
+        '<div style="font-size:.7rem;color:#666;margin-top:3px">' + new Date(t.date).toLocaleDateString() + '</div>' +
+      '</div>' +
+      '<button onclick="renameThread(&#39;' + t.id + '&#39;, event)" style="background:none;border:none;color:#555;font-size:.95rem;padding:0 6px;cursor:pointer">✏️</button>' +
+      '<button onclick="deleteThread(&#39;' + t.id + '&#39;, event)" style="background:none;border:none;color:#555;font-size:1.1rem;padding:0 6px;cursor:pointer">×</button>' +
+    '</div>';
+  }).join('');
+}
+
+function renameThread(threadId, event) {
+  if (event) event.stopPropagation();
+  const list = getThreadsList();
+  const entry = list.find(function(t) { return t.id === threadId; });
+  if (!entry) return;
+  const newName = prompt('Rename this conversation:', entry.title || 'New chat');
+  if (newName === null || !newName.trim()) return;
+  entry.title = newName.trim().slice(0, 60);
+  entry.manuallyRenamed = true;
+  saveThreadsList(list);
+  renderThreadList();
+}
+
+function startNewThread() {
+  const newId = 'thread_' + Date.now().toString(36);
+  localStorage.setItem('vk_active_thread', newId);
+  document.getElementById('chatArea').innerHTML = '';
+  location.reload();
+}
+
+function openThread(threadId) {
+  localStorage.setItem('vk_active_thread', threadId);
+  location.reload();
+}
+
+function deleteThread(threadId, event) {
+  if (event) event.stopPropagation();
+  if (!confirm('Delete this conversation?')) return;
+  localStorage.removeItem('vk_thread_' + threadId);
+  let list = getThreadsList().filter(t => t.id !== threadId);
+  saveThreadsList(list);
+  if (getActiveThreadId() === threadId) {
+    startNewThread();
+  } else {
+    renderThreadList();
+  }
+}
+
+function checkResumeSession() {
+  const sessionId = localStorage.getItem('vk_resume_session');
+  if (!sessionId) return;
+  localStorage.removeItem('vk_resume_session');
+  try {
+    const h = getHistory();
+    const session = h.find(s => s.id === sessionId);
+    if (!session || !session.scripts) return;
+
+    window._batchScripts = session.scripts;
+    window._batchParams = { topic: session.prompt, style: 'educational', length: 60, voice: 'en-us-m' };
+    window._batchOriginalPrompt = session.prompt;
+
+    addMsg('ai', 'Resuming session: "' + (session.prompt||'').slice(0,80) + '"');
+
+    const area = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = 'batchCard';
+    div.innerHTML = '<div class="msg-avatar ai">🎬</div>' +
+      '<div class="progress-card" style="text-align:left">' +
+      '<div style="font-weight:800;margin-bottom:10px">📦 ' + session.scripts.length + ' Scripts from this session</div>' +
+      session.scripts.map(function(s, i) {
+        return '<div style="padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem">' +
+          '<strong>' + (i+1) + '. ' + (s.title||'Untitled') + '</strong><br>' +
+          '<span style="color:#888">' + (s.hook||'').slice(0,60) + '...</span></div>';
+      }).join('') +
+      '<button class="result-btn" onclick="createAllBatchVideos()" style="margin-top:14px">🚀 Create All ' + session.scripts.length + ' Videos</button>';
+    area.appendChild(div);
+    setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
+  } catch(e) { console.log('[Resume]', e.message); }
+}
+
+function initScriptStore() {
+  try {
+    const saved = localStorage.getItem('vk_script_store');
+    window._scriptStore = saved ? JSON.parse(saved) : {};
+  } catch(e) { window._scriptStore = {}; }
+
+  // Wrap the store in a Proxy so any write auto-persists to localStorage
+  window._scriptStore = new Proxy(window._scriptStore, {
+    set(target, key, value) {
+      target[key] = value;
+      try { localStorage.setItem('vk_script_store', JSON.stringify(target)); } catch(e) {}
+      return true;
+    }
+  });
+}
+
+function loadChatHistory() {
+  const threadId = getActiveThreadId();
+  const saved = localStorage.getItem('vk_thread_' + threadId);
+  if (saved) document.getElementById('chatArea').innerHTML = saved;
+  restorePersistedVideos(threadId);
+}
+
+async function restorePersistedVideos(threadId) {
+  // Old download links point to dead blob: URLs from a previous page load.
+  // Find every status slot and, if we have a saved video for it in
+  // IndexedDB, rebuild a fresh working download link.
+  const statusEls = document.querySelectorAll('[id^="batchStatus-"]');
+  for (const el of statusEls) {
+    const idx = el.id.replace('batchStatus-', '');
+    const persistId = threadId + '_v' + idx;
+    try {
+      const record = await loadVideoBlob(persistId);
+      if (record && record.blob) {
+        const freshUrl = URL.createObjectURL(record.blob);
+        const captionBtn = el.querySelector('button[onclick*="showCaptionPicker"]');
+        const captionHtml = captionBtn ? captionBtn.outerHTML : '';
+        el.innerHTML = '<a href="' + freshUrl + '" download="videokit-' + (record.meta.title||'video').replace(/[^a-z0-9]/gi,'-').slice(0,30) + '.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a>' + captionHtml;
+      }
+    } catch(e) {}
+  }
+}
+
+function addMsg(role, content, isHTML=false) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  const avatar = role==='ai' ? '<div class="msg-avatar ai">🎬</div>' : '<div class="msg-avatar user">👤</div>';
+  const bubble = `<div class="msg-bubble">${isHTML ? content : content.replace(/\n/g,'<br>')}</div>`;
+  div.innerHTML = role==='ai' ? avatar+bubble : bubble+avatar;
+  area.appendChild(div);
+  setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
+  saveChatHistory();
+  return div.querySelector('.msg-bubble');
+}
+
+function addProgress(steps) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.id = 'progressCard';
+  div.innerHTML = `<div class="msg-avatar ai">🎬</div>
+    <div class="progress-card">
+      ${steps.map((s,i) => `
+        <div class="progress-step" id="step-${i}">
+          <span class="step-icon step-pending">○</span>
+          <span>${s}</span>
+        </div>`).join('')}
+      <div class="mini-bar"><div class="mini-bar-fill" id="progressBar" style="width:0%"></div></div>
+    </div>`;
+  area.appendChild(div);
+  setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
+  return div;
+}
+
+function updateStep(i, status) {
+  const el = document.getElementById('step-'+i);
+  if (!el) return;
+  const icon = el.querySelector('.step-icon');
+  icon.className = 'step-icon ' + status;
+  icon.textContent = status==='step-done' ? '✓' : status==='step-active' ? '▶' : '○';
+  const pct = Math.round(((i+1)/4)*100);
+  const bar = document.getElementById('progressBar');
+  if (bar) bar.style.width = pct + '%';
+}
+
+function usePrompt(text) {
+  document.getElementById('chatInput').value = text;
+  document.getElementById('chatInput').focus();
+}
+
+function handleAiUpload(input) {
+  const files = Array.from(input.files);
+  uploadedFiles = [...uploadedFiles, ...files];
+  const preview = document.getElementById('uploadsPreview');
+  preview.innerHTML = uploadedFiles.map((f,i) => {
+    const url = URL.createObjectURL(f);
+    const isImg = f.type.startsWith('image');
+    return `<div class="upload-chip">
+      ${isImg ? `<img class="upload-thumb" src="${url}">` : '🎬'}
+      <span>${f.name.slice(0,15)}...</span>
+      <span onclick="removeUpload(${i})" style="cursor:pointer;color:#555">×</span>
+    </div>`;
+  }).join('');
+}
+
+function removeUpload(i) {
+  uploadedFiles.splice(i, 1);
+  handleAiUpload({files: uploadedFiles});
+}
+
+async function sendMessage() {
+  if (isProcessing) return;
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMsg('user', text);
+  input.value = '';
+  input.style.height = 'auto';
+
+  isProcessing = true;
+  try {
+    await processVideoRequest(text);
+  } finally {
+    isProcessing = false;
+  }
+}
+
+async function processVideoRequest(prompt) {
+  // Ask AI to analyze the prompt
+  const typingBubble = addMsg('ai', 'Analyzing your request...', false);
+  typingBubble.classList.add('typing');
+
+  try {
+    // Step 1: AI extracts video parameters from prompt
+    const analysisRes = await smartFetch('/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages:[{role:'user', content:`Extract video parameters from this request: "${prompt}"
+        
+Return ONLY valid JSON (no markdown, no explanation):
+{
+  "topic": "the main topic",
+  "style": "educational|motivational|storytelling|listicle|news-style|documentary",
+  "hook": "viral|controversial|emotional|nigerian-style|storytelling|curiosity|luxury|fomo",
+  "length": 60,
+  "contentType": "image|video|textcard",
+  "platform": "the specific platform(s) mentioned, e.g. instagram, tiktok, youtube, facebook, linkedin, twitter, snapchat, pinterest, threads, whatsapp status, or general if none mentioned",
+  "voice": "en-us-m|en-us-f|en-gb-m|en-gb-f|en-au-m|en-au-f|en-news-m|en-story-f",
+  "hasUserMedia": false,
+  "quantity": 1,
+  "isSampleScript": false
+}
+Detect voice from phrases like "British female" -> en-gb-f, "American male" -> en-us-m, "Australian" -> en-au-m/f, "news anchor" -> en-news-m. Default en-us-m if not mentioned.
+Detect quantity from phrases like "give me 10", "create 5 videos", "10 different videos" -> set that number. Default 1.
+Set isSampleScript true if the request CONTAINS an actual script with parts like Hook/Middle/End/CTA written out (not just a topic description).
+Extract platform exactly as the user names it (could be one platform or several, or none mentioned).`}],
+        model:'llama-3.3-70b-versatile',
+        temperature:0.3
+      })
+    });
+    const analysisData = await analysisRes.json();
+    let params;
+    try {
+      const raw = analysisData.content || analysisData.choices?.[0]?.message?.content || '{}';
+      const clean = raw.replace(/```json|```/g,'').trim();
+      params = JSON.parse(clean);
+    } catch(e) {
+      params = { topic: prompt, style:'educational', hook:'viral', length:60, contentType:'image', platform:'instagram' };
+    }
+
+    // Branch: batch mode if quantity > 1
+    if (params.quantity && params.quantity > 1) {
+      typingBubble.classList.remove('typing');
+      const qty = Math.min(params.quantity, 15);
+      typingBubble.innerHTML = `Got it! I'll create <strong>${qty} different videos</strong> about <strong>"${params.topic}"</strong>${params.isSampleScript ? ' following the style of your sample script' : ''}.<br><br>Generating scripts now...`;
+      await processBatchRequest(prompt, params, qty);
+      return;
+    }
+
+    // Update typing bubble with understanding
+    typingBubble.classList.remove('typing');
+    typingBubble.innerHTML = `Got it! I'll create a <strong>${params.length}s ${params.style}</strong> video about <strong>"${params.topic}"</strong> for ${params.platform}.${uploadedFiles.length ? ' Using your ' + uploadedFiles.length + ' uploaded file(s).' : ' Using stock images.'}<br><br>Starting now...`;
+
+    // Show confirm card and wait for user input
+    const settings = await showConfirmCard(params);
+    params.voice = settings.voice;
+    params.musicUrl = settings.musicUrl;
+
+    // Show progress card
+    const steps = ['Writing script', 'Finding visuals', 'Generating voice', 'Creating video'];
+    addProgress(steps);
+
+    // Step 1: Generate script
+    updateStep(0, 'step-active');
+    await new Promise(r => setTimeout(r, 500));
+
+    const scriptRes = await smartFetch('/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages:[{role:'user', content:`You are a professional social media marketer, influencer, and viral content creator. Create a ${params.length}-second ${params.style} faceless video script about: ${params.topic}.
+
+Write a scroll-stopping, curiosity-driven HOOK as the first line - the kind that makes someone stop scrolling in the first 2 seconds. Use pattern interrupts, bold claims, or relatable pain points.
+
+For the CTA, write what a real ${params.platform || 'social media'} creator would actually say, following this principle: on platforms where captions/posts don't support clickable links (like Instagram, TikTok, Threads, Snapchat), say "Link in bio" or "Follow for more". On platforms where the description or post itself CAN hold a clickable link (like YouTube, Facebook, LinkedIn, Twitter/X, Pinterest), say "Link in the description" or "Click the link below". If platform is unclear, general, or multiple platforms at once, default to "Link in bio" since it works everywhere. If there's no specific link to share, use "Follow for more tips", "Save this for later", or "Share with someone who needs this".
+        
+Return ONLY valid JSON:
+{
+  "title": "video title",
+  "hook": "a SHORT scroll-stopping ALL-CAPS phrase, 3-8 words max, using power words like SECRET/MISTAKE/STOP/WHY/NEVER/TRUTH/FINALLY - this is NOT a sentence, it is a bold thumbnail-style headline, e.g. THE BIGGEST MONEY MISTAKE NIGERIANS MAKE",
+  "scenes": [
+    {"scene_number":1,"narration":"text","visual_keyword":"search term","duration_seconds":10},
+    ...
+  ],
+  "cta": "call to action"
+}`}],
+        model:'llama-3.3-70b-versatile',
+        temperature:0.7
+      })
+    });
+    const scriptData2 = await scriptRes.json();
+    let script;
+    try {
+      const raw2 = scriptData2.content || scriptData2.choices?.[0]?.message?.content || '{}';
+      script = JSON.parse(raw2.replace(/```json|```/g,'').trim());
+    } catch(e) {
+      throw new Error('Script generation failed');
+    }
+    if (script.cta && script.scenes) {
+      script.scenes.push({
+        scene_number: script.scenes.length + 1,
+        narration: script.cta,
+        visual_keyword: 'click here follow subscribe button',
+        duration_seconds: 6
+      });
+    }
+    if (script.hook && script.scenes && script.scenes[0]) {
+      script.scenes[0].isHookFrame = true;
+      script.scenes[0].hookText = script.hook;
+    }
+    updateStep(0, 'step-done');
+    const scenes = script.scenes || [];
+
+    // Step 2: Generate voice FIRST (so we know exact duration)
+    updateStep(2, 'step-active');
+    let audioBlob2 = null;
+    let voiceDuration = params.length || 60;
+    let voiceError = null;
+    try {
+      const fullScript2 = stripUrlsForSpeech(scenes.map(s => s.narration).join(' '));
+      const voiceRes = await smartFetch('/tts-voicerss', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: fullScript2, voice: params.voice || 'en-us-m' })
+      });
+      if (voiceRes.ok) {
+        const blob = await voiceRes.blob();
+        if (blob.size < 500) {
+          voiceError = 'Voice file too small (' + blob.size + ' bytes) - likely an error response';
+        } else if (!blob.type.includes('audio') && blob.type !== '') {
+          voiceError = 'Unexpected response type: ' + blob.type;
+        } else {
+          audioBlob2 = blob;
+          const tmpAudio = new Audio(URL.createObjectURL(audioBlob2));
+          voiceDuration = await new Promise(res => {
+            tmpAudio.onloadedmetadata = () => res(Math.ceil(tmpAudio.duration));
+            tmpAudio.onerror = () => res(params.length || 60);
+            tmpAudio.load();
+            setTimeout(() => res(params.length || 60), 3000);
+          });
+          console.log('[Voice] actual duration:', voiceDuration, 's, size:', blob.size);
+        }
+      } else {
+        voiceError = 'TTS server returned status ' + voiceRes.status;
+      }
+    } catch(e) { voiceError = e.message; }
+    if (voiceError) {
+      addMsg('ai', '⚠️ Voice generation issue: ' + voiceError + ' (continuing without voice)');
+    }
+    updateStep(2, 'step-done');
+
+    // Step 3: Find visuals (or use uploaded)
+    updateStep(1, 'step-active');
+    const sceneMedia = [];
+      const usedImageUrls = new Set();
+
+    if (uploadedFiles.length) {
+      // Use uploaded files
+      uploadedFiles.forEach((f,i) => {
+        const url = URL.createObjectURL(f);
+        sceneMedia[i] = { url, type: f.type.startsWith('video')?'video':'image' };
+      });
+      // Fill remaining scenes with stock
+      for (let i = uploadedFiles.length; i < scenes.length; i++) {
+        try {
+          const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scenes[i].visual_keyword));
+          const imgData = await imgRes.json();
+          if (imgData.hits && imgData.hits.length) {
+            const pick = imgData.hits.find(h => !usedImageUrls.has(h.largeImageURL || h.webformatURL)) || imgData.hits[0];
+            const picUrl = pick.largeImageURL || pick.webformatURL;
+            usedImageUrls.add(picUrl);
+            sceneMedia[i] = { url: picUrl, type:'image' };
+          }
+        } catch(e) {}
+      }
+    } else {
+      // All stock images
+      for (let i = 0; i < scenes.length; i++) {
+        try {
+          const estDur = scenes[i].duration_seconds || 8;
+          const numNeeded = Math.max(1, Math.min(4, Math.ceil(estDur / 6)));
+          const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scenes[i].visual_keyword));
+          const imgData = await imgRes.json();
+          const allHits = imgData.hits || [];
+          const freshHits = allHits.filter(h => !usedImageUrls.has(h.largeImageURL || h.webformatURL));
+          const picks = (freshHits.length ? freshHits : allHits).slice(0, numNeeded);
+          if (picks.length) {
+            sceneMedia[i] = picks.map(p => {
+              const url = p.largeImageURL || p.webformatURL;
+              usedImageUrls.add(url);
+              return { url, type: 'image' };
+            });
+          }
+        } catch(e) {}
+      }
+    }
+    updateStep(1, 'step-done');
+// Step 4: Create video
+    updateStep(3, 'step-active');
+    const videoBlob = await createVideoFromScenes(scenes, sceneMedia, audioBlob2, voiceDuration, params.musicUrl);
+    updateStep(3, 'step-done');
+
+    // Remove progress card
+    document.getElementById('progressCard')?.remove();
+
+    // Show result
+    const url2 = URL.createObjectURL(videoBlob);
+    window._scriptStore = window._scriptStore || {};
+    const sId = 'script_' + Date.now();
+    window._scriptStore[sId] = script;
+    addMsg('ai', `
+      <div class="result-card">
+        <div class="result-title">✅ Your video is ready!</div>
+        <div style="font-size:.82rem;color:#999;margin-bottom:10px">${script.title || params.topic} · ${params.length}s</div>
+        <a href="${url2}" download="videokit-${Date.now()}.webm" class="result-btn">⬇ Download Video</a>
+        <button class="result-btn secondary" onclick="showCaptionPicker('${sId}')">📋 Get Caption</button>
+        <button class="result-btn secondary" onclick="openInCreate(${JSON.stringify({script:script, media:sceneMedia}).replace(/"/g,'&quot;')})">✏️ Edit in Create</button>
+      </div>
+    `, true);
+
+    // Save to history
+    saveToHistory({
+      topic: params.topic, style: params.style, length: params.length,
+      scriptData: script,
+      scriptText: script.scenes ? script.scenes.map(s=>s.narration).join(' ') : ''
+    });
+
+  } catch(err) {
+    console.error('[AI Studio]', err);
+    document.getElementById('progressCard')?.remove();
+    addMsg('ai', 'Sorry, something went wrong: ' + err.message + '\n\nPlease try again or use the Create tab.');
+  }
+}
+
+async function createVideoFromScenes(scenes, media, audioBlob2, totalLen, musicUrl) {
+  // Try backend merge first (faster than canvas)
+  // Give each scene a duration PROPORTIONAL to how much it speaks,
+  // not an equal split - so short hooks and long explanations both
+  // match what the voice is actually saying at that moment.
+  const target = (totalLen || 60) + 0.4;  // small buffer so video never falls short of voice
+  const minDur = 2;
+  const charCounts = scenes.map(s => Math.max((s.narration||'').length, 10));
+  const totalChars = charCounts.reduce((a,b) => a+b, 0) || 1;
+
+  let runningTotal = 0;
+  const durations = charCounts.map((cnt, i) => {
+    if (i === charCounts.length - 1) {
+      // Last scene absorbs whatever time is left so total always matches voice exactly
+      return Math.max(minDur, Math.round((target - runningTotal) * 10) / 10);
+    }
+    const dur = Math.max(minDur, Math.round((cnt / totalChars) * target));
+    runningTotal += dur;
+    return dur;
+  });
+
+  const payloadScenes = [];
+  scenes.forEach((s, i) => {
+    const m = media[i];
+    const subMedias = Array.isArray(m) ? m : (m ? [m] : [null]);
+    const subCount = subMedias.length;
+    const baseDur = durations[i];
+    subMedias.forEach((sm, subIdx) => {
+      const isLastSub = subIdx === subCount - 1;
+      const evenShare = Math.round((baseDur / subCount) * 10) / 10;
+      const subDur = isLastSub
+        ? Math.max(1, Math.round((baseDur - evenShare * (subCount - 1)) * 10) / 10)
+        : evenShare;
+      payloadScenes.push({
+        videoUrl: sm ? sm.url : null,
+        isImage: sm ? sm.type === 'image' : false,
+        isTextCard: !sm,
+        text: subIdx === 0 && s.narration ? s.narration.slice(0, 100) : '',
+        duration: subDur,
+        isHookFrame: !!s.isHookFrame && subIdx === 0,
+        hookText: subIdx === 0 ? (s.hookText || '') : ''
+      });
+    });
+  });
+  const payload = { scenes: payloadScenes };
+
+  if (musicUrl) payload.musicUrl = musicUrl;
+
+  // Add audio as base64 if available
+  if (audioBlob2) {
+    try {
+      payload.audioBase64 = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = () => res(reader.result.split(',')[1]);
+        reader.onerror = rej;
+        reader.readAsDataURL(audioBlob2);
+      });
+    } catch(e) { console.log('[Audio b64]', e); }
+  }
+
+  // Start async job on backend
+  const startRes = await smartFetch('/merge-start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  if (!startRes.ok) throw new Error('Backend merge failed to start');
+  const { jobId } = await startRes.json();
+
+  // Update progress message
+  const bar = document.getElementById('progressBar');
+  if (bar) bar.style.width = '80%';
+
+  // Poll for completion
+  for (let attempt = 0; attempt < 60; attempt++) {
+    await new Promise(r => setTimeout(r, 5000));
+    const statusRes = await smartFetch('/merge-status/' + jobId);
+    const ct = statusRes.headers.get('content-type') || '';
+
+    if (ct.includes('video')) {
+      return await statusRes.blob();
+    }
+
+    const status = await statusRes.json();
+    if (status.status === 'error') throw new Error(status.error || 'Merge failed');
+    if (status.status === 'done') {
+      const fileRes = await smartFetch('/merge-status/' + jobId);
+      return await fileRes.blob();
+    }
+    if (bar) bar.style.width = Math.min(95, 80 + status.progress/20) + '%';
+  }
+  throw new Error('Video creation timed out');
+}
+
+function openInCreate(data) {
+  const entry = {
+    topic: (data.script && data.script.title) || 'AI Generated Video',
+    style: 'educational',
+    length: 60,
+    scriptData: data.script,
+    scriptText: (data.script && data.script.scenes) ? data.script.scenes.map(s=>s.narration).join(' ') : ''
+  };
+  const h = getHistory();
+  h.unshift({...entry, id: Date.now().toString(36), date: Date.now()});
+  localStorage.setItem('vk_history', JSON.stringify(h.slice(0,50)));
+  localStorage.setItem('vk_restore', h[0].id);
+  window.location.href = 'create.html';
+}
+
+// ── Confirm & Customize Card ────────────────────────────────
+function showConfirmCard(params) {
+  return new Promise((resolve) => {
+    const area = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = 'confirmCard';
+    const detectedVoice = params.voice || 'en-us-m';
+    div.innerHTML = `<div class="msg-avatar ai">🎬</div>
+      <div class="progress-card" style="text-align:left">
+        <div style="font-weight:700;margin-bottom:12px;font-size:.92rem">⚙️ Quick Settings</div>
+        <label style="font-size:.74rem;color:#888;display:block;margin-bottom:5px">Voice</label>
+        <select id="confirmVoice" style="width:100%;padding:10px;margin-bottom:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-family:'Syne',sans-serif;font-size:.85rem">
+          <option value="en-us-m">🇺🇸 American Male</option>
+          <option value="en-us-f">🇺🇸 American Female</option>
+          <option value="en-gb-m">🇬🇧 British Male</option>
+          <option value="en-gb-f">🇬🇧 British Female</option>
+          <option value="en-au-m">🇦🇺 Australian Male</option>
+          <option value="en-au-f">🇦🇺 Australian Female</option>
+          <option value="en-news-m">📰 News Anchor</option>
+          <option value="en-story-f">📖 Storyteller Female</option>
+        </select>
+        <label style="font-size:.74rem;color:#888;display:block;margin-bottom:5px">Background Music</label>
+        <div id="musicPicker" onclick="openMusicPicker()" style="width:100%;padding:10px;margin-bottom:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#888;font-size:.85rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+          <span id="musicLabel">🎵 No music — tap to choose</span>
+          <span style="color:#444">›</span>
+        </div>
+        <input type="hidden" id="confirmMusicUrl" value="">
+        <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;margin-bottom:16px;color:#666">
+          <input type="checkbox" id="confirmNoWatermark" disabled style="width:16px;height:16px">
+          ✨ Remove watermark <span style="color:#ff5c00;font-weight:700">(Pro)</span>
+        </label>
+        <button class="result-btn" onclick="confirmGenerate()" style="margin-top:0">🚀 Generate Video</button>
+      </div>`;
+    area.appendChild(div);
+    setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
+    document.getElementById('confirmVoice').value = detectedVoice;
+    window._confirmResolve = resolve;
+  });
+}
+
+function confirmGenerate() {
+  const voice = document.getElementById('confirmVoice').value;
+  const musicUrl = document.getElementById('confirmMusicUrl').value;
+  const card = document.getElementById('confirmCard');
+  if (card) card.remove();
+  if (window._confirmResolve) window._confirmResolve({ voice, musicUrl });
+}
+
+
+// ── Music Picker ─────────────────────────────────────────────
+function openMusicPicker() {
+  document.getElementById('musicModal').style.display = 'flex';
+  searchMusic('motivational');
+}
+
+async function searchMusic(mood) {
+  const results = document.getElementById('musicResults');
+  results.innerHTML = '<div style="text-align:center;padding:20px;color:#555;font-size:.82rem">Loading...</div>';
+  try {
+    const res = await smartFetch('/music?mood=' + encodeURIComponent(mood));
+    const data = await res.json();
+    const hits = data.hits || [];
+    if (!hits.length) {
+      results.innerHTML = '<div style="text-align:center;padding:20px;color:#555;font-size:.82rem">No results. Try another search.</div>';
+      return;
+    }
+    results.innerHTML = hits.slice(0, 8).map((h, i) => `
+      <div onclick='selectMusic(${JSON.stringify(h.audio || h.previewURL || "").replace(/'/g,"&#39;")}, ${JSON.stringify((h.tags||"Track").split(",")[0]).replace(/'/g,"&#39;")})'
+        style="display:flex;align-items:center;gap:10px;padding:10px;background:#1a1a1a;border-radius:10px;margin-bottom:8px;cursor:pointer">
+        <div style="width:36px;height:36px;background:#ff5c00;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">🎵</div>
+        <div style="flex:1;font-size:.82rem;color:#ddd;text-transform:capitalize">${(h.tags||'Background track').split(',')[0]}</div>
+        <div style="color:#444">▶</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    results.innerHTML = '<div style="text-align:center;padding:20px;color:#f87171;font-size:.82rem">Search failed: ' + e.message + '</div>';
+  }
+}
+
+function selectMusic(url, name) {
+  document.getElementById('confirmMusicUrl').value = url;
+  document.getElementById('musicLabel').textContent = '🎵 ' + name;
+  document.getElementById('musicLabel').style.color = '#fff';
+  document.getElementById('musicModal').style.display = 'none';
+}
+
+function selectNoMusic() {
+  document.getElementById('confirmMusicUrl').value = '';
+  document.getElementById('musicLabel').textContent = '🎵 No music — tap to choose';
+  document.getElementById('musicLabel').style.color = '#888';
+  document.getElementById('musicModal').style.display = 'none';
+}
+
+
+// ── Batch Video Generation ──────────────────────────────────
+async function retryOneBatchVideo(i) {
+  const scripts = window._batchScripts || [];
+  const params = window._batchParams || {};
+  const statusEl = document.getElementById('batchStatus-'+i);
+  if (!statusEl || !scripts[i]) return;
+
+  statusEl.textContent = 'Retrying...';
+  statusEl.style.color = '#ff5c00';
+
+  try {
+    const sceneMedia = [];
+    const usedImageUrls = new Set();
+    for (let j = 0; j < scripts[i].scenes.length; j++) {
+      try {
+        const estDur = scripts[i].scenes[j].duration_seconds || 8;
+        const numNeeded = Math.max(1, Math.min(4, Math.ceil(estDur / 6)));
+        const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
+        const imgData = await imgRes.json();
+        const allHits = imgData.hits || [];
+        const freshHits = allHits.filter(h => !usedImageUrls.has(h.largeImageURL || h.webformatURL));
+        const picks = (freshHits.length ? freshHits : allHits).slice(0, numNeeded);
+        if (picks.length) {
+          sceneMedia[j] = picks.map(p => {
+            const url = p.largeImageURL || p.webformatURL;
+            usedImageUrls.add(url);
+            return { url, type: 'image' };
+          });
+        }
+      } catch(e) {}
+    }
+
+    statusEl.textContent = 'Generating voice...';
+    let audioB = null, vDur = params.length || 60;
+    try {
+      const fullText = stripUrlsForSpeech(scripts[i].scenes.map(s=>s.narration).join(' '));
+      const vRes = await smartFetch('/tts-voicerss', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ text: fullText, voice: params.voice || 'en-us-m' })
+      });
+      if (vRes.ok) {
+        const blob = await vRes.blob();
+        if (blob.size > 500) {
+          audioB = blob;
+          const tmpA = new Audio(URL.createObjectURL(blob));
+          vDur = await new Promise(res => {
+            tmpA.onloadedmetadata = () => res(Math.ceil(tmpA.duration));
+            tmpA.onerror = () => res(params.length||60);
+            tmpA.load();
+            setTimeout(()=>res(params.length||60), 3000);
+          });
+        }
+      }
+    } catch(e) {}
+
+    statusEl.textContent = 'Creating video...';
+    const blob = await createVideoFromScenes(scripts[i].scenes, sceneMedia, audioB, vDur, params.musicUrl);
+
+    const url = URL.createObjectURL(blob);
+    window._scriptStore = window._scriptStore || {};
+    const batchSId = 'batchscript_' + i + '_' + Date.now();
+    window._scriptStore[batchSId] = scripts[i];
+    const persistId = getActiveThreadId() + '_v' + i;
+    await saveVideoBlob(persistId, blob, { title: scripts[i].title || params.topic, index: i });
+    statusEl.innerHTML = '<a href="' + url + '" download="videokit-retry-' + (i+1) + '-' + Date.now() + '.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a><button onclick="showCaptionPicker(\'' + batchSId + '\')" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>';
+    statusEl.dataset.persistId = persistId;
+
+    saveToHistory({
+      topic: scripts[i].title || params.topic, style: params.style||'educational', length: vDur,
+      scriptData: scripts[i],
+      scriptText: scripts[i].scenes.map(s=>s.narration).join(' ')
+    });
+    saveChatHistory();
+  } catch(err) {
+    statusEl.innerHTML = '<span style="color:#f87171">✗ Failed again</span> <button onclick="retryOneBatchVideo(' + i + ')" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0;margin-left:6px">↻ Retry</button>';
+    statusEl.title = err.message;
+  }
+}
+
+async function processBatchRequest(originalPrompt, params, qty) {
+  try {
+    const batchSettings = await showConfirmCard(params);
+    params.voice = batchSettings.voice;
+    params.musicUrl = batchSettings.musicUrl;
+
+    addMsg('ai', 'Writing ' + qty + ' scripts...');
+
+    const sampleNote = params.isSampleScript
+      ? `The user provided this SAMPLE SCRIPT to follow as a style template:
+"""${originalPrompt}"""
+
+You are a professional social media marketer and viral content creator. Generate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
+      : `You are a professional social media marketer and viral content creator. Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
+
+    const batchRes = await smartFetch('/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: `${sampleNote}
+
+Write scroll-stopping, curiosity-driven hooks - the kind that stop someone mid-scroll in 2 seconds. Every single script MUST end with a clear, complete "cta" field that mentions the call to action clearly (e.g. mentions the link, or says "Link in bio", "Follow for more" depending on platform: ${params.platform}). Never leave cta empty or generic - it is the most important line.
+
+Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
+{"title":"...","hook":"...","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","duration_seconds":10}],"cta":"..."}` }],
+        model: 'llama-3.3-70b-versatile',
+        temperature: 0.8
+      })
+    });
+
+    if (!batchRes.ok) {
+      addMsg('ai', '⚠️ Script generation request failed with status ' + batchRes.status + '. Please try again.');
+      return;
+    }
+
+    const batchData = await batchRes.json();
+    const raw = batchData.content || (batchData.choices && batchData.choices[0] && batchData.choices[0].message && batchData.choices[0].message.content) || '[]';
+    const clean = raw.replace(/```json|```/g, '').trim();
+
+    let scriptsArray;
+    try {
+      scriptsArray = JSON.parse(clean);
+      if (!Array.isArray(scriptsArray)) scriptsArray = [scriptsArray];
+    } catch (parseErr) {
+      addMsg('ai', '⚠️ Could not parse the scripts the AI returned (' + parseErr.message + '). Raw response started with: ' + clean.slice(0, 150));
+      return;
+    }
+
+    if (!scriptsArray.length) {
+      addMsg('ai', '⚠️ The AI returned zero scripts. Please try again with a simpler prompt.');
+      return;
+    }
+
+    scriptsArray.forEach(s => {
+      if (s.cta && s.scenes) {
+        s.scenes.push({
+          scene_number: s.scenes.length + 1,
+          narration: s.cta,
+          visual_keyword: 'click here follow subscribe button',
+          duration_seconds: 6
+        });
+      }
+      if (s.hook && s.scenes && s.scenes[0]) {
+        s.scenes[0].isHookFrame = true;
+        s.scenes[0].hookText = s.hook;
+      }
+    });
+
+    const area = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'msg ai';
+    div.id = 'batchCard';
+    div.innerHTML = '<div class="msg-avatar ai">🎬</div>' +
+      '<div class="progress-card" style="text-align:left">' +
+      '<div style="font-weight:800;margin-bottom:10px">📦 ' + scriptsArray.length + ' Scripts Ready</div>' +
+      scriptsArray.map(function(s, i) {
+        return '<div style="padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem">' +
+          '<strong>' + (i + 1) + '. ' + (s.title || 'Untitled') + '</strong><br>' +
+          '<span style="color:#888">' + (s.hook || '').slice(0, 60) + '...</span></div>';
+      }).join('') +
+      '<button class="result-btn" onclick="createAllBatchVideos()" style="margin-top:14px">🚀 Create All ' + scriptsArray.length + ' Videos</button>' +
+      '</div>';
+    area.appendChild(div);
+    setTimeout(function() { area.scrollTop = area.scrollHeight + 300; }, 50);
+
+    window._batchScripts = scriptsArray;
+    window._batchParams = params;
+    window._batchOriginalPrompt = originalPrompt;
+
+  } catch (err) {
+    addMsg('ai', '⚠️ Batch generation failed: ' + err.message);
+  }
+}
+
+async function createAllBatchVideos() {
+  if (isProcessing) {
+    addMsg('ai', '⏳ Still working on the previous batch — please wait for it to finish first.');
+    return;
+  }
+  isProcessing = true;
+  try {
+  const scripts = window._batchScripts || [];
+  const params = window._batchParams || {};
+  document.getElementById('batchCard')?.remove();
+
+  const area = document.getElementById('chatArea');
+  const resultsDiv = document.createElement('div');
+  resultsDiv.className = 'msg ai';
+  resultsDiv.id = 'batchResults';
+  resultsDiv.innerHTML = `<div class="msg-avatar ai">🎬</div>
+    <div class="progress-card" style="text-align:left">
+      <div style="font-weight:800;margin-bottom:6px">Creating ${scripts.length} videos...</div>
+      <div style="background:#2a1500;border:1px solid #ff5c00;border-radius:8px;padding:8px 10px;font-size:.74rem;color:#ffb366;margin-bottom:10px">⚠️ Keep this tab open. Closing it or your phone sleeping will stop the batch — anything already downloaded stays saved.</div>
+      <div id="batchRows"></div>
+    </div>`;
+  area.appendChild(resultsDiv);
+  setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
+
+  const rows = document.getElementById('batchRows');
+  scripts.forEach((s,i) => {
+    try {
+      const row = document.createElement('div');
+      row.id = 'batchRow-'+i;
+      row.style.cssText = 'padding:8px 0;border-bottom:1px solid #1a1a1a;font-size:.8rem;display:flex;justify-content:space-between;align-items:center';
+      row.innerHTML = `<span>${i+1}. ${(s.title||'Video '+(i+1)).slice(0,28)}</span><span id="batchStatus-${i}" style="color:#666">Waiting...</span>`;
+      if (rows) rows.appendChild(row);
+    } catch(rowErr) {
+      addMsg('ai', '⚠️ Debug: row ' + i + ' creation failed: ' + rowErr.message);
+    }
+  });
+
+  for (let i = 0; i < scripts.length; i++) {
+    const statusEl = document.getElementById('batchStatus-'+i);
+    try {
+      const videoTimeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Video took too long - skipped')), 210000));
+      await Promise.race([videoTimeoutPromise, (async () => {
+      statusEl.textContent = 'Finding images...';
+      statusEl.style.color = '#ff5c00';
+      const sceneMedia = [];
+      const usedImageUrls = new Set();
+      for (let j = 0; j < scripts[i].scenes.length; j++) {
+        try {
+          const estDur = scripts[i].scenes[j].duration_seconds || 8;
+          const numNeeded = Math.max(1, Math.min(4, Math.ceil(estDur / 6)));
+          const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scripts[i].scenes[j].visual_keyword));
+          const imgData = await imgRes.json();
+          const allHits = imgData.hits || [];
+          const freshHits = allHits.filter(h => !usedImageUrls.has(h.largeImageURL || h.webformatURL));
+          const picks = (freshHits.length ? freshHits : allHits).slice(0, numNeeded);
+          if (picks.length) {
+            sceneMedia[j] = picks.map(p => {
+              const url = p.largeImageURL || p.webformatURL;
+              usedImageUrls.add(url);
+              return { url, type: 'image' };
+            });
+          }
+        } catch(e) {}
+      }
+
+      statusEl.textContent = 'Generating voice...';
+      let audioB = null, vDur = params.length || 60;
+      try {
+        const fullText = stripUrlsForSpeech(scripts[i].scenes.map(s=>s.narration).join(' '));
+        const vRes = await smartFetch('/tts-voicerss', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ text: fullText, voice: params.voice || 'en-us-m' })
+        });
+        if (vRes.ok) {
+          const blob = await vRes.blob();
+          if (blob.size > 500) {
+            audioB = blob;
+            const tmpA = new Audio(URL.createObjectURL(blob));
+            vDur = await new Promise(res => {
+              tmpA.onloadedmetadata = () => res(Math.ceil(tmpA.duration));
+              tmpA.onerror = () => res(params.length||60);
+              tmpA.load();
+              setTimeout(()=>res(params.length||60), 3000);
+            });
+          }
+        }
+      } catch(e) {}
+
+      statusEl.textContent = 'Creating video...';
+      const blob = await createVideoFromScenes(scripts[i].scenes, sceneMedia, audioB, vDur, params.musicUrl);
+
+      const url = URL.createObjectURL(blob);
+      window._scriptStore = window._scriptStore || {};
+      const batchSId = 'batchscript_' + i + '_' + Date.now();
+      window._scriptStore[batchSId] = scripts[i];
+      const persistId = getActiveThreadId() + '_v' + i;
+      await saveVideoBlob(persistId, blob, { title: scripts[i].title || params.topic, index: i });
+      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a><button onclick="showCaptionPicker(&#39;${batchSId}&#39;)" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>`;
+      statusEl.dataset.persistId = persistId;
+
+      saveToHistory({
+        topic: scripts[i].title || params.topic, style: params.style||'educational', length: vDur,
+        scriptData: scripts[i],
+        scriptText: scripts[i].scenes.map(s=>s.narration).join(' ')
+      });
+      })()]);
+
+    } catch(err) {
+      statusEl.innerHTML = '<span style="color:#f87171">✗ Failed</span> <button onclick="retryOneBatchVideo(' + i + ')" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0;margin-left:6px">↻ Retry</button>';
+      statusEl.title = err.message;
+      console.error('[Batch '+i+']', err.message);
+    }
+    saveChatHistory();
+  }
+
+  saveSessionToHistory(window._batchOriginalPrompt || '', scripts);
+  const anyFailed = scripts.some((s, idx) => {
+    const el = document.getElementById('batchStatus-'+idx);
+    return el && el.textContent.indexOf('Failed') !== -1;
+  });
+  addMsg('ai', anyFailed
+    ? '⚠️ Some videos finished, some failed. Tap ↻ Retry next to any failed video to try again.'
+    : `✅ All ${scripts.length} videos processed! Tap each Download link above to save them.`);
+  } catch (outerErr) {
+    addMsg('ai', '⚠️ Unexpected batch error: ' + outerErr.message + ' — you can try again now.');
+  } finally {
+    isProcessing = false;
+  }
+}
+
+
+// ── Caption Generator ───────────────────────────────────────
+const PLATFORM_SPECS = {
+  instagram: { label: 'Instagram', limit: 2200, ideal: '125-150 characters, hook in first line', hashtags: '5-8 relevant hashtags at the end' },
+  tiktok:    { label: 'TikTok', limit: 4000, ideal: '150-300 characters, only first ~90 chars show before cutoff', hashtags: '3-5 hashtags woven naturally' },
+  youtube:   { label: 'YouTube', limit: 5000, ideal: 'separate Title (under 60 chars, written like a real clickable YouTube title using curiosity, numbers, or power words like Secret/Mistake/Truth/Never - NOT a flat restatement of the topic - e.g. "The Follow-Up Mistake Costing You Sales" not "Importance of Follow-Up") and Description (hook line first, then 2-3 sentences, then the link)', hashtags: '3-5 hashtags at the end of description', hasTitle: true },
+  facebook:  { label: 'Facebook', limit: 477, ideal: '125-250 characters, gets truncated on mobile around 125', hashtags: '1-3 hashtags max, not heavily used on Facebook' }
+};
+
+function showCaptionPicker(sId) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.innerHTML = `<div class="msg-avatar ai">🎬</div>
+    <div class="progress-card" style="text-align:left">
+      <div style="font-weight:700;margin-bottom:10px;font-size:.88rem">Which platform is this for?</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <button onclick="generateCaptionFor('${sId}','instagram',this)" style="padding:8px 14px;background:#1a0900;border:1px solid #ff5c00;border-radius:20px;color:#ff5c00;font-size:.78rem;font-weight:700;cursor:pointer">Instagram</button>
+        <button onclick="generateCaptionFor('${sId}','tiktok',this)" style="padding:8px 14px;background:#1a0900;border:1px solid #ff5c00;border-radius:20px;color:#ff5c00;font-size:.78rem;font-weight:700;cursor:pointer">TikTok</button>
+        <button onclick="generateCaptionFor('${sId}','youtube',this)" style="padding:8px 14px;background:#1a0900;border:1px solid #ff5c00;border-radius:20px;color:#ff5c00;font-size:.78rem;font-weight:700;cursor:pointer">YouTube</button>
+        <button onclick="generateCaptionFor('${sId}','facebook',this)" style="padding:8px 14px;background:#1a0900;border:1px solid #ff5c00;border-radius:20px;color:#ff5c00;font-size:.78rem;font-weight:700;cursor:pointer">Facebook</button>
+        <button onclick="generateCaptionFor('${sId}','all',this)" style="padding:8px 14px;background:#ff5c00;border:none;border-radius:20px;color:white;font-size:.78rem;font-weight:700;cursor:pointer">All Platforms</button>
+      </div>
+    </div>`;
+  area.appendChild(div);
+  setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
+  saveChatHistory();
+}
+
+async function generateCaptionFor(sId, platform, btnEl) {
+  const script = (window._scriptStore || {})[sId];
+  if (!script) { alert('Script data not found'); return; }
+  btnEl.closest('.progress-card').parentElement.remove();
+
+  const targets = platform === 'all' ? Object.keys(PLATFORM_SPECS) : [platform];
+  const typingBubble = addMsg('ai', 'Writing caption' + (targets.length>1?'s':'') + '...');
+  typingBubble.classList.add('typing');
+
+  try {
+    const specsText = targets.map(p => {
+      const s = PLATFORM_SPECS[p];
+      return `${s.label}: max ${s.limit} characters, ideal ${s.ideal}, hashtags: ${s.hashtags}${s.hasTitle ? ', ALSO include a separate "title" field under 100 chars' : ''}.`;
+    }).join('\n');
+
+    const res = await smartFetch('/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages:[{role:'user', content:`Write social media caption(s) for this video:
+Title: ${script.title||''}
+Hook: ${script.hook||''}
+Summary: ${(script.scenes||[]).map(s=>s.narration).join(' ').slice(0,300)}
+CTA: ${script.cta||''}
+
+Platform rules (follow character limits strictly, never exceed them):
+${specsText}
+
+Return ONLY valid JSON (no markdown), shaped as an object keyed by platform name, e.g.:
+{"instagram":{"caption":"..."},"youtube":{"title":"...","caption":"..."}}
+Only include keys for: ${targets.join(', ')}`}],
+        model:'llama-3.3-70b-versatile',
+        temperature:0.7
+      })
+    });
+    const data = await res.json();
+    const raw = data.content || data.choices?.[0]?.message?.content || '{}';
+    const cleanedRaw = raw.replace(/```json|```/g,'').trim();
+    const jsonStart = cleanedRaw.indexOf('{');
+    const jsonEnd = cleanedRaw.lastIndexOf('}');
+    const jsonOnly = (jsonStart !== -1 && jsonEnd !== -1) ? cleanedRaw.slice(jsonStart, jsonEnd + 1) : cleanedRaw;
+    const captions = JSON.parse(jsonOnly);
+
+    typingBubble.classList.remove('typing');
+    typingBubble.parentElement.remove();
+
+    const blocksHtml = targets.map(p => {
+      const cap = captions[p] || {};
+      const safeId = 'cap_' + p + '_' + Date.now();
+      const fullText = (cap.title ? cap.title + '\n\n' : '') + (cap.caption || '');
+      window._scriptStore[safeId] = fullText;
+      return `
+        <div style="margin-bottom:14px">
+          <div style="font-weight:700;font-size:.82rem;color:#ff5c00;margin-bottom:6px">${PLATFORM_SPECS[p].label}</div>
+          ${cap.title ? `<div style="font-size:.78rem;color:#888;margin-bottom:4px">Title: <span style="color:#ddd">${cap.title}</span></div>` : ''}
+          <div style="background:#1a1a1a;border:1px solid #222;border-radius:10px;padding:12px;font-size:.82rem;color:#ddd;white-space:pre-wrap;margin-bottom:6px">${cap.caption||''}</div>
+          <button onclick="copyCaptionText('${safeId}')" style="padding:6px 12px;background:#1a0900;border:1px solid #ff5c00;border-radius:8px;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer">📋 Copy</button>
+        </div>`;
+    }).join('');
+
+    addMsg('ai', `<div class="result-card">${blocksHtml}</div>`, true);
+
+  } catch(err) {
+    typingBubble.classList.remove('typing');
+    typingBubble.textContent = 'Caption generation failed: ' + err.message;
+  }
+}
+
+function copyCaptionText(id) {
+  const text = (window._scriptStore || {})[id];
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => alert('Copied!'));
+}
+
+</script>
+
+<div id="musicModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:99998;align-items:flex-end;justify-content:center">
+  <div style="background:#111;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:75vh;overflow-y:auto">
+    <div style="width:40px;height:4px;background:#333;border-radius:2px;margin:0 auto 16px"></div>
+    <div style="font-weight:800;font-size:1rem;margin-bottom:14px">🎵 Choose Music</div>
+    <input id="musicSearch" placeholder="Search any music style..." style="width:100%;padding:12px;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:#fff;font-family:'Syne',sans-serif;font-size:.88rem;margin-bottom:12px;box-sizing:border-box"
+      onkeydown="if(event.key==='Enter')searchMusic(document.getElementById('musicSearch').value)">
+    <div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;padding-bottom:4px">
+      <div onclick="searchMusic('motivational')" style="white-space:nowrap;padding:6px 12px;background:#1a0900;border:1px solid #ff5c00;border-radius:20px;font-size:.72rem;color:#ff5c00;font-weight:700;cursor:pointer">🔥 Motivational</div>
+      <div onclick="searchMusic('chill lofi')" style="white-space:nowrap;padding:6px 12px;background:#1a1a1a;border:1px solid #333;border-radius:20px;font-size:.72rem;color:#ccc;cursor:pointer">😌 Chill</div>
+      <div onclick="searchMusic('upbeat energetic')" style="white-space:nowrap;padding:6px 12px;background:#1a1a1a;border:1px solid #333;border-radius:20px;font-size:.72rem;color:#ccc;cursor:pointer">⚡ Upbeat</div>
+      <div onclick="searchMusic('dramatic cinematic')" style="white-space:nowrap;padding:6px 12px;background:#1a1a1a;border:1px solid #333;border-radius:20px;font-size:.72rem;color:#ccc;cursor:pointer">🎬 Cinematic</div>
+      <div onclick="searchMusic('afrobeat')" style="white-space:nowrap;padding:6px 12px;background:#1a1a1a;border:1px solid #333;border-radius:20px;font-size:.72rem;color:#ccc;cursor:pointer">🇳🇬 Afrobeat</div>
+    </div>
+    <div id="musicResults"></div>
+    <div onclick="selectNoMusic()" style="text-align:center;padding:12px;color:#666;font-size:.82rem;cursor:pointer;margin-top:8px">No music — voice only</div>
+  </div>
+</div>
+</body>
+</html>
