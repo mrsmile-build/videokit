@@ -1181,6 +1181,15 @@ function removeUpload(i) {
 }
 
 async function sendMessage() {
+  const dbgInput = document.getElementById("chatInput").value.trim();
+  if (dbgInput === "/debugcaptions") {
+    document.getElementById("chatInput").value = "";
+    const threadId = getActiveThreadId();
+    const capStoreKey = "vk_captions_" + threadId;
+    const raw = localStorage.getItem(capStoreKey);
+    addMsg("ai", "Thread ID: " + threadId + "\n\nCaption store key: " + capStoreKey + "\n\nRaw content: " + (raw ? raw.slice(0,300) : "NOTHING SAVED"));
+    return;
+  }
   if (isProcessing) return;
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
