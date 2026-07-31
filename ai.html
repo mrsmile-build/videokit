@@ -694,6 +694,20 @@ function toggleCaptionPanel(i, sId) {
         return '<button onclick="loadCaptionTab(' + i + ', &#39;' + p + '&#39;)" id="capTab-' + i + '-' + p + '" style="padding:5px 10px;background:#1a1a1a;border:1px solid #333;border-radius:16px;color:#999;font-size:.7rem;font-weight:700;cursor:pointer">' + PLATFORM_SPECS[p].label + '</button>';
       }).join('') +
       '</div><div id="capResult-' + i + '"></div>';
+
+    // Restore any previously-generated captions for this video from localStorage
+    try {
+      const capStoreKey = 'vk_captions_' + getActiveThreadId();
+      const capStore = JSON.parse(localStorage.getItem(capStoreKey) || '{}');
+      Object.keys(capStore).forEach(function(key) {
+        const parts = key.split('_');
+        const rowIdx = parts[0];
+        const plat = parts.slice(1).join('_');
+        if (rowIdx === String(i)) {
+          panel.dataset[plat] = capStore[key];
+        }
+      });
+    } catch(e) {}
   }
 }
 
@@ -749,6 +763,12 @@ async function loadCaptionTab(i, platform) {
 
     panel.dataset[cacheKey] = html;
     resultEl.innerHTML = html;
+    try {
+      const capStoreKey = 'vk_captions_' + getActiveThreadId();
+      const capStore = JSON.parse(localStorage.getItem(capStoreKey) || '{}');
+      capStore[i + '_' + platform] = html;
+      localStorage.setItem(capStoreKey, JSON.stringify(capStore));
+    } catch(e) {}
 
   } catch(err) {
     resultEl.innerHTML = '<div style="color:#f87171;font-size:.78rem">Failed: ' + err.message + '</div>';
@@ -1968,6 +1988,20 @@ function toggleCaptionPanel(i, sId) {
         return '<button onclick="loadCaptionTab(' + i + ', &#39;' + p + '&#39;)" id="capTab-' + i + '-' + p + '" style="padding:5px 10px;background:#1a1a1a;border:1px solid #333;border-radius:16px;color:#999;font-size:.7rem;font-weight:700;cursor:pointer">' + PLATFORM_SPECS[p].label + '</button>';
       }).join('') +
       '</div><div id="capResult-' + i + '"></div>';
+
+    // Restore any previously-generated captions for this video from localStorage
+    try {
+      const capStoreKey = 'vk_captions_' + getActiveThreadId();
+      const capStore = JSON.parse(localStorage.getItem(capStoreKey) || '{}');
+      Object.keys(capStore).forEach(function(key) {
+        const parts = key.split('_');
+        const rowIdx = parts[0];
+        const plat = parts.slice(1).join('_');
+        if (rowIdx === String(i)) {
+          panel.dataset[plat] = capStore[key];
+        }
+      });
+    } catch(e) {}
   }
 }
 
@@ -2023,6 +2057,12 @@ async function loadCaptionTab(i, platform) {
 
     panel.dataset[cacheKey] = html;
     resultEl.innerHTML = html;
+    try {
+      const capStoreKey = 'vk_captions_' + getActiveThreadId();
+      const capStore = JSON.parse(localStorage.getItem(capStoreKey) || '{}');
+      capStore[i + '_' + platform] = html;
+      localStorage.setItem(capStoreKey, JSON.stringify(capStore));
+    } catch(e) {}
 
   } catch(err) {
     resultEl.innerHTML = '<div style="color:#f87171;font-size:.78rem">Failed: ' + err.message + '</div>';
