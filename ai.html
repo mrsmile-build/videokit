@@ -1117,7 +1117,16 @@ function addMsg(role, content, isHTML=false) {
   const div = document.createElement('div');
   div.className = 'msg ' + role;
   const avatar = role==='ai' ? '<div class="msg-avatar ai">🎬</div>' : '<div class="msg-avatar user">👤</div>';
-  const bubble = `<div class="msg-bubble">${isHTML ? content : content.replace(/\n/g,'<br>')}</div>`;
+  let bubble;
+  if (role === 'user' && !isHTML) {
+    const promptId = 'prompt_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    window._scriptStore = window._scriptStore || {};
+    window._scriptStore[promptId] = content;
+    bubble = '<div class="msg-bubble">' + content.replace(/\n/g,'<br>') +
+      '<div style="margin-top:6px;text-align:right"><button onclick="copyCaptionText(&#39;' + promptId + '&#39;)" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:.68rem;cursor:pointer;padding:0">📋 Copy prompt</button></div></div>';
+  } else {
+    bubble = `<div class="msg-bubble">${isHTML ? content : content.replace(/\n/g,'<br>')}</div>`;
+  }
   div.innerHTML = role==='ai' ? avatar+bubble : bubble+avatar;
   area.appendChild(div);
   setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
