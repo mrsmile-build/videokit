@@ -1768,8 +1768,8 @@ async function processBatchRequest(originalPrompt, params, qty) {
       ? `The user provided this SAMPLE SCRIPT to follow as a style template:
 """${originalPrompt}"""
 
-You are a professional social media marketer and viral content creator. Generate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
-      : `You are a professional social media marketer and viral content creator. Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
+You are a professional social media marketer, storyteller, and video director. Generate ${qty} NEW scripts following the EXACT SAME structure (Hook -> Problem/Middle -> Solution/End -> CTA), same tone, same length, but each exploring a DIFFERENT specific scenario/angle that leads to the same core message and CTA.`
+      : `You are a professional social media marketer, storyteller, and video director. Generate ${qty} DIFFERENT video scripts about: ${params.topic}. Each should take a different angle/approach but match style: ${params.style}.`;
 
     const batchRes = await smartFetch('/generate', {
       method: 'POST',
@@ -1777,10 +1777,14 @@ You are a professional social media marketer and viral content creator. Generate
       body: JSON.stringify({
         messages: [{ role: 'user', content: `${sampleNote}
 
-Write scroll-stopping, curiosity-driven hooks - the kind that stop someone mid-scroll in 2 seconds. Every single script MUST end with a clear, complete "cta" field that mentions the call to action clearly (e.g. mentions the link, or says "Link in bio", "Follow for more" depending on platform: ${params.platform}). Never leave cta empty or generic - it is the most important line.
+Write like a real person explaining something valuable to a friend - human, conversational, confident, curious. NEVER sound like an advertisement or a robotic script. Follow this narrative structure in every script: HOOK (3-8s, curiosity/pain/surprise/question/bold opinion) -> TOPIC INTRO (1-2 sentences) -> MAIN POINTS (2-5 points, each with a real example or comparison, never just stated as facts) -> EXPLANATION (the WHY, using everyday business situations) -> SUMMARY (one memorable line) -> CTA (conversational, never salesy - e.g. "What do you think?", "Follow for more" - only mention a product naturally if relevant).
+
+For the CTA link style: on platforms without clickable captions (Instagram, TikTok, Threads, Snapchat) say "Link in bio" or "Follow for more". On platforms where descriptions support links (YouTube, Facebook, LinkedIn, Twitter/X, Pinterest) say "Link in the description". Default to "Link in bio" if platform is unclear. Never leave cta empty or generic - it is the most important line.
+
+For EACH scene, decide the best visualType: "stock" (general B-roll, default), "chart" (numbers/stats/growth/data), "quote" (a short powerful standalone statement), or "text-card" (simple transitional/emphasis line). Also tag each scene's emotion (serious, exciting, urgent, calm, hopeful, etc) and 2-4 visual keywords.
 
 Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
-{"title":"...","hook":"...","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","duration_seconds":10}],"cta":"..."}` }],
+{"title":"...","hook":"...","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","visualType":"stock|chart|quote|text-card","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}],"cta":"..."}` }],
         model: 'llama-3.3-70b-versatile',
         temperature: 0.8
       })
