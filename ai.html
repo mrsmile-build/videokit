@@ -1288,19 +1288,33 @@ Extract platform exactly as the user names it (could be one platform or several,
     const scriptRes = await smartFetch('/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        messages:[{role:'user', content:`You are a professional social media marketer, influencer, and viral content creator. Create a ${params.length}-second ${params.style} faceless video script about: ${params.topic}.
+        messages:[{role:'user', content:`You are a professional social media marketer, storyteller, and video director. Create a ${params.length}-second ${params.style} faceless video script about: ${params.topic}.
 
-Write a scroll-stopping, curiosity-driven HOOK as the first line - the kind that makes someone stop scrolling in the first 2 seconds. Use pattern interrupts, bold claims, or relatable pain points.
+Write like a real person explaining something valuable to a friend - human, conversational, confident, curious. NEVER sound like an advertisement or a robotic script. Follow this exact narrative structure:
 
-For the CTA, write what a real ${params.platform || 'social media'} creator would actually say, following this principle: on platforms where captions/posts don't support clickable links (like Instagram, TikTok, Threads, Snapchat), say "Link in bio" or "Follow for more". On platforms where the description or post itself CAN hold a clickable link (like YouTube, Facebook, LinkedIn, Twitter/X, Pinterest), say "Link in the description" or "Click the link below". If platform is unclear, general, or multiple platforms at once, default to "Link in bio" since it works everywhere. If there's no specific link to share, use "Follow for more tips", "Save this for later", or "Share with someone who needs this".
-        
+1. HOOK (3-8 seconds): The first line must stop the scroll using curiosity, pain, surprise, a question, a common mistake, or a bold opinion.
+2. TOPIC INTRO: 1-2 sentences on what this video is about and why they should keep watching.
+3. MAIN POINTS: 2-5 simple, practical points, each explained with a real example, story, or comparison - never just stated as facts.
+4. EXPLANATION: Explain WHY, not just what - use everyday business situations a viewer would recognize.
+5. SUMMARY: Briefly repeat the core lesson in one memorable line.
+6. CTA: Conversational, never salesy - e.g. "What do you think?", "Has this happened to you?", "Follow for more". Only mention a product naturally if truly relevant, e.g. "This is one reason I'm building X" - never "Buy X today".
+
+For the CTA link style, follow this principle: on platforms where captions/posts don't support clickable links (like Instagram, TikTok, Threads, Snapchat), say "Link in bio" or "Follow for more". On platforms where the description or post itself CAN hold a clickable link (like YouTube, Facebook, LinkedIn, Twitter/X, Pinterest), say "Link in the description" or "Click the link below". If platform is unclear, general, or multiple platforms at once, default to "Link in bio". If there's no specific link, use "Follow for more tips", "Save this for later", or "Share with someone who needs this".
+
+For EACH scene, decide the best visualType based on its content:
+- "stock": general B-roll footage/images (default for most narrative scenes)
+- "chart": use when the scene mentions numbers, statistics, growth, or data
+- "quote": use when the scene states a short powerful standalone statement worth highlighting big on screen
+- "text-card": use for simple transitional or emphasis lines with no clear visual
+
+Also tag each scene's emotion (serious, exciting, urgent, calm, hopeful, etc) and 2-4 visual keywords describing what should be shown.
+
 Return ONLY valid JSON:
 {
   "title": "video title",
-  "hook": "a SHORT scroll-stopping ALL-CAPS phrase, 3-8 words max, using power words like SECRET/MISTAKE/STOP/WHY/NEVER/TRUTH/FINALLY - this is NOT a sentence, it is a bold thumbnail-style headline, e.g. THE BIGGEST MONEY MISTAKE NIGERIANS MAKE",
+  "hook": "a SHORT scroll-stopping ALL-CAPS phrase, 3-8 words max, using power words like SECRET/MISTAKE/STOP/WHY/NEVER/TRUTH/FINALLY - this is NOT a sentence, it is a bold thumbnail-style headline",
   "scenes": [
-    {"scene_number":1,"narration":"text","visual_keyword":"search term","duration_seconds":10},
-    ...
+    {"scene_number":1,"narration":"text","visual_keyword":"search term","visualType":"stock|chart|quote|text-card","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}
   ],
   "cta": "call to action"
 }`}],
