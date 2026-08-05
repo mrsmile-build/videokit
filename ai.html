@@ -1312,7 +1312,7 @@ Return ONLY valid JSON (no markdown, no explanation):
   "quantity": 1,
   "isSampleScript": false
 }
-Detect voice from phrases like "British female" -> en-gb-f, "American male" -> en-us-m, "Australian" -> en-au-m/f, "news anchor" -> en-news-m. Default en-us-m if not mentioned.
+Detect voice from phrases like "British female" -> en-gb-f, "American male" -> en-us-m, "Australian" -> en-au-m/f, "news anchor" -> en-news-m. Default en-us-m if not mentioned. If no specific duration is mentioned in the request, default length to 45.
 Detect quantity from phrases like "give me 10", "create 5 videos", "10 different videos" -> set that number. Default 1.
 Set isSampleScript true if the request CONTAINS an actual script with parts like Hook/Middle/End/CTA written out (not just a topic description).
 Extract platform exactly as the user names it (could be one platform or several, or none mentioned).`}],
@@ -1329,6 +1329,7 @@ Extract platform exactly as the user names it (could be one platform or several,
     } catch(e) {
       params = { topic: prompt, style:'educational', hook:'viral', length:60, contentType:'image', platform:'instagram' };
     }
+    if (!params.length || params.length <= 0) params.length = 45;
 
     // Branch: batch mode if quantity > 1
     if (params.quantity && params.quantity > 1) {
