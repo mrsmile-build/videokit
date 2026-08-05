@@ -903,14 +903,16 @@ function showGuidedStep(step) {
     businessType: ['Real Estate','Restaurant','Salon/Beauty','Travel Agency','Marketing Agency','E-commerce','Coach/Consultant','Tech/SaaS','Other'],
     goal: ['Get more followers','Generate leads','Increase sales','Educate customers','Build authority','Brand awareness','Customer retention'],
     platform: ['TikTok','Instagram','Facebook','LinkedIn','YouTube','X (Twitter)','General/All'],
-    contentStyle: ['Teach a skill','Coach/advise','Explain a concept','Highlight a mistake','Give a valuable idea','Business tips','Industry myth vs fact','Case study/story','Motivation','Behind the scenes','Q&A style']
+    contentStyle: ['Teach a skill','Coach/advise','Explain a concept','Highlight a mistake','Give a valuable idea','Business tips','Industry myth vs fact','Case study/story','Motivation','Behind the scenes','Q&A style'],
+    quantity: ['Just 1 video','3 videos','5 videos','10 videos']
   };
 
   const labels = {
     businessType: 'What type of business is this for?',
     goal: 'What\'s your main goal?',
     platform: 'Which platform is this mainly for?',
-    contentStyle: 'What content style do you want?'
+    contentStyle: 'What content style do you want?',
+    quantity: 'How many videos should I create?'
   };
 
   const area = document.getElementById('chatArea');
@@ -932,7 +934,7 @@ function selectGuidedOption(step, value, btnEl) {
   btnEl.closest('.progress-card').parentElement.remove();
   addMsg('user', value);
 
-  const stepOrder = ['businessType','goal','platform','contentStyle'];
+  const stepOrder = ['businessType','goal','platform','contentStyle','quantity'];
   const nextIdx = stepOrder.indexOf(step) + 1;
 
   if (nextIdx < stepOrder.length) {
@@ -944,9 +946,11 @@ function selectGuidedOption(step, value, btnEl) {
 
 function finishGuidedMode() {
   const g = _guidedState;
-  const builtPrompt = 'Create a ' + g.contentStyle.toLowerCase() + ' video for a ' + g.businessType.toLowerCase() + ' business, optimized for ' + g.platform + ', with the goal of ' + g.goal.toLowerCase() + '. Make it feel like expert industry-specific content, not generic advice.';
+  const qtyNum = parseInt(g.quantity) || 1;
+  const qtyPhrase = qtyNum > 1 ? ('Create ' + qtyNum + ' different videos') : 'Create a video';
+  const builtPrompt = qtyPhrase + ' - each a ' + g.contentStyle.toLowerCase() + ' style video for a ' + g.businessType.toLowerCase() + ' business, optimized for ' + g.platform + ', with the goal of ' + g.goal.toLowerCase() + '. Make it feel like expert industry-specific content, not generic advice.';
 
-  addMsg('ai', '📋 Content strategy set:\n\n' + g.businessType + ' • ' + g.goal + ' • ' + g.platform + ' • ' + g.contentStyle + '\n\nGenerating your video now...');
+  addMsg('ai', '📋 Content strategy set:\n\n' + g.businessType + ' • ' + g.goal + ' • ' + g.platform + ' • ' + g.contentStyle + ' • ' + g.quantity + '\n\nGenerating now...');
 
   document.getElementById('chatInput').value = builtPrompt;
   sendMessage();
