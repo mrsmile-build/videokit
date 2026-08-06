@@ -898,6 +898,8 @@ function startGuidedMode() {
   showGuidedStep('businessType');
 }
 
+const guidedStepOrder = ['businessType','goal','platform','contentStyle','quantity','linkDetails'];
+
 function showGuidedStep(step) {
   const options = {
     businessType: ['Real Estate','Restaurant','Salon/Beauty','Travel Agency','Marketing Agency','E-commerce','Coach/Consultant','Tech/SaaS','Other'],
@@ -918,15 +920,42 @@ function showGuidedStep(step) {
   const area = document.getElementById('chatArea');
   const div = document.createElement('div');
   div.className = 'msg ai';
-  div.innerHTML = '<div class="msg-avatar ai">🎬</div><div class="progress-card" style="text-align:left">' +
-    '<div style="font-weight:700;margin-bottom:10px;font-size:.88rem">' + labels[step] + '</div>' +
-    '<div style="display:flex;flex-wrap:wrap;gap:8px">' +
-    options[step].map(function(opt) {
-      return '<button onclick="selectGuidedOption(\'' + step + '\', \'' + opt.replace(/'/g,"\\'") + '\', this)" style="padding:8px 14px;background:#1a0900;border:1px solid #ff5c00;border-radius:20px;color:#ff5c00;font-size:.78rem;font-weight:700;cursor:pointer">' + opt + '</button>';
-    }).join('') +
-    '</div></div>';
+  const stepIdx = guidedStepOrder.indexOf(step);
+  const backBtn = stepIdx > 0 ? '<button onclick="goBackGuidedStep(&#39;' + step + '&#39;)" style="padding:6px 10px;background:#1a1a1a;border:1px solid #333;border-radius:16px;color:#999;font-size:.72rem;font-weight:700;cursor:pointer;margin-bottom:10px">← Back</button><br>' : '';
+
+  if (step === 'linkDetails') {
+    div.innerHTML = '<div class="msg-avatar ai">🎬</div><div class="progress-card" style="text-align:left">' +
+      backBtn +
+      '<div style="font-weight:700;margin-bottom:8px;font-size:.88rem">Any link to mention? (optional)</div>' +
+      '<div style="font-size:.76rem;color:#888;margin-bottom:10px">Paste your link/website, or leave blank to skip. Then pick how it should be mentioned.</div>' +
+      '<input id="guidedLinkInput" placeholder="e.g. https://yourwebsite.com" style="width:100%;padding:10px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.82rem;margin-bottom:10px;box-sizing:border-box">' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px">' +
+      ['Link in bio','Link in description','Comment a word to get it','Follow for more (no link)','Just say it out loud in the video'].map(function(opt) {
+        return '<button onclick="selectLinkStyle(&#39;' + opt.replace(/'/g,"&#39;") + '&#39;, this)" style="padding:8px 14px;background:#1a0900;border:1px solid #ff5c00;border-radius:20px;color:#ff5c00;font-size:.78rem;font-weight:700;cursor:pointer">' + opt + '</button>';
+      }).join('') +
+      '</div></div>';
+  } else {
+    div.innerHTML = '<div class="msg-avatar ai">🎬</div><div class="progress-card" style="text-align:left">' +
+      backBtn +
+      '<div style="font-weight:700;margin-bottom:10px;font-size:.88rem">' + labels[step] + '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px">' +
+      options[step].map(function(opt) {
+        return '<button onclick="selectGuidedOption(\'' + step + '\', \'' + opt.replace(/'/g,"\\'") + '\', this)" style="padding:8px 14px;background:#1a0900;border:1px solid #ff5c00;border-radius:20px;color:#ff5c00;font-size:.78rem;font-weight:700;cursor:pointer">' + opt + '</button>';
+      }).join('') +
+      '</div></div>';
+  }
+
   area.appendChild(div);
   setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
+}
+
+function goBackGuidedStep(currentStep) {
+  const idx = guidedStepOrder.indexOf(currentStep);
+  if (idx <= 0) return;
+  document.getElementById('chatArea').lastElementChild.remove();
+  const prevStep = guidedStepOrder[idx - 1];
+  delete _guidedState[prevStep];
+  showGuidedStep(prevStep);
 }
 
 function selectGuidedOption(step, value, btnEl) {
@@ -934,23 +963,38 @@ function selectGuidedOption(step, value, btnEl) {
   btnEl.closest('.progress-card').parentElement.remove();
   addMsg('user', value);
 
-  const stepOrder = ['businessType','goal','platform','contentStyle','quantity'];
-  const nextIdx = stepOrder.indexOf(step) + 1;
-
-  if (nextIdx < stepOrder.length) {
-    showGuidedStep(stepOrder[nextIdx]);
+  const nextIdx = guidedStepOrder.indexOf(step) + 1;
+  if (nextIdx < guidedStepOrder.length) {
+    showGuidedStep(guidedStepOrder[nextIdx]);
   } else {
     finishGuidedMode();
   }
+}
+
+function selectLinkStyle(style, btnEl) {
+  const linkVal = (document.getElementById('guidedLinkInput') || {}).value || '';
+  _guidedState.linkUrl = linkVal.trim();
+  _guidedState.linkStyle = style;
+  btnEl.closest('.progress-card').parentElement.remove();
+  addMsg('user', (linkVal ? linkVal + ' — ' : '') + style);
+  finishGuidedMode();
 }
 
 function finishGuidedMode() {
   const g = _guidedState;
   const qtyNum = parseInt(g.quantity) || 1;
   const qtyPhrase = qtyNum > 1 ? ('Create ' + qtyNum + ' different videos') : 'Create a video';
-  const builtPrompt = qtyPhrase + ' - each a ' + g.contentStyle.toLowerCase() + ' style video for a ' + g.businessType.toLowerCase() + ' business, optimized for ' + g.platform + ', with the goal of ' + g.goal.toLowerCase() + '. Make it feel like expert industry-specific content, not generic advice.';
 
-  addMsg('ai', '📋 Content strategy set:\n\n' + g.businessType + ' • ' + g.goal + ' • ' + g.platform + ' • ' + g.contentStyle + ' • ' + g.quantity + '\n\nGenerating now...');
+  let linkPhrase = '';
+  if (g.linkUrl) {
+    linkPhrase = ' The video should mention this link: ' + g.linkUrl + '. For the call to action, use this exact style: "' + g.linkStyle + '".';
+  } else if (g.linkStyle && g.linkStyle !== 'Just say it out loud in the video') {
+    linkPhrase = ' For the call to action, use this exact style: "' + g.linkStyle + '" (no specific link to mention, just the phrasing).';
+  }
+
+  const builtPrompt = qtyPhrase + ' - each a ' + g.contentStyle.toLowerCase() + ' style video for a ' + g.businessType.toLowerCase() + ' business, optimized for ' + g.platform + ', with the goal of ' + g.goal.toLowerCase() + '. Make it feel like expert industry-specific content, not generic advice.' + linkPhrase;
+
+  addMsg('ai', '📋 Content strategy set:\n\n' + g.businessType + ' • ' + g.goal + ' • ' + g.platform + ' • ' + g.contentStyle + ' • ' + g.quantity + (g.linkUrl ? ' • ' + g.linkUrl : '') + '\n\nGenerating now...');
 
   document.getElementById('chatInput').value = builtPrompt;
   sendMessage();
