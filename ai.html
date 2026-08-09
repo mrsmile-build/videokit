@@ -1472,12 +1472,17 @@ Return ONLY valid JSON:
     updateStep(0, 'step-done');
     const scenes = script.scenes || [];
 
-    // Step 2: Generate voice FIRST (so we know exact duration)
+    // Step 2: Generate voice FIRST (so we know exact duration) - unless AI decided this content works better without narration
     updateStep(2, 'step-active');
     let audioBlob2 = null;
     let voiceDuration = params.length || 60;
     let voiceError = null;
+    const wantsVoice = script.voiceover !== false;
+    if (!wantsVoice) {
+      console.log('[Voice] Skipped by AI decision:', script.voiceover_reason || 'no reason given');
+    }
     try {
+      if (!wantsVoice) throw new Error('SKIP_VOICE_BY_DESIGN');
       const fullScript2 = stripUrlsForSpeech(scenes.map(s => s.narration).join(' '));
       const voiceRes = await smartFetch('/tts-voicerss', {
         method:'POST', headers:{'Content-Type':'application/json'},
@@ -1503,7 +1508,9 @@ Return ONLY valid JSON:
       } else {
         voiceError = 'TTS server returned status ' + voiceRes.status;
       }
-    } catch(e) { voiceError = e.message; }
+    } catch(e) {
+      if (e.message !== 'SKIP_VOICE_BY_DESIGN') voiceError = e.message;
+    }
     if (voiceError) {
       addMsg('ai', '⚠️ Voice generation issue: ' + voiceError + ' (continuing without voice)');
     }
