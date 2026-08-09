@@ -451,10 +451,10 @@ Write like a real person explaining something valuable to a friend - human, conv
 
 For the CTA link style: on platforms without clickable captions (Instagram, TikTok, Threads, Snapchat) say "Link in bio" or "Follow for more". On platforms where descriptions support links (YouTube, Facebook, LinkedIn, Twitter/X, Pinterest) say "Link in the description". Default to "Link in bio" if platform is unclear. Never leave cta empty or generic - it is the most important line.
 
-For EACH scene, decide the best visualType: "stock" (general B-roll, default), "chart" (numbers/stats/growth/data), "quote" (a short powerful standalone statement), or "text-card" (simple transitional/emphasis line). Also tag each scene's emotion (serious, exciting, urgent, calm, hopeful, etc) and 2-4 visual keywords.
+First classify this content's overall format as one of: educational_list, tutorial, framework, checklist, mistakes, problem_solution, comparison, case_study, storytelling, myth_vs_reality, statistics, tips, qa, motivational, opinion, news_explainer - pick whichever fits best.\n\nDecide whether voiceover genuinely helps this content or if it works better as pure text/visuals (e.g. a short punchy list may not need narration, but an explanation usually does). Include a one-sentence reason for your decision.\n\nFor EACH scene, decide the best visualType: "stock" (general B-roll, default), "chart" (numbers/stats/growth/data), "quote" (a short powerful standalone statement), or "text-card" (simple transitional/emphasis line). Also tag each scene's emotion (serious, exciting, urgent, calm, hopeful, etc) and 2-4 visual keywords.
 
 Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
-{"title":"...","hook":"...","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","visualType":"stock|chart|quote|text-card","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}],"cta":"..."}` }],
+{"title":"...","hook":"...","content_type":"educational_list|tutorial|framework|checklist|mistakes|problem_solution|comparison|case_study|storytelling|myth_vs_reality|statistics|tips|qa|motivational|opinion|news_explainer","voiceover":true,"voiceover_reason":"why","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","visualType":"stock|chart|quote|text-card","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}],"cta":"..."}` }],
         model: 'llama-3.3-70b-versatile',
         temperature: 0.8
       })
@@ -1421,6 +1421,10 @@ Write like a real person explaining something valuable to a friend - human, conv
 
 For the CTA link style, follow this principle: on platforms where captions/posts don't support clickable links (like Instagram, TikTok, Threads, Snapchat), say "Link in bio" or "Follow for more". On platforms where the description or post itself CAN hold a clickable link (like YouTube, Facebook, LinkedIn, Twitter/X, Pinterest), say "Link in the description" or "Click the link below". If platform is unclear, general, or multiple platforms at once, default to "Link in bio". If there's no specific link, use "Follow for more tips", "Save this for later", or "Share with someone who needs this".
 
+First classify this content's overall format as one of: educational_list, tutorial, framework, checklist, mistakes, problem_solution, comparison, case_study, storytelling, myth_vs_reality, statistics, tips, qa, motivational, opinion, news_explainer - pick whichever fits best.
+
+Decide whether voiceover genuinely helps this content or if it works better as pure text/visuals. Include a one-sentence reason.
+
 For EACH scene, decide the best visualType based on its content:
 - "stock": general B-roll footage/images (default for most narrative scenes)
 - "chart": use when the scene mentions numbers, statistics, growth, or data
@@ -1433,6 +1437,9 @@ Return ONLY valid JSON:
 {
   "title": "video title",
   "hook": "a SHORT scroll-stopping ALL-CAPS phrase, 3-8 words max, using power words like SECRET/MISTAKE/STOP/WHY/NEVER/TRUTH/FINALLY - this is NOT a sentence, it is a bold thumbnail-style headline",
+  "content_type": "educational_list|tutorial|framework|checklist|mistakes|problem_solution|comparison|case_study|storytelling|myth_vs_reality|statistics|tips|qa|motivational|opinion|news_explainer",
+  "voiceover": true,
+  "voiceover_reason": "why",
   "scenes": [
     {"scene_number":1,"narration":"text","visual_keyword":"search term","visualType":"stock|chart|quote|text-card","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}
   ],
@@ -1894,10 +1901,10 @@ Write like a real person explaining something valuable to a friend - human, conv
 
 For the CTA link style: on platforms without clickable captions (Instagram, TikTok, Threads, Snapchat) say "Link in bio" or "Follow for more". On platforms where descriptions support links (YouTube, Facebook, LinkedIn, Twitter/X, Pinterest) say "Link in the description". Default to "Link in bio" if platform is unclear. Never leave cta empty or generic - it is the most important line.
 
-For EACH scene, decide the best visualType: "stock" (general B-roll, default), "chart" (numbers/stats/growth/data), "quote" (a short powerful standalone statement), or "text-card" (simple transitional/emphasis line). Also tag each scene's emotion (serious, exciting, urgent, calm, hopeful, etc) and 2-4 visual keywords.
+First classify this content's overall format as one of: educational_list, tutorial, framework, checklist, mistakes, problem_solution, comparison, case_study, storytelling, myth_vs_reality, statistics, tips, qa, motivational, opinion, news_explainer - pick whichever fits best.\n\nDecide whether voiceover genuinely helps this content or if it works better as pure text/visuals (e.g. a short punchy list may not need narration, but an explanation usually does). Include a one-sentence reason for your decision.\n\nFor EACH scene, decide the best visualType: "stock" (general B-roll, default), "chart" (numbers/stats/growth/data), "quote" (a short powerful standalone statement), or "text-card" (simple transitional/emphasis line). Also tag each scene's emotion (serious, exciting, urgent, calm, hopeful, etc) and 2-4 visual keywords.
 
 Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
-{"title":"...","hook":"...","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","visualType":"stock|chart|quote|text-card","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}],"cta":"..."}` }],
+{"title":"...","hook":"...","content_type":"educational_list|tutorial|framework|checklist|mistakes|problem_solution|comparison|case_study|storytelling|myth_vs_reality|statistics|tips|qa|motivational|opinion|news_explainer","voiceover":true,"voiceover_reason":"why","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","visualType":"stock|chart|quote|text-card","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}],"cta":"..."}` }],
         model: 'llama-3.3-70b-versatile',
         temperature: 0.8
       })
