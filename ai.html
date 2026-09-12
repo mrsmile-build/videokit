@@ -244,36 +244,14 @@ window.addEventListener('error', function(e) {
 
 </script>
 <script>window.addEventListener("DOMContentLoaded", function(){ initScriptStore(); loadChatHistory(); checkResumeSession(); });</script>
+<script src="js/api.js"></script>
 <script>
 
 function stripUrlsForSpeech(text) {
   return (text||'').replace(/https?:\/\/[^\s]+/g, '').replace(/\s+/g, ' ').trim();
 }
 
-const BACKENDS = [
-  'https://groq-proxy-7f82.onrender.com',  // Primary (live)
-  'https://groq-proxy-0bfy.onrender.com'   // Secondary
-  // Add more backups if needed later
-];
 
-async function smartFetch(path, options) {
-  let lastError = null;
-  for (let i = 0; i < BACKENDS.length; i++) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(function() { controller.abort(); }, 90000);
-      const opts = Object.assign({}, options, { signal: controller.signal });
-      const resp = await fetch(BACKENDS[i] + path, opts);
-      clearTimeout(timeoutId);
-      if (resp.status < 500) return resp;
-      lastError = new Error('Backend returned status ' + resp.status);
-    } catch (err) {
-      lastError = err;
-      continue;
-    }
-  }
-  throw lastError || new Error('All backends failed');
-}
 let uploadedFiles = [];
 let isProcessing = false;
 let _guidedState = {};

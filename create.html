@@ -601,13 +601,6 @@ function waitFor(condition, timeout) {
 </footer>
 
 <script>
-const BACKENDS = [
-  "https://groq-proxy-0bfy.onrender.com",
-  "https://groq-proxy-production-cd12.up.railway.app",
-  "https://groq-proxy-7f82.onrender.com"
-];
-const PROXY = BACKENDS[0];
-
 // ── Voice config ──────────────────────────────────────────────
 const VOICE_CONFIG = {
   "en-us-m":    { puter: "onyx",    tiktok: "en_us_006" },
@@ -717,30 +710,7 @@ function toggleUrlSection() {
   if (arrow) arrow.textContent = open ? "⌄" : "›";
 }
 
-async function fetchWithRetry(url, options, max=3) {
-  // Extract whichever path was appended after the original PROXY base,
-  // so we can retry that SAME path against each backend in turn.
-  const path = url.startsWith(PROXY) ? url.slice(PROXY.length) : url;
-  let lastError = null;
-  for (const backend of BACKENDS) {
-    for (let i = 0; i < max; i++) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(function() { controller.abort(); }, 30000);
-        const opts = Object.assign({}, options, { signal: controller.signal });
-        const resp = await fetch(backend + path, opts);
-        clearTimeout(timeoutId);
-        if (resp.status < 500) return resp;
-        lastError = new Error('Status ' + resp.status);
-        break; // don't retry same backend on a clean error response, just move to next backend
-      } catch(e) {
-        lastError = e;
-        await new Promise(r=>setTimeout(r,1000*(i+1)));
-      }
-    }
-  }
-  throw lastError || new Error('All backends failed');
-}
+
 
 // ── STEP 1: Script ────────────────────────────────────────────
 const HOOK_PROMPTS = {
@@ -1554,6 +1524,7 @@ function waitFor(condition, timeout) {
   </a>
 </div>
 
+<script src="js/api.js"></script>
 <script>
 (function() {
   const restoreId = localStorage.getItem('vk_restore');
