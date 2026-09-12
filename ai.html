@@ -865,9 +865,8 @@ function stripUrlsForSpeech(text) {
 }
 
 const BACKENDS = [
-  'https://groq-proxy-0bfy.onrender.com',
-  'https://groq-proxy-production-cd12.up.railway.app',
-  'https://groq-proxy-7f82.onrender.com'
+  'https://groq-proxy-7f82.onrender.com'  // Primary (live)
+  // Add more backups if needed later
 ];
 
 async function smartFetch(path, options) {
