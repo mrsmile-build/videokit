@@ -455,10 +455,10 @@ First classify this content's overall format as one of: educational_list, tutori
 
 Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
 {"title":"...","hook":"...","content_type":"educational_list|tutorial|framework|checklist|mistakes|problem_solution|comparison|case_study|storytelling|myth_vs_reality|statistics|tips|qa|motivational|opinion|news_explainer","voiceover":true,"voiceover_reason":"why","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","visualType":"stock|chart|quote|text-card","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}],"cta":"..."}` }],
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         temperature: 0.8
       })
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         temperature: 0.8
       })
     });
@@ -749,7 +749,7 @@ async function loadCaptionTab(i, platform) {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         messages:[{role:'user', content:'Write a social media caption for this video:\nTitle: ' + (script.title||'') + '\nHook: ' + (script.hook||'') + '\nSummary: ' + (script.scenes||[]).map(function(sc){return sc.narration;}).join(' ').slice(0,300) + '\nCTA: ' + (script.cta||'') + '\n\nPlatform rule (follow strictly): ' + specsText + '\n\nReturn ONLY valid JSON (no markdown): {"caption":"..."' + (s.hasTitle ? ',"title":"..."' : '') + '}'}],
-        model:'llama-3.3-70b-versatile',
+        model:'openai/gpt-oss-120b',
         temperature:0.7
       })
     });
@@ -813,7 +813,7 @@ ${specsText}
 Return ONLY valid JSON (no markdown), shaped as an object keyed by platform name, e.g.:
 {"instagram":{"caption":"..."},"youtube":{"title":"...","caption":"..."}}
 Only include keys for: ${targets.join(', ')}`}],
-        model:'llama-3.3-70b-versatile',
+        model:'openai/gpt-oss-120b',
         temperature:0.7
       })
     });
@@ -1364,7 +1364,7 @@ Detect voice from phrases like "British female" -> en-gb-f, "American male" -> e
 Detect quantity from phrases like "give me 10", "create 5 videos", "10 different videos" -> set that number. Default 1.
 Set isSampleScript true if the request CONTAINS an actual script with parts like Hook/Middle/End/CTA written out (not just a topic description).
 Extract platform exactly as the user names it (could be one platform or several, or none mentioned).`}],
-        model:'llama-3.3-70b-versatile',
+        model:'openai/gpt-oss-120b',
         temperature:0.3
       })
     });
@@ -1445,7 +1445,7 @@ Return ONLY valid JSON:
   ],
   "cta": "call to action"
 }`}],
-        model:'llama-3.3-70b-versatile',
+        model:'openai/gpt-oss-120b',
         temperature:0.7
       })
     });
@@ -1912,7 +1912,7 @@ First classify this content's overall format as one of: educational_list, tutori
 
 Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
 {"title":"...","hook":"...","content_type":"educational_list|tutorial|framework|checklist|mistakes|problem_solution|comparison|case_study|storytelling|myth_vs_reality|statistics|tips|qa|motivational|opinion|news_explainer","voiceover":true,"voiceover_reason":"why","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","visualType":"stock|chart|quote|text-card","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}],"cta":"..."}` }],
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         temperature: 0.8
       })
     });
@@ -2205,7 +2205,7 @@ async function loadCaptionTab(i, platform) {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         messages:[{role:'user', content:'Write a social media caption for this video:\nTitle: ' + (script.title||'') + '\nHook: ' + (script.hook||'') + '\nSummary: ' + (script.scenes||[]).map(function(sc){return sc.narration;}).join(' ').slice(0,300) + '\nCTA: ' + (script.cta||'') + '\n\nPlatform rule (follow strictly): ' + specsText + '\n\nReturn ONLY valid JSON (no markdown): {"caption":"..."' + (s.hasTitle ? ',"title":"..."' : '') + '}'}],
-        model:'llama-3.3-70b-versatile',
+        model:'openai/gpt-oss-120b',
         temperature:0.7
       })
     });
@@ -2269,7 +2269,7 @@ ${specsText}
 Return ONLY valid JSON (no markdown), shaped as an object keyed by platform name, e.g.:
 {"instagram":{"caption":"..."},"youtube":{"title":"...","caption":"..."}}
 Only include keys for: ${targets.join(', ')}`}],
-        model:'llama-3.3-70b-versatile',
+        model:'openai/gpt-oss-120b',
         temperature:0.7
       })
     });

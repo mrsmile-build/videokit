@@ -780,7 +780,7 @@ async function generateScript() {
   try {
     const res  = await fetchWithRetry(PROXY + "/generate", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ model:"llama-3.3-70b-versatile", messages:[{role:"user",content:prompt}], temperature:0.8, max_tokens:3000 })
+      body: JSON.stringify({ model:"openai/gpt-oss-120b", messages:[{role:"user",content:prompt}], temperature:0.8, max_tokens:3000 })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error?.message || "API error");
@@ -820,7 +820,7 @@ async function generateCaption(sd) {
     const res = await fetchWithRetry(PROXY + "/generate", {
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
-        model:"llama-3.3-70b-versatile", max_tokens:200,
+        model:"openai/gpt-oss-120b", max_tokens:200,
         messages:[{role:"user",content:"Write a viral " + platform + " caption for a video about: \"" + sd.title + "\". Rules: " + rules + " Return ONLY the caption text."}]
       })
     });
@@ -852,7 +852,7 @@ async function humanRewrite() {
     const prompt = "Rewrite this video script to sound completely human and natural. Remove all AI cliches like game-changer, delve, unlock, leverage. Use contractions. Add natural pauses with ellipsis. Use phrases like Here is the thing and And honestly and Look. Keep the same JSON structure exactly. Return ONLY valid JSON. Script: " + JSON.stringify(scriptData);
     const res  = await fetchWithRetry(PROXY + "/generate", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ model:"llama-3.3-70b-versatile", max_tokens:3000, messages:[{role:"user",content:prompt}] })
+      body: JSON.stringify({ model:"openai/gpt-oss-120b", max_tokens:3000, messages:[{role:"user",content:prompt}] })
     });
     const data = await res.json();
     const raw  = data.choices[0].message.content.trim().replace(/```json|```/g,"").trim();
@@ -887,7 +887,7 @@ async function usePastedScript() {
     const res  = await fetchWithRetry(PROXY + "/generate", {
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
-        model:"llama-3.3-70b-versatile",
+        model:"openai/gpt-oss-120b",
         messages:[{role:"user",content:"Convert this script into a proper JSON video script. Return ONLY a valid JSON object with: title, hook (max 15 words), scenes (array with: scene_number, narration, visual_keyword, duration_seconds), cta. Preserve the words. Script:\n" + raw}],
         temperature:0.3, max_tokens:2000
       })
@@ -913,7 +913,7 @@ async function sendChat() {
     const res  = await fetchWithRetry(PROXY + "/generate", {
       method:"POST", headers:{"Content-Type":"application/json"},
       body: JSON.stringify({
-        model:"llama-3.3-70b-versatile",
+        model:"openai/gpt-oss-120b",
         messages:[
           {role:"system", content:"You are a script editor. The user has this video script: " + JSON.stringify(scriptData) + ". Apply the change and return the COMPLETE updated script as valid JSON with same structure: title, hook, scenes, cta. No markdown."},
           ...chatHistory
