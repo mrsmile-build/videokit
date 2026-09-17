@@ -233,6 +233,7 @@ window.addEventListener('error', function(e) {
 
 </script>
 <script>window.addEventListener("DOMContentLoaded", function(){ initScriptStore(); loadChatHistory(); checkResumeSession(); });</script>
+<script src="js/kinetic.js"></script>
 <script src="js/api.js"></script>
 <script>
 
@@ -717,11 +718,13 @@ Return ONLY valid JSON (no markdown, no explanation):
   "platform": "the specific platform(s) mentioned, e.g. instagram, tiktok, youtube, facebook, linkedin, twitter, snapchat, pinterest, threads, whatsapp status, or general if none mentioned",
   "voice": "en-us-m|en-us-f|en-gb-m|en-gb-f|en-au-m|en-au-f|en-news-m|en-story-f",
   "hasUserMedia": false,
+  "visualMode": "stock|kinetic",
   "quantity": 1,
   "isSampleScript": false
 }
 Detect voice from phrases like "British female" -> en-gb-f, "American male" -> en-us-m, "Australian" -> en-au-m/f, "news anchor" -> en-news-m. Default en-us-m if not mentioned. If no specific duration is mentioned in the request, default length to 45.
 Detect quantity from phrases like "give me 10", "create 5 videos", "10 different videos" -> set that number. Default 1.
+Set visualMode "kinetic" if the request mentions kinetic, typography, text-only ad, brand motion, McKinsey-style, or says no stock footage; otherwise "stock".
 Set isSampleScript true if the request CONTAINS an actual script with parts like Hook/Middle/End/CTA written out (not just a topic description).
 Extract platform exactly as the user names it (could be one platform or several, or none mentioned).`}],
         model:'openai/gpt-oss-120b',
@@ -823,7 +826,8 @@ Return ONLY valid JSON:
         scene_number: script.scenes.length + 1,
         narration: script.cta,
         visual_keyword: 'click here follow subscribe button',
-        duration_seconds: 6
+        duration_seconds: 6,
+        isCta: true
       });
     }
     if (script.hook && script.scenes && script.scenes[0]) {
@@ -883,9 +887,13 @@ Return ONLY valid JSON:
     }
     updateStep(2, 'step-done');
 
-    // Step 3: Find visuals (or use uploaded)
-    updateStep(1, 'step-active');
+    // Step 3: Find visuals (or use uploaded) - skipped for Brand Motion
+    const visualMode = brief.visualMode || 'stock';
     const sceneMedia = [];
+    if (visualMode === 'kinetic') {
+      updateStep(1, 'step-done');
+    } else {
+    updateStep(1, 'step-active');
       const usedImageUrls = new Set();
 
     if (uploadedFiles.length) {
@@ -929,9 +937,12 @@ Return ONLY valid JSON:
       }
     }
     updateStep(1, 'step-done');
+    }
 // Step 4: Create video
     updateStep(3, 'step-active');
-    const videoBlob = await createVideoFromScenes(scenes, sceneMedia, audioBlob2, voiceDuration, params.musicUrl);
+    const videoBlob = (visualMode === 'kinetic')
+      ? await renderKineticVideo(scenes, audioBlob2, null, { totalLen: voiceDuration, musicUrl: params.musicUrl, ctaUrl: window._bizUrl || '' })
+      : await createVideoFromScenes(scenes, sceneMedia, audioBlob2, voiceDuration, params.musicUrl);
     updateStep(3, 'step-done');
 
     // Remove progress card
@@ -1181,6 +1192,7 @@ async function runBusinessResearch() {
   const name = document.getElementById('bizName').value.trim();
   const desc = document.getElementById('bizDesc').value.trim();
   const url = document.getElementById('bizUrl').value.trim();
+  window._bizUrl = url;
   if (!name && !desc) { alert('Add at least a name or a description'); return; }
   document.getElementById('bizCard').remove();
   const typing = addMsg('ai', '🔎 Researching your business...');
@@ -1289,6 +1301,16 @@ function isCtaDuplicate(scenes, cta) {
   return last.includes(c.slice(0, 25)) || c.includes(last.slice(0, 25));
 }
 
+function setVisualMode(m) {
+  window._briefVisualMode = m;
+  const ks = document.getElementById('vmStock'), kk = document.getElementById('vmKinetic');
+  if (!ks || !kk) return;
+  const on = 'flex:1;padding:10px;border-radius:8px;border:1px solid #ff5c00;background:#1a0900;color:#ff5c00;font-weight:700;font-size:.8rem;cursor:pointer';
+  const off = 'flex:1;padding:10px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#888;font-weight:700;font-size:.8rem;cursor:pointer';
+  ks.style.cssText = m === 'stock' ? on : off;
+  kk.style.cssText = m === 'kinetic' ? on : off;
+}
+
 // ── Video Brief Review (plan before you build) ─────────────
 function openPasteModal() {
   document.getElementById('pasteModal').style.display = 'flex';
@@ -1346,6 +1368,10 @@ function showBriefCard(script, params) {
       '<div style="font-size:.68rem;color:#888;font-weight:700;letter-spacing:.05em;margin-bottom:6px">SCENES</div>' +
       '<div id="briefScenes" data-editing="0" style="margin-bottom:10px">' + sceneHtml + '</div>' +
       '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+      '<button id="vmStock" onclick="setVisualMode(\'stock\')" style="flex:1;padding:10px;border-radius:8px;border:1px solid #ff5c00;background:#1a0900;color:#ff5c00;font-weight:700;font-size:.8rem;cursor:pointer">📸 Stock</button>' +
+      '<button id="vmKinetic" onclick="setVisualMode(\'kinetic\')" style="flex:1;padding:10px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#888;font-weight:700;font-size:.8rem;cursor:pointer">🎬 Brand Motion</button>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;margin-bottom:10px">' +
       '<select id="briefVoice" style="flex:1;padding:10px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-family:\'Syne\',sans-serif;font-size:.82rem">' +
       '<option value="en-us-m">🇺🇸 American Male</option><option value="en-us-f">🇺🇸 American Female</option>' +
       '<option value="en-gb-m">🇬🇧 British Male</option><option value="en-gb-f">🇬🇧 British Female</option>' +
@@ -1362,6 +1388,7 @@ function showBriefCard(script, params) {
     area.appendChild(div);
     setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
     document.getElementById('briefVoice').value = params.voice || 'en-us-m';
+    setVisualMode((params.visualMode || 'stock') === 'kinetic' ? 'kinetic' : 'stock');
   });
 }
 
@@ -1374,7 +1401,8 @@ function confirmBrief() {
   const out = {
     script: script,
     voice: document.getElementById('briefVoice').value,
-    musicUrl: document.getElementById('confirmMusicUrl').value
+    musicUrl: document.getElementById('confirmMusicUrl').value,
+    visualMode: window._briefVisualMode || 'stock'
   };
   card.remove();
   if (window._briefResolve) window._briefResolve(out);
@@ -1567,7 +1595,8 @@ Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON 
           scene_number: s.scenes.length + 1,
           narration: s.cta,
           visual_keyword: 'click here follow subscribe button',
-          duration_seconds: 6
+          duration_seconds: 6,
+          isCta: true
         });
       }
       if (s.hook && s.scenes && s.scenes[0]) {
