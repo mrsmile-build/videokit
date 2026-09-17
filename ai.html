@@ -691,7 +691,8 @@ async function sendMessage() {
 }
 
 async function processVideoRequest(prompt) {
-  if (!window._fromBusiness) window._strategyBlock = '';
+  const fromBiz = !!window._fromBusiness;
+  if (!fromBiz) window._strategyBlock = '';
   window._fromBusiness = false;
   // Ask AI to analyze the prompt
   const typingBubble = addMsg('ai', 'Analyzing your request...', false);
@@ -703,6 +704,8 @@ async function processVideoRequest(prompt) {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         messages:[{role:'user', content:`Extract video parameters from this request: "${prompt}"
+
+${window._strategyBlock || ''}
         
 Return ONLY valid JSON (no markdown, no explanation):
 {
@@ -735,6 +738,12 @@ Extract platform exactly as the user names it (could be one platform or several,
       params = { topic: prompt, style:'educational', hook:'viral', length:60, contentType:'image', platform:'instagram' };
     }
     if (!params.length || params.length <= 0) params.length = 45;
+    if (fromBiz && window._strategyMeta) {
+      params.style = window._strategyMeta.stylesLabel;
+      params.platform = window._strategyMeta.platform;
+      params.length = window._strategyMeta.length;
+      if (window._strategyMeta.qty > 1) params.quantity = window._strategyMeta.qty;
+    }
 
     // Branch: batch mode if quantity > 1
     if (params.quantity && params.quantity > 1) {
@@ -809,7 +818,7 @@ Return ONLY valid JSON:
     } catch(e) {
       throw new Error('Script generation failed');
     }
-    if (script.cta && script.scenes) {
+    if (script.cta && script.scenes && !isCtaDuplicate(script.scenes, script.cta)) {
       script.scenes.push({
         scene_number: script.scenes.length + 1,
         narration: script.cta,
@@ -1265,10 +1274,19 @@ function confirmStrategy() {
   const qty = document.getElementById('bizQty').value;
   const labels = styles.map(k => VK_STYLES[k].label).join(' + ');
   window._strategyBlock = 'STRATEGY CONTEXT (from business research — follow it):\nBusiness: ' + (window._bizName||'') + ' — ' + (window._bizDesc||'') + '\nSummary: ' + (strat.business_summary||'') + '\nAudience: ' + (strat.audience||'') + '\nPains: ' + (strat.pains||[]).join('; ') + '\nObjections to handle: ' + (strat.objections||[]).join('; ') + '\nAngle: ' + (strat.angle||'') + '\nChosen style mix: ' + labels + '\n';
+  window._strategyMeta = { platform: platform, length: +length, qty: +qty, stylesLabel: labels };
   window._fromBusiness = true;
   document.getElementById('strategyCard').remove();
   const prompt = (qty > 1 ? 'Create ' + qty + ' different videos' : 'Create a video') + ' (' + length + ' seconds) for ' + (window._bizName || 'my business') + ' in ' + labels + ' style for ' + platform + '. ' + (strat.angle || '');
   usePrompt(prompt);
+}
+
+function isCtaDuplicate(scenes, cta) {
+  if (!scenes || !scenes.length || !cta) return false;
+  const last = (scenes[scenes.length - 1].narration || '').toLowerCase().trim();
+  const c = cta.toLowerCase().trim();
+  if (!last || c.length < 10) return false;
+  return last.includes(c.slice(0, 25)) || c.includes(last.slice(0, 25));
 }
 
 // ── Video Brief Review (plan before you build) ─────────────
@@ -1544,7 +1562,7 @@ Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON 
     }
 
     scriptsArray.forEach(s => {
-      if (s.cta && s.scenes) {
+      if (s.cta && s.scenes && !isCtaDuplicate(s.scenes, s.cta)) {
         s.scenes.push({
           scene_number: s.scenes.length + 1,
           narration: s.cta,
