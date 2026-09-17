@@ -157,7 +157,7 @@
   </div>
   <div style="display:flex;gap:8px">
     <button onclick="renderThreadList();document.getElementById('threadListModal').style.display='flex'" style="width:38px;height:38px;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:#ccc;font-size:1.1rem;cursor:pointer">📋</button>
-    <button onclick="startNewThread()" style="width:38px;height:38px;background:#ff5c00;border:none;border-radius:10px;color:white;font-size:1.1rem;cursor:pointer">＋</button>
+    <button onclick="startNewThread();setTimeout(maybeShowStartCard,300)" style="width:38px;height:38px;background:#ff5c00;border:none;border-radius:10px;color:white;font-size:1.1rem;cursor:pointer">＋</button>
   </div>
 </div>
 
@@ -184,6 +184,8 @@
       "Funny video about Nigerian hustle culture, 60 seconds"</em>
     </div>
   </div>
+
+  
 </div>
 
 <!-- Input Area -->
@@ -252,6 +254,7 @@ function startGuidedMode() {
 const guidedStepOrder = ['businessType','goal','platform','contentStyle','quantity','linkDetails'];
 
 function showGuidedStep(step) {
+  var _sc = document.getElementById('startCard'); if (_sc) _sc.remove();
   const options = {
     businessType: ['Real Estate','Restaurant','Salon/Beauty','Travel Agency','Marketing Agency','E-commerce','Coach/Consultant','Tech/SaaS','Other'],
     goal: ['Get more followers','Generate leads','Increase sales','Educate customers','Build authority','Brand awareness','Customer retention'],
@@ -660,6 +663,7 @@ function removeUpload(i) {
 }
 
 async function sendMessage() {
+  var sc = document.getElementById('startCard'); if (sc) sc.remove();
   const dbgInput = document.getElementById("chatInput").value.trim();
   if (dbgInput === "/debugcaptions") {
     document.getElementById("chatInput").value = "";
@@ -1113,6 +1117,25 @@ function confirmGenerate() {
 }
 
 
+// ── Empty-state Start Cards (dynamic) ───────────────────────
+function maybeShowStartCard() {
+  const area = document.getElementById('chatArea');
+  if (!area || document.getElementById('startCard')) return;
+  if (area.querySelector('.msg.user') || area.querySelector('.progress-card')) return; // thread has real activity
+  const div = document.createElement('div');
+  div.id = 'startCard';
+  const row = 'display:flex;gap:12px;align-items:center;background:#111;border:1px solid #222;border-radius:14px;padding:14px;cursor:pointer';
+  div.style.cssText = 'display:flex;flex-direction:column;gap:10px;padding:10px 4px 4px';
+  div.innerHTML = '<div style="font-size:.68rem;color:#666;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:8px">Start here</div>' +
+    '<div onclick="document.getElementById(\'chatInput\').focus()" style="' + row + '"><span style="font-size:1.3rem">💬</span><span><span style="display:block;font-weight:800;font-size:.88rem">Describe an idea</span><span style="display:block;font-size:.74rem;color:#888;margin-top:2px">Type anything — AI plans the rest</span></span></div>' +
+    '<div onclick="startGuidedMode()" style="' + row + '"><span style="font-size:1.3rem">🎯</span><span><span style="display:block;font-weight:800;font-size:.88rem">Guided Strategist</span><span style="display:block;font-size:.74rem;color:#888;margin-top:2px">6 quick questions → strategic video</span></span></div>' +
+    '<div onclick="startBusinessMode()" style="' + row.replace('#222','#ff5c00') + '"><span style="font-size:1.3rem">🏢</span><span><span style="display:block;font-weight:800;font-size:.88rem;color:#ff5c00">My Business</span><span style="display:block;font-size:.74rem;color:#888;margin-top:2px">AI researches your brand + recommends styles</span></span></div>' +
+    '<div onclick="openPasteModal()" style="' + row + '"><span style="font-size:1.3rem">📋</span><span><span style="display:block;font-weight:800;font-size:.88rem">Paste a script</span><span style="display:block;font-size:.74rem;color:#888;margin-top:2px">Rebuild any script in your own style</span></span></div>';
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(maybeShowStartCard, 300); });
+
 // ── Business Strategist (research + reasoning + style mix) ──
 const VK_STYLES = {
   ad:      { label:'📢 Ad / Sales', desc:'Direct response — sell the offer' },
@@ -1125,6 +1148,7 @@ const VK_STYLES = {
 };
 
 function startBusinessMode() {
+  var _sc = document.getElementById('startCard'); if (_sc) _sc.remove();
   const area = document.getElementById('chatArea');
   const div = document.createElement('div');
   div.className = 'msg ai';
