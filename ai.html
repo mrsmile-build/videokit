@@ -774,9 +774,9 @@ Extract platform exactly as the user names it (could be one platform or several,
       body: JSON.stringify({
         messages:[{role:'user', content:`You are a professional social media marketer, storyteller, and video director. Create a ${params.length}-second ${params.style} faceless video script about: ${params.topic}.\n\n${window._strategyBlock || ''}
 
-Write like a real person explaining something valuable to a friend - human, conversational, confident, curious. NEVER sound like an advertisement or a robotic script. Follow this exact narrative structure:
+Write like a real person explaining something valuable to a friend - human, conversational, confident, curious. NEVER sound like an advertisement or a robotic script. VOICE RULES: contractions everywhere (you're, don't, it's), short fragments allowed, sometimes start with And/But, ZERO corporate buzzwords (delve, leverage, unlock, elevate, game-changer, revolutionize, seamless), ZERO AI tells (In conclusion, It's important to note, Moreover), every line must pass the read-aloud test - if it sounds like an ad or a robot, rewrite it. Follow this exact narrative structure:
 
-1. HOOK (3-8 seconds): The first line must stop the scroll using curiosity, pain, surprise, a question, a common mistake, or a bold opinion.
+1. HOOK (3-8 seconds): 4-8 WORDS, second person, an emotional gut-punch that mirrors the viewer's private pain or opens a curiosity gap they MUST close. Must sound like a real human saying it out loud. BANNED openers: 'In today's video', 'Ever wondered', 'Welcome to'. Model hooks: 'You're not lazy. You're trapped.' / 'Your salary is a painkiller, not a cure.' / 'Nobody warns you about this money trap.'
 2. TOPIC INTRO: 1-2 sentences on what this video is about and why they should keep watching.
 3. MAIN POINTS: 2-5 simple, practical points, each explained with a real example, story, or comparison - never just stated as facts.
 4. EXPLANATION: Explain WHY, not just what - use everyday business situations a viewer would recognize.
@@ -805,7 +805,7 @@ Return ONLY valid JSON:
   "voiceover": true,
   "voiceover_reason": "why",
   "scenes": [
-    {"scene_number":1,"narration":"text","visual_keyword":"search term","visualType":"stock|chart|quote|text-card","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}
+    {"scene_number":1,"narration":"text","visual_keyword":"search term","visualType":"stock|chart|quote|text-card","highlight":"exact punchline phrase from this scene narration to color-highlight (max 6 words, or empty)","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}
   ],
   "cta": "call to action"
 }`}],
@@ -941,7 +941,7 @@ Return ONLY valid JSON:
 // Step 4: Create video
     updateStep(3, 'step-active');
     const videoBlob = (visualMode === 'kinetic')
-      ? await renderKineticVideo(scenes, audioBlob2, null, { totalLen: voiceDuration, musicUrl: params.musicUrl, ctaUrl: window._bizUrl || '' })
+      ? await renderKineticVideo(scenes.filter(x => !x.isCta), audioBlob2, null, { totalLen: voiceDuration, musicUrl: params.musicUrl, ctaText: (scenes.find(x => x.isCta) || {}).narration || '', ctaUrl: brief.link || window._bizUrl || '' })
       : await createVideoFromScenes(scenes, sceneMedia, audioBlob2, voiceDuration, params.musicUrl);
     updateStep(3, 'step-done');
 
@@ -959,6 +959,7 @@ Return ONLY valid JSON:
         <div style="font-size:.82rem;color:#999;margin-bottom:10px">${script.title || params.topic} · ${params.length}s</div>
         <a href="${url2}" download="videokit-${Date.now()}.webm" class="result-btn">⬇ Download Video</a>
         <button class="result-btn secondary" onclick="showCaptionPicker('${sId}')">📋 Get Caption</button>
+        <button class="result-btn secondary" onclick="exportCarousel('${sId}')">🖼 Carousel PNGs</button>
         <button class="result-btn secondary" onclick="openInCreate(${JSON.stringify({script:script, media:sceneMedia}).replace(/"/g,'&quot;')})">✏️ Edit in Create</button>
       </div>
     `, true);
@@ -1154,6 +1155,10 @@ function maybeShowStartCard() {
   area.appendChild(div);
   area.scrollTop = area.scrollHeight;
 }
+try {
+  const _h = new URLSearchParams(location.search).get('handle');
+  if (_h) localStorage.setItem('vk_handle', _h);
+} catch(e) {}
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(maybeShowStartCard, 300); });
 
 // ── Business Strategist (research + reasoning + style mix) ──
@@ -1367,6 +1372,7 @@ function showBriefCard(script, params) {
       '<div style="font-weight:800;font-size:.9rem">' + (script.hook || '') + '</div></div>' +
       '<div style="font-size:.68rem;color:#888;font-weight:700;letter-spacing:.05em;margin-bottom:6px">SCENES</div>' +
       '<div id="briefScenes" data-editing="0" style="margin-bottom:10px">' + sceneHtml + '</div>' +
+      '<div style="margin-bottom:10px"><input id="briefLink" placeholder="🔗 Your link / URL for the end card (optional)" value="' + (window._bizUrl || (localStorage.getItem('vk_link') || '')) + '" style="width:100%;padding:10px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.8rem;box-sizing:border-box"></div>' +
       '<div style="display:flex;gap:8px;margin-bottom:10px">' +
       '<button id="vmStock" onclick="setVisualMode(\'stock\')" style="flex:1;padding:10px;border-radius:8px;border:1px solid #ff5c00;background:#1a0900;color:#ff5c00;font-weight:700;font-size:.8rem;cursor:pointer">📸 Stock</button>' +
       '<button id="vmKinetic" onclick="setVisualMode(\'kinetic\')" style="flex:1;padding:10px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#888;font-weight:700;font-size:.8rem;cursor:pointer">🎬 Brand Motion</button>' +
@@ -1398,11 +1404,13 @@ function confirmBrief() {
   card.querySelectorAll('[data-bi]').forEach(function(el) {
     script.scenes[+el.dataset.bi][el.dataset.bf] = el.value;
   });
+  try { localStorage.setItem('vk_link', (document.getElementById('briefLink') || {}).value || ''); window._briefLinkLast = (document.getElementById('briefLink') || {}).value || ''; } catch(e) {}
   const out = {
     script: script,
     voice: document.getElementById('briefVoice').value,
     musicUrl: document.getElementById('confirmMusicUrl').value,
-    visualMode: window._briefVisualMode || 'stock'
+    visualMode: window._briefVisualMode || 'stock',
+    link: (document.getElementById('briefLink') || {}).value || ''
   };
   card.remove();
   if (window._briefResolve) window._briefResolve(out);
@@ -1553,14 +1561,14 @@ You are a professional social media marketer, storyteller, and video director. G
       body: JSON.stringify({
         messages: [{ role: 'user', content: `${sampleNote}
 
-Write like a real person explaining something valuable to a friend - human, conversational, confident, curious. NEVER sound like an advertisement or a robotic script. Follow this narrative structure in every script: HOOK (3-8s, curiosity/pain/surprise/question/bold opinion) -> TOPIC INTRO (1-2 sentences) -> MAIN POINTS (2-5 points, each with a real example or comparison, never just stated as facts) -> EXPLANATION (the WHY, using everyday business situations) -> SUMMARY (one memorable line) -> CTA (conversational, never salesy - e.g. "What do you think?", "Follow for more" - only mention a product naturally if relevant).
+Write like a real person explaining something valuable to a friend - human, conversational, confident, curious. NEVER sound like an advertisement or a robotic script. VOICE RULES: contractions everywhere (you're, don't, it's), short fragments allowed, sometimes start with And/But, ZERO corporate buzzwords (delve, leverage, unlock, elevate, game-changer, revolutionize, seamless), ZERO AI tells (In conclusion, It's important to note, Moreover), every line must pass the read-aloud test - if it sounds like an ad or a robot, rewrite it. Follow this narrative structure in every script: HOOK (4-8 words, second person, emotional gut-punch or curiosity gap, sounds human out loud; banned: 'In today's video', 'Ever wondered') -> TOPIC INTRO (1-2 sentences) -> MAIN POINTS (2-5 points, each with a real example or comparison, never just stated as facts) -> EXPLANATION (the WHY, using everyday business situations) -> SUMMARY (one memorable line) -> CTA (conversational, never salesy - e.g. "What do you think?", "Follow for more" - only mention a product naturally if relevant).
 
 For the CTA link style: on platforms without clickable captions (Instagram, TikTok, Threads, Snapchat) say "Link in bio" or "Follow for more". On platforms where descriptions support links (YouTube, Facebook, LinkedIn, Twitter/X, Pinterest) say "Link in the description". Default to "Link in bio" if platform is unclear. Never leave cta empty or generic - it is the most important line.
 
 First classify this content's overall format as one of: educational_list, tutorial, framework, checklist, mistakes, problem_solution, comparison, case_study, storytelling, myth_vs_reality, statistics, tips, qa, motivational, opinion, news_explainer - pick whichever fits best.\n\nDecide whether voiceover genuinely helps this content or if it works better as pure text/visuals (e.g. a short punchy list may not need narration, but an explanation usually does). Include a one-sentence reason for your decision.\n\nFor EACH scene, decide the best visualType: "stock" (general B-roll, default), "chart" (numbers/stats/growth/data), "quote" (a short powerful standalone statement), or "text-card" (simple transitional/emphasis line). Also tag each scene's emotion (serious, exciting, urgent, calm, hopeful, etc) and 2-4 visual keywords.
 
 Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
-{"title":"...","hook":"...","content_type":"educational_list|tutorial|framework|checklist|mistakes|problem_solution|comparison|case_study|storytelling|myth_vs_reality|statistics|tips|qa|motivational|opinion|news_explainer","voiceover":true,"voiceover_reason":"why","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","visualType":"stock|chart|quote|text-card","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}],"cta":"..."}` }],
+{"title":"...","hook":"...","content_type":"educational_list|tutorial|framework|checklist|mistakes|problem_solution|comparison|case_study|storytelling|myth_vs_reality|statistics|tips|qa|motivational|opinion|news_explainer","voiceover":true,"voiceover_reason":"why","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","visualType":"stock|chart|quote|text-card","highlight":"exact punchline phrase from this scene narration to color-highlight (max 6 words, or empty)","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}],"cta":"..."}` }],
         model: 'openai/gpt-oss-120b',
         temperature: 0.8
       })

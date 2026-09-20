@@ -1,23 +1,120 @@
-// js/kinetic.js - Brand Motion renderer (word-by-word kinetic typography)
-const VK_BRAND = {
-  palette: ['#f2f5f9', '#2447f0', '#0b0b4d'],
-  fg: '#ffffff',
-  ghost: 'rgba(255,255,255,0.25)',
-  ghostDark: 'rgba(10,10,60,0.18)',
-  accent: '#ffffff'
-};
+// js/kinetic.js - Brand Motion renderer v3 (fit-to-width, URL end card, per-user handle)
+const VK_BRAND = { bg:'#0a0a0a', fg:'#ffffff', highlight:'#FFD400', underline:'#00C853', stripe:'#F43F5E' };
 
-function _kinWrap(words, perLine) {
-  const lines = [];
-  for (let i = 0; i < words.length; i += perLine) lines.push(words.slice(i, i + perLine));
-  return lines;
+function vkHandle() {
+  try {
+    const h = localStorage.getItem('vk_handle');
+    if (h) return h;
+    const u = JSON.parse(localStorage.getItem('vk_user') || 'null');
+    if (u && u.name) return '@' + String(u.name).toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 18);
+  } catch(e) {}
+  return '@yourbrand';
 }
 
-function _kinScenePlan(scene) {
-  const raw = (scene.narration || '').trim();
-  let words = (scene.isCta ? raw : raw.split(/\s+/).slice(0, 14)).filter(Boolean);
-  if (scene.isHookFrame) words = words.map(w => w.toUpperCase());
-  return { words: words, lines: _kinWrap(words, scene.isHookFrame ? 3 : 4) };
+// Greedy wrap by measured width; shrink font until lines fit maxLines
+function _kinWrapFit(ctx, words, maxW, maxSize, minSize, maxLines) {
+  for (let size = maxSize; size >= minSize; size -= 6) {
+    ctx.font = '800 ' + size + 'px Syne, sans-serif';
+    const spaceW = ctx.measureText(' ').width;
+    const lines = []; let cur = []; let curW = 0;
+    for (const w of words) {
+      const ww = ctx.measureText(w).width;
+      if (cur.length && curW + spaceW + ww > maxW) { lines.push(cur); cur = []; curW = 0; }
+      cur.push(w);
+      curW += (cur.length > 1 ? spaceW : 0) + ww;
+    }
+    if (cur.length) lines.push(cur);
+    if (lines.length <= maxLines) return { lines: lines, size: size };
+  }
+  ctx.font = '800 ' + minSize + 'px Syne, sans-serif';
+  const lines = [];
+  for (let i = 0; i < words.length; i += 4) lines.push(words.slice(i, i + 4));
+  return { lines: lines.slice(0, maxLines), size: minSize };
+}
+
+function _kinDraw(ctx, W, H, scene, idx, lastIdx, B, opts, tIn, full) {
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = B.bg;
+  ctx.fillRect(0, 0, W, H);
+
+  if (scene.isHookFrame) {
+    // hazard stripes + dark band + big fitted hook
+    ctx.save();
+    for (let x = -H; x < W + H; x += 130) {
+      ctx.fillStyle = ((x / 130) % 2 === 0) ? B.highlight : '#141414';
+      ctx.beginPath();
+      ctx.moveTo(x, 0); ctx.lineTo(x + 65, 0); ctx.lineTo(x + 65 - H, H); ctx.lineTo(x - H, H);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    ctx.fillRect(0, H * 0.26, W, H * 0.48);
+    const hook = (scene.hookText || scene.narration || '').toUpperCase();
+    const fit = _kinWrapFit(ctx, hook.split(/\s+/).filter(Boolean), W - 140, 92, 48, 4);
+    ctx.font = '800 ' + fit.size + 'px Syne, sans-serif';
+    ctx.textAlign = 'center';
+    let y = H / 2 - ((fit.lines.length - 1) * (fit.size + 34)) / 2;
+    for (const ln of fit.lines) { ctx.fillStyle = B.fg; ctx.fillText(ln.join(' '), W / 2, y); y += fit.size + 34; }
+    ctx.textAlign = 'left';
+  } else {
+    // centered fitted lines, yellow punchline, green underline
+    const words = (scene.narration || '').trim().split(/\s+/).filter(Boolean);
+    const fit = _kinWrapFit(ctx, words, W - 120, 74, 40, 4);
+    const hl = (scene.highlight || '').toLowerCase();
+    const lineH = fit.size + 40;
+    ctx.font = '800 ' + fit.size + 'px Syne, sans-serif';
+    const spaceW = ctx.measureText(' ').width;
+    let y = H / 2 - ((fit.lines.length - 1) * lineH) / 2;
+    const totalWords = words.length || 1;
+    let wSeen = 0;
+    for (const ln of fit.lines) {
+      const text = ln.join(' ');
+      const widths = ln.map(w => ctx.measureText(w).width);
+      const lineW = widths.reduce((a, b) => a + b, 0) + spaceW * (ln.length - 1);
+      let x = (W - lineW) / 2;
+      const isHl = hl && hl.length > 3 && text.toLowerCase().includes(hl.slice(0, 12));
+      for (let k = 0; k < ln.length; k++) {
+        const t = (wSeen / totalWords) * 1.2;
+        ctx.fillStyle = (full || tIn >= t) ? (isHl ? B.highlight : B.fg) : 'rgba(255,255,255,0.13)';
+        ctx.fillText(ln[k], x, y);
+        x += widths[k] + spaceW;
+        wSeen++;
+      }
+      if (isHl) { ctx.fillStyle = B.underline; ctx.fillRect(W / 2 - Math.min(lineW, 240) / 2, y + lineH / 2 - 6, Math.min(lineW, 240), 10); }
+      y += lineH;
+    }
+  }
+
+  // brand stripe
+  ctx.fillStyle = B.stripe;
+  ctx.fillRect(0, 0, 26, H);
+
+  // final card: CTA + URL
+  if (idx === lastIdx) {
+    ctx.textAlign = 'center';
+    if (opts.ctaText) {
+      ctx.font = '800 44px Syne, sans-serif';
+      ctx.fillStyle = B.highlight;
+      ctx.fillText(String(opts.ctaText).slice(0, 46), W / 2, H - 210);
+    }
+    if (opts.ctaUrl) {
+      ctx.font = '700 34px Syne, sans-serif';
+      ctx.fillStyle = B.fg;
+      ctx.fillText(String(opts.ctaUrl).replace(/^https?:\/\//, '').slice(0, 40), W / 2, H - 140);
+    }
+    ctx.textAlign = 'left';
+  }
+
+  // per-user handle + VideoKit mark
+  ctx.font = '700 34px Syne, sans-serif';
+  ctx.fillStyle = B.fg;
+  ctx.fillText(vkHandle(), 44, H - 64);
+  ctx.font = '700 22px Syne, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.textAlign = 'right';
+  ctx.fillText('VideoKit', W - 24, H - 60);
+  ctx.textAlign = 'left';
 }
 
 async function renderKineticVideo(scenes, audioBlob, brand, opts) {
@@ -38,6 +135,7 @@ async function renderKineticVideo(scenes, audioBlob, brand, opts) {
     run += d; return d;
   });
   const total = durations.reduce((a, b) => a + b, 0);
+  const lastIdx = scenes.length - 1;
 
   let audioEl = null, musicEl = null, actx = null, dest = null;
   if (audioBlob || opts.musicUrl) {
@@ -63,65 +161,6 @@ async function renderKineticVideo(scenes, audioBlob, brand, opts) {
   const chunks = [];
   rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
 
-  const plans = scenes.map(s => _kinScenePlan(s));
-
-  function drawScene(i, tIn) {
-    const s = scenes[i];
-    const D = durations[i];
-    const bg = s.isHookFrame ? B.palette[1] : B.palette[i % B.palette.length];
-    const dark = (i % B.palette.length) === 0;
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, W, H);
-    const ghost = dark ? B.ghostDark : B.ghost;
-    const plan = plans[i];
-    const lineH = s.isHookFrame ? 150 : 120;
-    const size = s.isHookFrame ? 92 : (plan.lines.length > 3 ? 62 : 78);
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'left';
-
-    if (s.isCta && opts.ctaUrl) {
-      ctx.font = '700 44px Syne, sans-serif';
-      const tw = ctx.measureText(opts.ctaUrl).width;
-      const pw = tw + 90, ph = 96, px = (W - pw) / 2, py = H / 2 - ph / 2;
-      ctx.fillStyle = dark ? 'rgba(10,10,60,0.85)' : 'rgba(255,255,255,0.14)';
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(px, py, pw, ph, 48); else ctx.rect(px, py, pw, ph);
-      ctx.fill();
-      ctx.fillStyle = dark ? B.palette[1] : '#ffffff';
-      ctx.fillText(opts.ctaUrl, px + 45, H / 2 + 4);
-      ctx.font = '700 38px Syne, sans-serif';
-      ctx.fillStyle = ghost;
-      ctx.textAlign = 'center';
-      ctx.fillText((s.narration || '').slice(0, 42), W / 2, H / 2 - 150);
-      ctx.textAlign = 'left';
-    } else {
-      const totalWords = plan.words.length || 1;
-      const revealSpan = D * 0.75;
-      let y = H / 2 - ((plan.lines.length - 1) * lineH) / 2;
-      let wIdx = 0;
-      for (const line of plan.lines) {
-        ctx.font = '800 ' + size + 'px Syne, sans-serif';
-        const widths = line.map(w => ctx.measureText(w).width);
-        const spaceW = ctx.measureText(' ').width;
-        const lineW = widths.reduce((a, b) => a + b, 0) + spaceW * (line.length - 1);
-        let x = (W - lineW) / 2;
-        for (let k = 0; k < line.length; k++) {
-          const t = (wIdx / totalWords) * revealSpan;
-          ctx.fillStyle = (tIn >= t) ? (s.isHookFrame ? B.accent : B.fg) : ghost;
-          ctx.fillText(line[k], x, y);
-          x += widths[k] + spaceW;
-          wIdx++;
-        }
-        y += lineH;
-      }
-    }
-    ctx.font = '700 26px Syne, sans-serif';
-    ctx.fillStyle = dark ? 'rgba(10,10,60,0.5)' : 'rgba(255,255,255,0.5)';
-    ctx.textAlign = 'right';
-    ctx.fillText('VideoKit', W - 24, H - 28);
-    ctx.textAlign = 'left';
-  }
-
   return new Promise((resolve) => {
     rec.start(500);
     if (audioEl) audioEl.play().catch(() => {});
@@ -129,12 +168,12 @@ async function renderKineticVideo(scenes, audioBlob, brand, opts) {
     const t0 = performance.now();
     function frame() {
       const el = (performance.now() - t0) / 1000;
-      let acc = 0, idx = durations.length - 1, tIn = 0;
+      let acc = 0, idx = lastIdx, tIn = 0;
       for (let i = 0; i < durations.length; i++) {
         if (el < acc + durations[i]) { idx = i; tIn = el - acc; break; }
         acc += durations[i];
       }
-      drawScene(idx, tIn);
+      _kinDraw(ctx, W, H, scenes[idx], idx, lastIdx, B, opts, tIn, false);
       if (el >= total) {
         rec.stop();
         if (audioEl) audioEl.pause();
@@ -146,4 +185,26 @@ async function renderKineticVideo(scenes, audioBlob, brand, opts) {
     }
     requestAnimationFrame(frame);
   });
+}
+
+async function exportCarousel(sId) {
+  const script = (window._scriptStore || {})[sId];
+  if (!script || !script.scenes) { alert('Script not found'); return; }
+  const B = VK_BRAND;
+  const W = 720, H = 1280;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const scenes = script.scenes;
+  const lastIdx = scenes.length - 1;
+  const ctaScene = scenes.find(s => s.isCta);
+  for (let i = 0; i < scenes.length; i++) {
+    _kinDraw(ctx, W, H, scenes[i], i, lastIdx, B, { ctaText: (i === lastIdx && ctaScene) ? ctaScene.narration : '', ctaUrl: window._briefLinkLast || '' }, 999, true);
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'videokit-card-' + (i + 1) + '.png';
+    a.click();
+    await new Promise(r => setTimeout(r, 400));
+  }
 }
