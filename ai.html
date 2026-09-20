@@ -1174,6 +1174,7 @@ const VK_STYLES = {
 
 function startBusinessMode() {
   var _sc = document.getElementById('startCard'); if (_sc) _sc.remove();
+  window._pastedScript = null;
   const area = document.getElementById('chatArea');
   const div = document.createElement('div');
   div.className = 'msg ai';
@@ -1294,7 +1295,13 @@ function confirmStrategy() {
   window._strategyMeta = { platform: platform, length: +length, qty: +qty, stylesLabel: labels };
   window._fromBusiness = true;
   document.getElementById('strategyCard').remove();
-  const prompt = (qty > 1 ? 'Create ' + qty + ' different videos' : 'Create a video') + ' (' + length + ' seconds) for ' + (window._bizName || 'my business') + ' in ' + labels + ' style for ' + platform + '. ' + (strat.angle || '');
+  let prompt;
+  if (window._pastedScript) {
+    prompt = (qty > 1 ? 'Create ' + qty + ' different videos' : 'Create a video') + ' (' + length + ' seconds) in ' + labels + ' style for ' + platform + '. Follow the EXACT structure, tone and pacing of this sample script: ' + ' + window._pastedScript + ';
+    window._pastedScript = null;
+  } else {
+    prompt = (qty > 1 ? 'Create ' + qty + ' different videos' : 'Create a video') + ' (' + length + ' seconds) for ' + (window._bizName || 'my business') + ' in ' + labels + ' style for ' + platform + '. ' + (strat.angle || '');
+  }
   usePrompt(prompt);
 }
 
@@ -1320,12 +1327,35 @@ function setVisualMode(m) {
 function openPasteModal() {
   document.getElementById('pasteModal').style.display = 'flex';
 }
-function submitPasteScript() {
+async function submitPasteScript() {
   const t = document.getElementById('pasteInput').value.trim();
   if (!t) return;
   document.getElementById('pasteModal').style.display = 'none';
   document.getElementById('pasteInput').value = '';
-  usePrompt(t);
+  window._pastedScript = t;
+  const typing = addMsg('ai', '🧠 Reading your script...');
+  typing.classList.add('typing');
+  try {
+    const res = await smartFetch('/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        messages:[{role:'user', content:'You are a senior brand strategist. Reverse-engineer the strategy inside this existing video script.\nScript:\n' + t + '\n\nReturn ONLY valid JSON (no markdown):\n{"business_summary":"one sentence: what this script is really about","audience":"exact target audience","pains":["2-3 pains it addresses"],"objections":["2-3 objections it handles or should"],"angle":"the sharpest marketing angle it uses or should use","recommended":[{"style":"ad|viral|coaching|introduction|storytelling|proof|launch","reason":"why this fits"},...up to 2],"platform":"best single platform for it","length":30|45|60}'}],
+        model:'openai/gpt-oss-120b', temperature:0.4
+      })
+    });
+    const data = await res.json();
+    const raw = data.content || (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '{}';
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const jS = clean.indexOf('{'), jE = clean.lastIndexOf('}');
+    const strat = JSON.parse(clean.slice(jS, jE + 1));
+    typing.remove();
+    showStrategyCard(strat, 'your script', '');
+  } catch(e) {
+    typing.classList.remove('typing');
+    typing.textContent = '⚠️ Could not analyze the script (' + e.message + ') — sending it straight to Studio instead.';
+    window._pastedScript = null;
+    usePrompt(t);
+  }
 }
 
 function toggleBriefEdit() {
