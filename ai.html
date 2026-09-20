@@ -810,7 +810,8 @@ Return ONLY valid JSON:
   "cta": "call to action"
 }`}],
         model:'openai/gpt-oss-120b',
-        temperature:0.7
+        temperature:0.7,
+        max_tokens:4000
       })
     });
     const scriptData2 = await scriptRes.json();
@@ -1305,6 +1306,33 @@ function confirmStrategy() {
   usePrompt(prompt);
 }
 
+function salvageJsonArray(txt) {
+  // Scan with string-awareness; remember where the last COMPLETE top-level object closed
+  let depth = 0, inStr = false, esc = false, lastTopClose = -1;
+  for (let i = 0; i < txt.length; i++) {
+    const ch = txt[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === '\\') esc = true;
+      else if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') { inStr = true; continue; }
+    if (ch === '{' || ch === '[') depth++;
+    else if (ch === '}' || ch === ']') {
+      depth--;
+      if (depth === 1 && ch === '}') lastTopClose = i;
+    }
+  }
+  if (lastTopClose > 0) {
+    try {
+      const v = JSON.parse(txt.slice(0, lastTopClose + 1) + ']');
+      if (Array.isArray(v) && v.length) return v;
+    } catch(e) {}
+  }
+  return null;
+}
+
 function isCtaDuplicate(scenes, cta) {
   if (!scenes || !scenes.length || !cta) return false;
   const last = (scenes[scenes.length - 1].narration || '').toLowerCase().trim();
@@ -1600,7 +1628,8 @@ First classify this content's overall format as one of: educational_list, tutori
 Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON array (no markdown) of ${qty} objects, each shaped exactly like:
 {"title":"...","hook":"...","content_type":"educational_list|tutorial|framework|checklist|mistakes|problem_solution|comparison|case_study|storytelling|myth_vs_reality|statistics|tips|qa|motivational|opinion|news_explainer","voiceover":true,"voiceover_reason":"why","scenes":[{"scene_number":1,"narration":"...","visual_keyword":"...","visualType":"stock|chart|quote|text-card","highlight":"exact punchline phrase from this scene narration to color-highlight (max 6 words, or empty)","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}],"cta":"..."}` }],
         model: 'openai/gpt-oss-120b',
-        temperature: 0.8
+        temperature: 0.8,
+        max_tokens: 6000
       })
     });
 
@@ -1618,8 +1647,14 @@ Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON 
       scriptsArray = JSON.parse(clean);
       if (!Array.isArray(scriptsArray)) scriptsArray = [scriptsArray];
     } catch (parseErr) {
-      addMsg('ai', '⚠️ Could not parse the scripts the AI returned (' + parseErr.message + '). Raw response started with: ' + clean.slice(0, 150));
-      return;
+      const salvaged = salvageJsonArray(clean);
+      if (salvaged) {
+        scriptsArray = salvaged;
+        addMsg('ai', '⚠️ The AI response was cut off mid-way — recovered ' + salvaged.length + ' complete script(s), continuing with those.');
+      } else {
+        addMsg('ai', '⚠️ Could not parse the scripts the AI returned (' + parseErr.message + '). Raw response started with: ' + clean.slice(0, 150));
+        return;
+      }
     }
 
     if (!scriptsArray.length) {
