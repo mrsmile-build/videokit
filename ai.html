@@ -639,6 +639,7 @@ function updateStep(i, status) {
 }
 
 function usePrompt(text) {
+  window._skipRouter = true;
   document.getElementById('chatInput').value = text;
   document.getElementById('chatInput').focus();
 }
@@ -677,9 +678,10 @@ function detectIntent(text) {
 
 async function sendMessage() {
   if (isProcessing) return;
+  const _skip = window._skipRouter; window._skipRouter = false;
   const _in = document.getElementById('chatInput');
   const _txt = (_in.value || '').trim();
-  if (_txt) {
+  if (_txt && !_skip) {
     const _intent = detectIntent(_txt);
     if (_intent === 'business') {
       const sc0 = document.getElementById('startCard'); if (sc0) sc0.remove();
@@ -1311,7 +1313,7 @@ function showStrategyCard(strat, name, desc) {
     '<div style="display:flex;gap:8px;margin-bottom:12px">' +
     '<select id="bizPlatform" style="flex:1;padding:10px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.8rem"><option>instagram</option><option>tiktok</option><option>youtube</option><option>facebook</option><option>linkedin</option><option>whatsapp status</option><option>general</option></select>' +
     '<select id="bizLength" style="flex:1;padding:10px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.8rem"><option value="30">30s</option><option value="45">45s</option><option value="60">60s</option><option value="90">90s</option></select>' +
-    '<select id="bizQty" style="flex:1;padding:10px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.8rem"><option value="1">1 video</option><option value="2">2 videos</option><option value="3">3 videos</option></select>' +
+    '<select id="bizQty" style="flex:1;padding:10px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.8rem"><option value="1">1 video</option><option value="2">2 videos</option><option value="3">3 videos</option><option value="5">5 videos</option><option value="10">10 videos</option></select>' +
     '</div>' +
     '<button class="result-btn" onclick="confirmStrategy()" style="margin-top:0">🚀 Build my video plan</button>' +
     '</div>';
