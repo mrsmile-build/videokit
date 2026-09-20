@@ -843,6 +843,9 @@ Return ONLY valid JSON:
     params.voice = brief.voice;
     params.musicUrl = brief.musicUrl;
     const scenes = script.scenes || [];
+    if (brief.linkMode === 'separate' && brief.visualMode !== 'kinetic' && (brief.link || window._bizUrl)) {
+      scenes.push({ scene_number: scenes.length + 1, narration: brief.link || window._bizUrl, visual_keyword: '', duration_seconds: 3, isUrlCard: true });
+    }
 
     // Step 2: Generate voice FIRST (so we know exact duration) - unless AI decided this content works better without narration
     updateStep(2, 'step-active');
@@ -855,7 +858,7 @@ Return ONLY valid JSON:
     }
     try {
       if (!wantsVoice) throw new Error('SKIP_VOICE_BY_DESIGN');
-      const fullScript2 = stripUrlsForSpeech(scenes.map(s => s.narration).join(' '));
+      const fullScript2 = stripUrlsForSpeech(scenes.filter(s => !s.isUrlCard).map(s => s.narration).join(' '));
       const voiceRes = await smartFetch('/tts-voicerss', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ text: fullScript2, voice: params.voice || 'en-us-m' })
@@ -942,7 +945,12 @@ Return ONLY valid JSON:
 // Step 4: Create video
     updateStep(3, 'step-active');
     const videoBlob = (visualMode === 'kinetic')
-      ? await renderKineticVideo(scenes.filter(x => !x.isCta), audioBlob2, null, { totalLen: voiceDuration, musicUrl: params.musicUrl, ctaText: (scenes.find(x => x.isCta) || {}).narration || '', ctaUrl: brief.link || window._bizUrl || '' })
+      ? await (async () => {
+          const linkUrl = (brief.linkMode === 'off') ? '' : (brief.link || window._bizUrl || '');
+          let kinScenes = scenes.filter(x => !x.isCta && !x.isUrlCard);
+          if (brief.linkMode === 'separate' && linkUrl) kinScenes = kinScenes.concat([{ narration: linkUrl, isUrlCard: true }]);
+          return renderKineticVideo(kinScenes, audioBlob2, null, { totalLen: voiceDuration, musicUrl: params.musicUrl, ctaText: (scenes.find(x => x.isCta) || {}).narration || '', ctaUrl: (brief.linkMode === 'separate' ? '' : linkUrl), linkMode: brief.linkMode || 'end' });
+        })()
       : await createVideoFromScenes(scenes, sceneMedia, audioBlob2, voiceDuration, params.musicUrl);
     updateStep(3, 'step-done');
 
@@ -984,18 +992,24 @@ async function createVideoFromScenes(scenes, media, audioBlob2, totalLen, musicU
   // Give each scene a duration PROPORTIONAL to how much it speaks,
   // not an equal split - so short hooks and long explanations both
   // match what the voice is actually saying at that moment.
-  const target = (totalLen || 60) + 0.4;  // small buffer so video never falls short of voice
+  const urlCardDur = 2.5;
+  const hasUrlCard = scenes.some(s => s.isUrlCard);
+  const target = (totalLen || 60) + 0.4 + (hasUrlCard ? urlCardDur : 0);
+  const speakTarget = (totalLen || 60) + 0.4;
   const minDur = 2;
-  const charCounts = scenes.map(s => Math.max((s.narration||'').length, 10));
+  const charCounts = scenes.map(s => s.isUrlCard ? 0 : Math.max((s.narration||'').length, 10));
   const totalChars = charCounts.reduce((a,b) => a+b, 0) || 1;
 
   let runningTotal = 0;
+  let lastSpeak = scenes.length - 1;
+  for (let i = scenes.length - 1; i >= 0; i--) { if (!scenes[i].isUrlCard) { lastSpeak = i; break; } }
   const durations = charCounts.map((cnt, i) => {
-    if (i === charCounts.length - 1) {
-      // Last scene absorbs whatever time is left so total always matches voice exactly
-      return Math.max(minDur, Math.round((target - runningTotal) * 10) / 10);
+    if (scenes[i].isUrlCard) { runningTotal += urlCardDur; return urlCardDur; }
+    if (i === lastSpeak) {
+      // Last SPOKEN scene absorbs leftover so voice stays in sync
+      return Math.max(minDur, Math.round((speakTarget - runningTotal) * 10) / 10);
     }
-    const dur = Math.max(minDur, Math.round((cnt / totalChars) * target));
+    const dur = Math.max(minDur, Math.round((cnt / totalChars) * speakTarget));
     runningTotal += dur;
     return dur;
   });
@@ -1431,6 +1445,7 @@ function showBriefCard(script, params) {
       '<div style="font-size:.68rem;color:#888;font-weight:700;letter-spacing:.05em;margin-bottom:6px">SCENES</div>' +
       '<div id="briefScenes" data-editing="0" style="margin-bottom:10px">' + sceneHtml + '</div>' +
       '<div style="margin-bottom:10px"><input id="briefLink" placeholder="🔗 Your link / URL for the end card (optional)" value="' + (window._bizUrl || (localStorage.getItem('vk_link') || '')) + '" style="width:100%;padding:10px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.8rem;box-sizing:border-box"></div>' +
+      '<div style="margin-bottom:10px"><select id="briefLinkMode" style="width:100%;padding:10px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:.8rem"><option value="end">🔗 URL: end card only</option><option value="corner">📌 URL: pinned corner every frame (Brand Motion)</option><option value="separate">➕ URL: separate lonely final card</option><option value="off">🚫 URL: not shown in video</option></select></div>' +
       '<div style="display:flex;gap:8px;margin-bottom:10px">' +
       '<button id="vmStock" onclick="setVisualMode(\'stock\')" style="flex:1;padding:10px;border-radius:8px;border:1px solid #ff5c00;background:#1a0900;color:#ff5c00;font-weight:700;font-size:.8rem;cursor:pointer">📸 Stock</button>' +
       '<button id="vmKinetic" onclick="setVisualMode(\'kinetic\')" style="flex:1;padding:10px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#888;font-weight:700;font-size:.8rem;cursor:pointer">🎬 Brand Motion</button>' +
@@ -1453,6 +1468,7 @@ function showBriefCard(script, params) {
     setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
     document.getElementById('briefVoice').value = params.voice || 'en-us-m';
     setVisualMode((params.visualMode || 'stock') === 'kinetic' ? 'kinetic' : 'stock');
+    try { document.getElementById('briefLinkMode').value = localStorage.getItem('vk_linkmode') || 'end'; } catch(e) {}
   });
 }
 
@@ -1462,13 +1478,14 @@ function confirmBrief() {
   card.querySelectorAll('[data-bi]').forEach(function(el) {
     script.scenes[+el.dataset.bi][el.dataset.bf] = el.value;
   });
-  try { localStorage.setItem('vk_link', (document.getElementById('briefLink') || {}).value || ''); window._briefLinkLast = (document.getElementById('briefLink') || {}).value || ''; } catch(e) {}
+  try { localStorage.setItem('vk_link', (document.getElementById('briefLink') || {}).value || ''); window._briefLinkLast = (document.getElementById('briefLink') || {}).value || ''; try { localStorage.setItem('vk_linkmode', (document.getElementById('briefLinkMode') || {}).value || 'end'); } catch(e2) {} } catch(e) {}
   const out = {
     script: script,
     voice: document.getElementById('briefVoice').value,
     musicUrl: document.getElementById('confirmMusicUrl').value,
     visualMode: window._briefVisualMode || 'stock',
-    link: (document.getElementById('briefLink') || {}).value || ''
+    link: (document.getElementById('briefLink') || {}).value || '',
+    linkMode: (document.getElementById('briefLinkMode') || {}).value || 'end'
   };
   card.remove();
   if (window._briefResolve) window._briefResolve(out);

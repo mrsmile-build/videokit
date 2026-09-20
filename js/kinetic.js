@@ -38,7 +38,20 @@ function _kinDraw(ctx, W, H, scene, idx, lastIdx, B, opts, tIn, full) {
   ctx.fillStyle = B.bg;
   ctx.fillRect(0, 0, W, H);
 
-  if (scene.isHookFrame) {
+  if (scene.isUrlCard) {
+    ctx.textAlign = 'center';
+    ctx.font = '700 40px Syne, sans-serif';
+    ctx.fillStyle = B.fg;
+    ctx.fillText('FIND ME HERE', W / 2, H / 2 - 130);
+    const fit = _kinWrapFit(ctx, String(scene.narration || '').replace(/^https?:\/\//, '').split(/\s+/).filter(Boolean), W - 140, 64, 36, 2);
+    ctx.font = '800 ' + fit.size + 'px Syne, sans-serif';
+    ctx.fillStyle = B.highlight;
+    let uy = H / 2;
+    for (const ln of fit.lines) { ctx.fillText(ln.join(' '), W / 2, uy); uy += fit.size + 20; }
+    ctx.fillStyle = B.underline;
+    ctx.fillRect(W / 2 - 80, uy + 4, 160, 10);
+    ctx.textAlign = 'left';
+  } else if (scene.isHookFrame) {
     // hazard stripes + dark band + big fitted hook
     ctx.save();
     for (let x = -H; x < W + H; x += 130) {
@@ -90,6 +103,15 @@ function _kinDraw(ctx, W, H, scene, idx, lastIdx, B, opts, tIn, full) {
   ctx.fillStyle = B.stripe;
   ctx.fillRect(0, 0, 26, H);
 
+  // pinned corner URL (channel-bug style)
+  if (opts.ctaUrl && (opts.linkMode === 'corner' || opts.linkMode === 'both')) {
+    ctx.font = '700 26px Syne, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.textAlign = 'right';
+    ctx.fillText(String(opts.ctaUrl).replace(/^https?:\/\//, '').slice(0, 34), W - 40, 60);
+    ctx.textAlign = 'left';
+  }
+
   // final card: CTA + URL
   if (idx === lastIdx) {
     ctx.textAlign = 'center';
@@ -126,10 +148,11 @@ async function renderKineticVideo(scenes, audioBlob, brand, opts) {
   const ctx = canvas.getContext('2d');
 
   const target = (opts.totalLen || 60) + 0.4;
-  const charCounts = scenes.map(s => Math.max((s.narration || '').length, 10));
+  const charCounts = scenes.map(s => s.isUrlCard ? 0 : Math.max((s.narration || '').length, 10));
   const totalChars = charCounts.reduce((a, b) => a + b, 0) || 1;
   let run = 0;
   const durations = charCounts.map((cnt, i) => {
+    if (scenes[i].isUrlCard) { run += 2.5; return 2.5; }
     if (i === charCounts.length - 1) return Math.max(2, Math.round((target - run) * 10) / 10);
     const d = Math.max(2, Math.round((cnt / totalChars) * target));
     run += d; return d;
