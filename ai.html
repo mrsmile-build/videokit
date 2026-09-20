@@ -663,7 +663,42 @@ function removeUpload(i) {
   handleAiUpload({files: uploadedFiles});
 }
 
+function detectIntent(text) {
+  const t = (text || '').trim();
+  if (!t) return 'idea';
+  const hasUrl = /https?:\/\/[^\s]+/i.test(t) || /(^|\s)(www\.[^\s]+|[a-z0-9][a-z0-9-]*\.(com|ng|io|co|org|net|app|ai|store|shop|link|page))(\/[^\s]*)?/i.test(t);
+  const lines = t.split(/\n+/).map(x => x.trim()).filter(Boolean);
+  const isLong = t.length > 200;
+  const hasStructure = /(hook|cta|call to action|scene|voiceover|narration|intro|outro|\[.*?\]|^\s*\d+[\.\):])/im.test(t);
+  if (isLong && (lines.length >= 3 || hasStructure)) return 'script';
+  if (hasUrl) return 'business';
+  return 'idea';
+}
+
 async function sendMessage() {
+  if (isProcessing) return;
+  const _in = document.getElementById('chatInput');
+  const _txt = (_in.value || '').trim();
+  if (_txt) {
+    const _intent = detectIntent(_txt);
+    if (_intent === 'business') {
+      const sc0 = document.getElementById('startCard'); if (sc0) sc0.remove();
+      const m = _txt.match(/https?:\/\/[^\s]+/i);
+      const url = m ? m[0] : '';
+      addMsg('user', _txt);
+      _in.value = '';
+      runBusinessResearch('', _txt.replace(url, '').trim(), url);
+      return;
+    }
+    if (_intent === 'script') {
+      const sc0 = document.getElementById('startCard'); if (sc0) sc0.remove();
+      addMsg('user', _txt.slice(0, 120) + (_txt.length > 120 ? '…' : ''));
+      _in.value = '';
+      runPasteAnalysis(_txt);
+      return;
+    }
+  }
+
   var sc = document.getElementById('startCard'); if (sc) sc.remove();
   const dbgInput = document.getElementById("chatInput").value.trim();
   if (dbgInput === "/debugcaptions") {
@@ -1157,23 +1192,22 @@ function confirmGenerate() {
 function maybeShowStartCard() {
   const area = document.getElementById('chatArea');
   if (!area || document.getElementById('startCard')) return;
-  if (area.querySelector('.msg.user') || area.querySelector('.progress-card')) return; // thread has real activity
+  if (area.querySelector('.msg.user') || area.querySelector('.progress-card')) return;
   const div = document.createElement('div');
   div.id = 'startCard';
   const row = 'display:flex;gap:12px;align-items:center;background:#111;border:1px solid #222;border-radius:14px;padding:14px;cursor:pointer';
+  const hero = 'display:flex;gap:12px;align-items:center;background:#1a0900;border:1px solid #ff5c00;border-radius:14px;padding:16px;cursor:pointer';
   div.style.cssText = 'display:flex;flex-direction:column;gap:10px;padding:10px 4px 4px';
-  div.innerHTML = '<div style="font-size:.68rem;color:#666;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:8px">Start here</div>' +
-    '<div onclick="document.getElementById(\'chatInput\').focus()" style="' + row + '"><span style="font-size:1.3rem">💬</span><span><span style="display:block;font-weight:800;font-size:.88rem">Describe an idea</span><span style="display:block;font-size:.74rem;color:#888;margin-top:2px">Type anything — AI plans the rest</span></span></div>' +
-    '<div onclick="startGuidedMode()" style="' + row + '"><span style="font-size:1.3rem">🎯</span><span><span style="display:block;font-weight:800;font-size:.88rem">Guided Strategist</span><span style="display:block;font-size:.74rem;color:#888;margin-top:2px">6 quick questions → strategic video</span></span></div>' +
-    '<div onclick="startBusinessMode()" style="' + row.replace('#222','#ff5c00') + '"><span style="font-size:1.3rem">🏢</span><span><span style="display:block;font-weight:800;font-size:.88rem;color:#ff5c00">My Business</span><span style="display:block;font-size:.74rem;color:#888;margin-top:2px">AI researches your brand + recommends styles</span></span></div>' +
-    '<div onclick="openPasteModal()" style="' + row + '"><span style="font-size:1.3rem">📋</span><span><span style="display:block;font-weight:800;font-size:.88rem">Paste a script</span><span style="display:block;font-size:.74rem;color:#888;margin-top:2px">Rebuild any script in your own style</span></span></div>';
+  div.innerHTML =
+    '<div onclick="document.getElementById(\'chatInput\').focus()" style="' + hero + '"><span style="font-size:1.5rem">💬</span><span><span style="display:block;font-weight:800;font-size:.95rem;color:#ff5c00">Just type it below</span><span style="display:block;font-size:.76rem;color:#ccc;margin-top:2px">An idea, a pasted script, or a business link — I auto-detect & route it</span></span></div>' +
+    '<div style="font-size:.68rem;color:#666;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:8px">Or pick a guided path</div>' +
+    '<div onclick="startGuidedMode()" style="' + row + '"><span style="font-size:1.3rem">🎯</span><span><span style="display:block;font-weight:800;font-size:.88rem">Guided Strategist</span><span style="display:block;font-size:.74rem;color:#888;margin-top:2px">No idea yet? 6 quick questions</span></span></div>' +
+    '<div onclick="startBusinessMode()" style="' + row + '"><span style="font-size:1.3rem">🏢</span><span><span style="display:block;font-weight:800;font-size:.88rem">My Business</span><span style="display:block;font-size:.74rem;color:#888;margin-top:2px">I research your brand & recommend styles</span></span></div>' +
+    '<div onclick="openPasteModal()" style="' + row + '"><span style="font-size:1.3rem">📋</span><span><span style="display:block;font-weight:800;font-size:.88rem">Paste a script</span><span style="display:block;font-size:.74rem;color:#888;margin-top:2px">Rebuild any script in your style</span></span></div>';
   area.appendChild(div);
   area.scrollTop = area.scrollHeight;
 }
-try {
-  const _h = new URLSearchParams(location.search).get('handle');
-  if (_h) localStorage.setItem('vk_handle', _h);
-} catch(e) {}
+
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(maybeShowStartCard, 300); });
 
 // ── Business Strategist (research + reasoning + style mix) ──
@@ -1209,13 +1243,15 @@ function startBusinessMode() {
   setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
 }
 
-async function runBusinessResearch() {
-  const name = document.getElementById('bizName').value.trim();
-  const desc = document.getElementById('bizDesc').value.trim();
-  const url = document.getElementById('bizUrl').value.trim();
-  window._bizUrl = url;
-  if (!name && !desc) { alert('Add at least a name or a description'); return; }
-  document.getElementById('bizCard').remove();
+async function runBusinessResearch(name, desc, url) {
+  if (name === undefined) {
+    name = document.getElementById('bizName').value.trim();
+    desc = document.getElementById('bizDesc').value.trim();
+    url = document.getElementById('bizUrl').value.trim();
+  }
+  window._bizUrl = url || '';
+  if (!name && !desc && !url) { alert('Add at least a name, description, or link'); return; }
+  const bc = document.getElementById('bizCard'); if (bc) bc.remove();
   const typing = addMsg('ai', '🔎 Researching your business...');
   typing.classList.add('typing');
   let context = '';
@@ -1369,11 +1405,15 @@ function setVisualMode(m) {
 function openPasteModal() {
   document.getElementById('pasteModal').style.display = 'flex';
 }
-async function submitPasteScript() {
+function submitPasteScript() {
   const t = document.getElementById('pasteInput').value.trim();
   if (!t) return;
   document.getElementById('pasteModal').style.display = 'none';
   document.getElementById('pasteInput').value = '';
+  runPasteAnalysis(t);
+}
+
+async function runPasteAnalysis(t) {
   window._pastedScript = t;
   const typing = addMsg('ai', '🧠 Reading your script...');
   typing.classList.add('typing');
