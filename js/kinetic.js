@@ -163,6 +163,7 @@ async function renderKineticVideo(scenes, audioBlob, brand, opts) {
   let audioEl = null, musicEl = null, actx = null, dest = null;
   if (audioBlob || opts.musicUrl) {
     actx = new (window.AudioContext || window.webkitAudioContext)();
+    try { if (actx.state === 'suspended') await actx.resume(); } catch(e) {}
     dest = actx.createMediaStreamDestination();
     if (audioBlob) {
       audioEl = new Audio(URL.createObjectURL(audioBlob));
