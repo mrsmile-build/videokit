@@ -1403,6 +1403,33 @@ function setVisualMode(m) {
   kk.style.cssText = m === 'kinetic' ? on : off;
 }
 
+async function populateVoiceSelect(selId, prefer) {
+  const sel = document.getElementById(selId);
+  if (!sel) return;
+  try {
+    let list = null;
+    try { list = JSON.parse(localStorage.getItem('vk_voices') || 'null'); } catch(e) {}
+    if (!list) {
+      const r = await smartFetch('/voices');
+      if (r.ok) { const d = await r.json(); list = d.voices || []; try { localStorage.setItem('vk_voices', JSON.stringify(list)); } catch(e) {} }
+    }
+    if (!list || !list.length) return;
+    const saved = localStorage.getItem('vk_voice_id') || '';
+    let chosen = saved;
+    if (!chosen && prefer) {
+      const wantF = /f$|female/.test(prefer);
+      const hit = list.find(v => ((v.labels || {}).gender || '').toLowerCase().includes(wantF ? 'female' : 'male'));
+      chosen = hit ? hit.id : '';
+    }
+    sel.innerHTML = list.map(v => {
+      const L = v.labels || {};
+      const tag = (L.accent ? L.accent : '') + (L.accent && L.gender ? ' ' : '') + (L.gender ? L.gender : '');
+      return '<option value="' + v.id + '">' + v.name + (tag ? ' (' + tag + ')' : '') + '</option>';
+    }).join('');
+    if (chosen && list.some(v => v.id === chosen)) sel.value = chosen;
+  } catch(e) {}
+}
+
 // ── Video Brief Review (plan before you build) ─────────────
 function openPasteModal() {
   document.getElementById('pasteModal').style.display = 'flex';
@@ -1508,7 +1535,7 @@ function showBriefCard(script, params) {
       '</div></div>';
     area.appendChild(div);
     setTimeout(function(){ area.scrollTop = area.scrollHeight + 300; }, 50);
-    document.getElementById('briefVoice').value = params.voice || 'en-us-m';
+    populateVoiceSelect('briefVoice', params.voice);
     setVisualMode((params.visualMode || 'stock') === 'kinetic' ? 'kinetic' : 'stock');
     try { document.getElementById('briefLinkMode').value = localStorage.getItem('vk_linkmode') || 'end'; } catch(e) {}
   });
@@ -1520,7 +1547,7 @@ function confirmBrief() {
   card.querySelectorAll('[data-bi]').forEach(function(el) {
     script.scenes[+el.dataset.bi][el.dataset.bf] = el.value;
   });
-  try { localStorage.setItem('vk_link', (document.getElementById('briefLink') || {}).value || ''); window._briefLinkLast = (document.getElementById('briefLink') || {}).value || ''; try { localStorage.setItem('vk_linkmode', (document.getElementById('briefLinkMode') || {}).value || 'end'); } catch(e2) {} } catch(e) {}
+  try { localStorage.setItem('vk_link', (document.getElementById('briefLink') || {}).value || ''); localStorage.setItem('vk_voice_id', (document.getElementById('briefVoice') || {}).value || ''); window._briefLinkLast = (document.getElementById('briefLink') || {}).value || ''; try { localStorage.setItem('vk_linkmode', (document.getElementById('briefLinkMode') || {}).value || 'end'); } catch(e2) {} } catch(e) {}
   const out = {
     script: script,
     voice: document.getElementById('briefVoice').value,
