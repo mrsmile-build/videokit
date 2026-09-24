@@ -525,11 +525,6 @@ function checkResumeSession() {
 
     addMsg('ai', 'Resuming session: "' + (session.prompt||'').slice(0,80) + '"');
 
-    const bb = await showBatchBrief(scriptsArray, params);
-    params.voice = bb.voice;
-    params.musicUrl = bb.musicUrl;
-    window._batchSettings = bb;
-
     const area = document.getElementById('chatArea');
     const div = document.createElement('div');
     div.className = 'msg ai';
@@ -1764,6 +1759,11 @@ Each script should be ~${params.length || 60} seconds. Return ONLY a valid JSON 
         s.scenes[0].hookText = s.hook;
       }
     });
+
+    const bb = await showBatchBrief(scriptsArray, params);
+    params.voice = bb.voice;
+    params.musicUrl = bb.musicUrl;
+    window._batchSettings = bb;
 
     const area = document.getElementById('chatArea');
     const div = document.createElement('div');
