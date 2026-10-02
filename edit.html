@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor — VideoKit Raw to Ready</title>
+<style>
+  body{background:#0d0d0d;color:#eee;font-family:system-ui,-apple-system,sans-serif;margin:0;padding:14px 14px 110px}
+  h1{font-size:1.15rem;margin:6px 0 2px}
+  .sub{color:#888;font-size:.78rem;margin-bottom:14px}
+  .card{background:#111;border:1px solid #222;border-radius:14px;padding:14px;margin-bottom:12px}
+  .btn{display:block;width:100%;padding:13px;border:none;border-radius:12px;background:#ff5c00;color:#fff;font-weight:800;font-size:.92rem;cursor:pointer}
+  .btn.ghost{background:#1a1a1a;border:1px solid #333;color:#ccc;font-weight:600}
+  .btn:disabled{opacity:.45}
+  .clip{display:flex;justify-content:space-between;font-size:.8rem;padding:8px;border:1px solid #222;border-radius:10px;margin-bottom:6px;background:#141414}
+  .line{padding:9px 10px;border-radius:10px;margin-bottom:6px;background:#141414;border:1px solid #1e1e1e;font-size:.85rem;cursor:pointer}
+  .line .t{color:#ff5c00;font-size:.7rem;font-weight:700;margin-right:6px}
+  .line.cut{opacity:.4;text-decoration:line-through;border-color:#5a1a1a}
+  .cliphead{color:#888;font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin:14px 0 6px}
+  #stats{color:#888;font-size:.78rem;text-align:center;margin:10px 0}
+</style>
+</head>
+<body>
+<h1>✂️ Raw to Ready</h1>
+<div class="sub">Upload your real footage → tap any line to cut it → we edit, caption & export.</div>
+
+<div class="card">
+  <input type="file" id="up" accept="video/*,audio/*" multiple style="display:none">
+  <button class="btn" onclick="document.getElementById('up').click()">📤 Upload clips (1–10)</button>
+  <div id="fileList" style="margin-top:10px"></div>
+  <button class="btn ghost" id="trBtn" style="margin-top:10px" disabled onclick="transcribeAll()">🧠 Transcribe audio</button>
+</div>
+
+<div id="transcript"></div>
+<div id="stats"></div>
+<button class="btn" id="renderBtn" disabled>🎬 Render edited video <span style="opacity:.7">(Phase 2)</span></button>
+
+<div class="card" style="margin-top:16px">
+  <div style="font-weight:800;font-size:.85rem;margin-bottom:8px">Prefer building from scratch?</div>
+  <a href="create.html" style="display:block;text-align:center;padding:11px;border:1px solid #333;border-radius:12px;color:#ccc;text-decoration:none;font-size:.85rem">🧱 Open Scene Builder (stock footage)</a>
+</div>
+
+<div id="vkNav"></div>
+<script src="js/api.js"></script>
+<script src="js/shared.js"></script>
+<script src="js/nav.js"></script>
+<script>
+var CLIPS = [];
+function fmt(t){ t = Math.max(0, Math.floor(t)); return Math.floor(t/60) + ':' + String(t%60).padStart(2,'0'); }
+
+document.getElementById('up').addEventListener('change', function(e){
+  var files = Array.from(e.target.files || []);
+  if (!files.length) return;
+  if (!canDo('upload')) { alert('Weekly upload limit reached on your plan. Upgrade in Menu or wait for reset.'); return; }
+  var total = files.reduce(function(a,f){ return a + f.size; }, 0);
+  if (files.length > 10) { alert('Max 10 clips per edit.'); return; }
+  if (total > 40 * 1024 * 1024) { alert('Total upload must be under 40MB for now (Phase 1 limit).'); return; }
+  CLIPS = files.map(function(f){ return { name: f.name, size: f.size, file: f, segments: null }; });
+  renderFiles();
+});
+
+function renderFiles(){
+  document.getElementById('fileList').innerHTML = CLIPS.map(function(c,i){
+    return '<div class="clip"><span>' + (i+1) + '. ' + c.name + '</span><span style="color:#888">' + (c.size/1048576).toFixed(1) + 'MB ' + (c.segments ? '✅' : '') + '</span></div>';
+  }).join('');
+  document.getElementById('trBtn').disabled = !CLIPS.length;
+}
+
+async function transcribeAll(){
+  document.getElementById('trBtn').disabled = true;
+  document.getElementById('trBtn').textContent = '🧠 Transcribing…';
+  for (var i = 0; i < CLIPS.length; i++) {
+    var c = CLIPS[i];
+    document.getElementById('trBtn').textContent = '🧠 Transcribing clip ' + (i+1) + '/' + CLIPS.length + '…';
+    try {
+      var dataUrl = await new Promise(function(res, rej){
+        var rd = new FileReader();
+        rd.onload = function(){ res(rd.result); };
+        rd.onerror = rej;
+        rd.readAsDataURL(c.file);
+      });
+      var r = await smartFetch('/transcribe', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ mediaBase64: dataUrl }) });
+      var d = await r.json();
+      if (!r.ok || !d.segments) throw new Error(d.error || 'transcribe failed');
+      c.segments = d.segments.map(function(sg){ return { start: sg.start, end: sg.end, text: sg.text, cut: false }; });
+      trackUsage('upload');
+    } catch(err) {
+      alert('Clip ' + (i+1) + ' failed: ' + err.message);
+      c.segments = [];
+    }
+    renderFiles();
+    renderTranscript();
+  }
+  document.getElementById('trBtn').textContent = '🧠 Transcribe again';
+  document.getElementById('trBtn').disabled = false;
+}
+
+function renderTranscript(){
+  var html = '';
+  var kept = 0, total = 0;
+  CLIPS.forEach(function(c, ci){
+    if (!c.segments) return;
+    html += '<div class="cliphead"> Clip ' + (ci+1) + ' — ' + c.name + ' (tap lines to cut)</div>';
+    c.segments.forEach(function(sg, si){
+      total += (sg.end - sg.start);
+      if (!sg.cut) kept += (sg.end - sg.start);
+      html += '<div class="line' + (sg.cut ? ' cut' : '') + '" onclick="toggleCut(' + ci + ',' + si + ')"><span class="t">' + fmt(sg.start) + '</span>' + sg.text + '</div>';
+    });
+  });
+  document.getElementById('transcript').innerHTML = html;
+  document.getElementById('stats').textContent = total ? ('Keeping ' + fmt(kept) + ' of ' + fmt(total) + ' — ' + Math.round(100*kept/total) + '%') : '';
+}
+
+function toggleCut(ci, si){
+  var sg = CLIPS[ci].segments[si];
+  sg.cut = !sg.cut;
+  renderTranscript();
+}
+</script>
+</body>
+</html>
