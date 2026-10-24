@@ -1,6 +1,7 @@
 // js/api.js - Unified Backend API Layer
 
 const BACKENDS = [
+  'https://videokit-groq-proxy.onrender.com',
   'https://groq-proxy-7f82.onrender.com',
   'https://groq-proxy-0bfy.onrender.com'
 ];
