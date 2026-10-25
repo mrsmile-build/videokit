@@ -234,6 +234,8 @@ window.addEventListener('error', function(e) {
 </script>
 <script>window.addEventListener("DOMContentLoaded", function(){ initScriptStore(); loadChatHistory(); checkResumeSession(); });</script>
 <script src="js/kinetic.js?v=6"></script>
+<script src="js/exporter.js?v=6"></script>
+<script>if(typeof window.vkConvIfAny!=='function'){window.vkConvIfAny=async function(b){return b;};}</script>
 <script src="js/api.js?v=6"></script>
 <script>
 
@@ -981,7 +983,7 @@ Return ONLY valid JSON:
     }
 // Step 4: Create video
     updateStep(3, 'step-active');
-    const videoBlob = (visualMode === 'kinetic')
+    let videoBlob = (visualMode === 'kinetic')
       ? await (async () => {
           const linkUrl = (brief.linkMode === 'off') ? '' : (brief.link || window._bizUrl || '');
           let kinScenes = scenes.filter(x => !x.isCta && !x.isUrlCard);
@@ -989,6 +991,7 @@ Return ONLY valid JSON:
           return renderKineticVideo(kinScenes, audioBlob2, null, { totalLen: voiceDuration, musicUrl: params.musicUrl, ctaText: (scenes.find(x => x.isCta) || {}).narration || '', ctaUrl: (brief.linkMode === 'separate' ? '' : linkUrl), linkMode: brief.linkMode || 'end' });
         })()
       : await createVideoFromScenes(scenes, sceneMedia, audioBlob2, voiceDuration, params.musicUrl);
+    videoBlob = await vkConvIfAny(videoBlob);
     updateStep(3, 'step-done');
 
     // Remove progress card
@@ -1003,7 +1006,7 @@ Return ONLY valid JSON:
       <div class="result-card">
         <div class="result-title">✅ Your video is ready!</div>
         <div style="font-size:.82rem;color:#999;margin-bottom:10px">${script.title || params.topic} · ${params.length}s</div>
-        <a href="${url2}" download="videokit-${Date.now()}.webm" class="result-btn">⬇ Download Video</a>
+        <a href="${url2}" download="videokit-${Date.now()}.${window._vkExt || 'webm'}" class="result-btn">⬇ Download Video</a>
         <button class="result-btn secondary" onclick="showCaptionPicker('${sId}')">📋 Get Caption</button>
         <button class="result-btn secondary" onclick="exportCarousel('${sId}')">🖼 Carousel PNGs</button>
         <button class="result-btn secondary" onclick="openInCreate(${JSON.stringify({script:script, media:sceneMedia}).replace(/"/g,'&quot;')})">✏️ Edit in Create</button>
@@ -1935,7 +1938,7 @@ async function createAllBatchVideos() {
       window._scriptStore[batchSId] = scripts[i];
       const persistId = getActiveThreadId() + '_v' + i;
       await saveVideoBlob(persistId, blob, { title: scripts[i].title || params.topic, index: i });
-      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.webm" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a><button onclick="toggleCaptionPanel(${i}, &#39;${batchSId}&#39;)" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>`;
+      statusEl.innerHTML = `<a href="${url}" download="videokit-batch-${i+1}-${Date.now()}.${window._vkExt || 'webm'}" style="color:#22c55e;font-weight:700;text-decoration:none;margin-right:10px">✓ Download</a><button onclick="toggleCaptionPanel(${i}, &#39;${batchSId}&#39;)" style="background:none;border:none;color:#ff5c00;font-size:.72rem;font-weight:700;cursor:pointer;padding:0">📋 Caption</button>`;
       statusEl.dataset.persistId = persistId;
 
       saveToHistory({
@@ -1977,7 +1980,7 @@ async function renderBatchVideo(i, scripts, sceneMedia, audioB, vDur, params) {
   if (mode === 'kinetic') {
     let kinScenes = scripts[i].scenes.filter(x => !x.isCta && !x.isUrlCard);
     if (bs.linkMode === 'separate' && linkUrl) kinScenes = kinScenes.concat([{ narration: linkUrl, isUrlCard: true }]);
-    return await renderKineticVideo(kinScenes, audioB, null, { totalLen: vDur, musicUrl: params.musicUrl, ctaText: (scripts[i].scenes.find(x => x.isCta) || {}).narration || '', ctaUrl: (bs.linkMode === 'separate' ? '' : linkUrl), linkMode: bs.linkMode || 'end' });
+    return await vkConvIfAny(await renderKineticVideo(kinScenes, audioB, null, { totalLen: vDur, musicUrl: params.musicUrl, ctaText: (scripts[i].scenes.find(x => x.isCta) || {}).narration || '', ctaUrl: (bs.linkMode === 'separate' ? '' : linkUrl), linkMode: bs.linkMode || 'end' }));
   }
   if (bs.linkMode === 'separate' && linkUrl && !scripts[i].scenes.some(x => x.isUrlCard)) {
     scripts[i].scenes.push({ scene_number: scripts[i].scenes.length + 1, narration: linkUrl, visual_keyword: '', duration_seconds: 3, isUrlCard: true });
