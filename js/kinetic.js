@@ -181,7 +181,7 @@ async function renderKineticVideo(scenes, audioBlob, brand, opts) {
   if (dest) dest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
   const mime = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus'
     : (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus') ? 'video/webm;codecs=vp8,opus' : 'video/webm');
-  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 5000000 });
+  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 1500000 });
   const chunks = [];
   rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
 
