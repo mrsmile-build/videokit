@@ -22,7 +22,7 @@ async function vkConvIfAny(blob) {
     } catch (e) {
       lastErr = e;
       if (!isNet(e.message) || a === 3) break;
-      await new Promise(function(rr){ setTimeout(rr, 4000); });
+      await new Promise(function(rr){ setTimeout(rr, 6000); });
     }
   }
   if (!jobId) {
