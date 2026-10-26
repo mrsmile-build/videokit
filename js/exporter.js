@@ -23,8 +23,9 @@ async function vkConvIfAny(blob) {
     return blob;
   }
   var pollNet = 0;
-  for (var i = 0; i < 100; i++) {
+  for (var i = 0; i < 180; i++) {
     await new Promise(function(rr){ setTimeout(rr, 3000); });
+    if (i === 90 && window.addMsg) addMsg('ai', 'Still converting - your batch is lined up on one server; keep this tab open, it is working.');
     var st;
     try { st = await smartFetch('/merge-status/' + jobId); }
     catch (pe) {
@@ -46,6 +47,6 @@ async function vkConvIfAny(blob) {
       return blob;
     }
   }
-  if (window.addMsg) addMsg('ai', 'MP4 conversion skipped: encode timeout - saved WebM (still plays fine)');
+  if (window.addMsg) addMsg('ai', 'MP4 conversion skipped: this batch outlasted the 9-minute window on one server (queued behind other videos) - saved WebM (still plays fine). Tip: retry it when fewer are rendering, or export it as a single.');
   return blob;
 }
