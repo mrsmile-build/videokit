@@ -2,20 +2,27 @@ window._vkExt = 'webm';
 async function vkConvIfAny(blob) {
   window._vkExt = 'webm';
   if (!blob || !blob.type || blob.type.indexOf('webm') === -1 || !window.smartFetch) return blob;
-  var isNet = function(m){ return /fetch|abort|network|Status 5|All backends/i.test(m || ''); };
+  var isNet = function(m){ return /fetch|abort|network|Status 5|All backends|timeout/i.test(m || ''); };
   var b64 = await new Promise(function(res, rej){ var rd = new FileReader(); rd.onload = function(){ res(rd.result); }; rd.onerror = rej; rd.readAsDataURL(blob); });
   var jobId = null, lastErr = null;
   for (var a = 1; a <= 3 && !jobId; a++) {
     try {
       if (window.addMsg) addMsg('ai', 'Converting to MP4 (try ' + a + '/3)...');
-      var r = await smartFetch('/remux-start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ webmBase64: b64 }) });
+      if (a === 1) {
+        try { await smartFetch('/').catch(function(){}); await new Promise(function(r){setTimeout(r,2000);}); } catch(e){}
+      }
+      var ctrl = new AbortController();
+      var tmr = setTimeout(function(){ ctrl.abort(); }, a === 1 ? 60000 : 45000);
+      var r;
+      try { r = await smartFetch('/remux-start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ webmBase64: b64 }), signal: ctrl.signal }); }
+      finally { clearTimeout(tmr); }
       var d = await r.json().catch(function(){ return {}; });
       if (r.ok && d.jobId) { jobId = d.jobId; break; }
       throw new Error((d && d.error) || ('remux HTTP ' + r.status));
     } catch (e) {
       lastErr = e;
       if (!isNet(e.message) || a === 3) break;
-      await new Promise(function(rr){ setTimeout(rr, 3000); });
+      await new Promise(function(rr){ setTimeout(rr, 4000); });
     }
   }
   if (!jobId) {
