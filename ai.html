@@ -1079,6 +1079,9 @@ async function createVideoFromScenes(scenes, media, audioBlob2, totalLen, musicU
     });
   });
   const payload = { scenes: payloadScenes };
+  payload.brandHandle = localStorage.getItem('vk_handle') || '';
+  payload.linkUrl = (window._briefLinkLast || '');
+  payload.linkMode = (window._briefLinkMode || 'end');
 
   if (musicUrl) payload.musicUrl = musicUrl;
 
