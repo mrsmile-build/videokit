@@ -812,7 +812,7 @@ Extract platform exactly as the user names it (could be one platform or several,
     const scriptRes = await smartFetch('/generate', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        messages:[{role:'user', content:`You are a professional social media marketer, storyteller, and video director. Create a ${params.length}-second ${params.style} faceless video script about: ${params.topic}.\n\n${window._strategyBlock || ''}
+        messages:[{role:'user', content:`You are a human who lived through this. Write a ${params.length}-second ${params.style} faceless video script about: ${params.topic}.\n\nRULES FOR EMOTION:\n- Open on the WORST MOMENT (the unpaid invoice at 2am, the lead who ghosted, the panic when the account hit zero)\n- Name the FEELING (shame, exhaustion, tired hope, quiet desperation)\n- Use second person ("you") and short punchy sentences\n- Every scene must carry ONE concrete sensory detail (a number, a place, a time of day, a physical sensation)\n- Withhold the payoff in the hook so people stay to find out what happens\n- Sound like someone telling a friend over coffee, not a textbook\n\n${window._strategyBlock || ''}
 
 Write like a real person explaining something valuable to a friend - human, conversational, confident, curious. NEVER sound like an advertisement or a robotic script. VOICE RULES: contractions everywhere (you're, don't, it's), short fragments allowed, sometimes start with And/But, ZERO corporate buzzwords (delve, leverage, unlock, elevate, game-changer, revolutionize, seamless), ZERO AI tells (In conclusion, It's important to note, Moreover), every line must pass the read-aloud test - if it sounds like an ad or a robot, rewrite it. Follow this exact narrative structure:
 
@@ -845,7 +845,7 @@ Return ONLY valid JSON:
   "voiceover": true,
   "voiceover_reason": "why",
   "scenes": [
-    {"scene_number":1,"narration":"text","visual_keyword":"search term","visualType":"stock|chart|quote|text-card","highlight":"exact punchline phrase from this scene narration to color-highlight (max 6 words, or empty)","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}
+    {"scene_number":1,"narration":"text","visual_keyword":"DRAMATIC emotional visual query (e.g. 'exhausted person staring at phone at 2am dramatic light', 'hands shaking holding empty wallet', 'cinematic silhouette looking at city skyline hopeful')","hook_visual":"EXTRA dramatic stop-scroll image for scene 1 only (pain or transformation, cinematic composition, emotional lighting)","visualType":"stock|chart|quote|text-card","highlight":"exact punchline phrase from this scene narration to color-highlight (max 6 words, or empty)","emotion":"serious|exciting|urgent|calm|hopeful","duration_seconds":10}
   ],
   "cta": "call to action"
 }`}],
@@ -949,7 +949,8 @@ Return ONLY valid JSON:
       // Fill remaining scenes with stock
       for (let i = uploadedFiles.length; i < scenes.length; i++) {
         try {
-          const imgRes = await smartFetch('/images?q=' + encodeURIComponent(scenes[i].visual_keyword));
+          const hookQuery = (i === 0 && scenes[i].hook_visual) ? scenes[i].hook_visual : scenes[i].visual_keyword;
+          const imgRes = await smartFetch('/images?q=' + encodeURIComponent(hookQuery));
           const imgData = await imgRes.json();
           if (imgData.hits && imgData.hits.length) {
             const pick = imgData.hits.find(h => !usedImageUrls.has(h.largeImageURL || h.webformatURL)) || imgData.hits[0];
