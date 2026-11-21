@@ -1494,12 +1494,65 @@ function addCloneButton(selId) {
 function openPasteModal() {
   document.getElementById('pasteModal').style.display = 'flex';
 }
+function parseVerbatimScript(text) {
+  // Split into carousel blocks by **Title** pattern
+  const blocks = text.split(/\*\*(\d+)\.\s+/).filter(b => b.trim());
+  const scripts = [];
+  for (let i = 0; i < blocks.length; i += 2) {
+    const title = blocks[i].trim();
+    const content = blocks[i + 1] || '';
+    const lines = content.split('\n').map(l => l.trim()).filter(l => l);
+    const scenes = [];
+    let caption = '';
+    for (const line of lines) {
+      if (line.startsWith('*Caption:*')) {
+        caption = line.replace('*Caption:*', '').trim();
+      } else if (/^\d+\./.test(line)) {
+        const text = line.replace(/^\d+\.\s*/, '').trim();
+        const slideNum = parseInt(line.match(/^(\d+)/)[1]);
+        scenes.push({
+          narration: text,
+          visual_keyword: '',
+          duration_seconds: 3,
+          isHookFrame: slideNum === 1,
+          hookText: slideNum === 1 ? text : '',
+          isCta: slideNum === 5
+        });
+      }
+    }
+    if (scenes.length > 0) {
+      scripts.push({
+        scenes: scenes,
+        caption: caption,
+        title: title,
+        isVerbatim: true
+      });
+    }
+  }
+  return scripts;
+}
+
 function submitPasteScript() {
   const t = document.getElementById('pasteInput').value.trim();
   if (!t) return;
+  const verbatim = document.getElementById('verbatimMode') && document.getElementById('verbatimMode').checked;
   document.getElementById('pasteModal').style.display = 'none';
   document.getElementById('pasteInput').value = '';
-  runPasteAnalysis(t);
+  
+  if (verbatim) {
+    // Parse verbatim, skip LLM entirely
+    const scripts = parseVerbatimScript(t);
+    if (scripts.length === 0) {
+      alert('Could not parse any carousel blocks. Make sure each starts with **1. Title** and has numbered slides 1-5.');
+      return;
+    }
+    window._verbatimScripts = scripts;
+    document.getElementById('chatInput').value = 'Generate ' + scripts.length + ' videos from my pasted script (verbatim mode)';
+    document.getElementById('chatInput').focus();
+  } else {
+    // Normal mode: LLM analyzes and rewrites
+    runPasteAnalysis(t);
+  }
 }
 
 async function runPasteAnalysis(t) {
