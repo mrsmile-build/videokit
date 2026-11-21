@@ -1357,6 +1357,13 @@ function confirmStrategy() {
   window._fromBusiness = true;
   document.getElementById('strategyCard').remove();
   let prompt;
+  if (window._verbatimScripts && window._verbatimScripts.length > 0) {
+    // Verbatim mode: skip LLM, render parsed scripts directly
+    const scripts = window._verbatimScripts;
+    window._verbatimScripts = null;
+    renderMultipleScripts(scripts, { length: 30, musicUrl: null, linkMode: 'end', linkUrl: '' });
+    return;
+  }
   if (window._pastedScript) {
     prompt = (qty > 1 ? 'Create ' + qty + ' different videos' : 'Create a video') + ' (' + length + ' seconds) in ' + labels + ' style for ' + platform + '. Follow the EXACT structure, tone and pacing of this sample script: ' + ' + window._pastedScript + ';
     window._pastedScript = null;
@@ -2252,6 +2259,10 @@ function copyCaptionText(id) {
     <div style="width:40px;height:4px;background:#333;border-radius:2px;margin:0 auto 16px"></div>
     <div style="font-weight:800;font-size:1rem;margin-bottom:10px">📋 Paste your script</div>
     <textarea id="pasteInput" rows="8" placeholder="Paste your full script (Hook, points, CTA...) — AI rebuilds it in your style" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:10px;color:#fff;font-family:'Syne',sans-serif;font-size:.85rem;padding:12px;margin-bottom:12px;box-sizing:border-box"></textarea>
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer">
+      <input type="checkbox" id="verbatimMode" style="width:18px;height:18px;cursor:pointer">
+      <span style="font-size:.82rem;color:#ccc">Use word-for-word (don't rewrite my script)</span>
+    </label>
     <button class="result-btn" onclick="submitPasteScript()" style="margin-top:0">Use this script</button>
     <div onclick="document.getElementById('pasteModal').style.display='none'" style="text-align:center;padding:10px;color:#666;font-size:.82rem;margin-top:6px;cursor:pointer">Cancel</div>
   </div>
